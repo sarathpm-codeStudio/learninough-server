@@ -1,0 +1,55 @@
+service: background-service
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-south-1
+  environment:
+    VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+          Resource: !GetAtt VideoUploadQueue.Arn
+
+plugins:
+  - serverless-offline
+
+resources:
+  Resources:
+    VideoUploadQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: video-upload-queue
+        VisibilityTimeout: 300
+
+functions:
+
+  # ── SQS Background Jobs ──────────────────────────────────────
+
+  processVideoUpload:
+    handler: src/functions/processVideoUpload.handler
+    events:
+      - sqs:
+          arn: !GetAtt VideoUploadQueue.Arn
+          batchSize: 1
+
+  syncVideoProgress:
+    handler: src/functions/syncVideoProgress.handler
+    events:
+      - schedule:
+          rate: rate(5 minutes)
+          enabled: false
+
+  # ── Webhooks ─────────────────────────────────────────────────
+
+  tpstreamsWebhook:
+    handler: src/functions/tpstreamsWebhook.handler
+    events:
+      - http:
+          path: /webhooks/tpstreams
+          method: post
+          # No auth — TPStreams calls this directly

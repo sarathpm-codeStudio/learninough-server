@@ -1,0 +1,20 @@
+service: student-service
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-south-1
+
+plugins:
+  - serverless-offline
+
+functions:
+
+  # ── Course ──────────────────────────────────────────────────
+
+  getCourses:
+    handler: src/functions/course/getCourses.handler
+    events:
+      - http:
+          path: student/courses
+          method: get

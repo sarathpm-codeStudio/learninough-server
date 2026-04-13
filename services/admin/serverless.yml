@@ -1,0 +1,20 @@
+service: admin-service
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-south-1
+
+plugins:
+  - serverless-offline
+
+functions:
+
+  # ── Students ─────────────────────────────────────────────────
+
+  getAllStudents:
+    handler: src/functions/students/getAllStudents.handler
+    events:
+      - http:
+          path: admin/students
+          method: get

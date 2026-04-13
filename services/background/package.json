@@ -1,0 +1,25 @@
+{
+  "name": "background-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec 'npx serverless offline' --ext ts --watch src",
+    "start": "npx serverless offline"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Background jobs and webhook handlers",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.1025.0",
+    "@supabase/supabase-js": "^2.101.0",
+    "aws-sdk": "^2.1693.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "nodemon": "^3.1.14",
+    "serverless-offline": "^14.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  }
+}
