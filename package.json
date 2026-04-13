@@ -1,0 +1,31 @@
+{
+  "name": "learning-app-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec 'npx serverless offline' --ext ts --watch src",
+    "start": "npx serverless offline"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.1025.0",
+    "@prisma/adapter-pg": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "@supabase/supabase-js": "^2.101.0",
+    "@upstash/redis": "^1.37.0",
+    "aws-sdk": "^2.1693.0",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "nodemon": "^3.1.14",
+    "prisma": "^7.6.0",
+    "serverless-offline": "^14.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  }
+}

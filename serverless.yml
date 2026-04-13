@@ -1,0 +1,214 @@
+
+
+
+service: learning-app
+
+provider:
+  name: aws
+  runtime: nodejs20.x   
+  region: ap-south-1
+
+plugins:
+  - serverless-offline
+
+environment:
+    VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue
+
+iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+          Resource: !GetAtt VideoUploadQueue.Arn
+
+
+resources:
+  Resources:
+    VideoUploadQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: video-upload-queue
+        VisibilityTimeout: 300   # 5 min timeout per job
+
+
+functions:
+
+  # faculty 
+  
+  createCourse:
+    handler: src/functions/faculty/course/createCourse.handler
+    events:
+      - http:
+          path: faculty/courses
+          method: post
+  
+  getMyCourses:
+    handler: src/functions/faculty/course/getMycourse.handler
+    events:
+      - http:
+          path: faculty/courses
+          method: get
+
+
+  getCourseById:
+    handler: src/functions/faculty/course/getCourseById.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}
+          method: get
+
+  getCoursePreview:
+    handler: src/functions/faculty/course/getCoursePreview.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/preview
+          method: get
+
+
+  updateCourse:
+    handler: src/functions/faculty/course/updateCourse.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}
+          method: put
+
+  publishCourse:
+    handler: src/functions/faculty/course/publishCourse.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/publish
+          method: put
+  
+  createFolderInCourse:
+    handler: src/functions/faculty/course/createFolder.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/folders
+          method: post
+
+
+  updateFolder:
+    handler: src/functions/faculty/course/updateFolder.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/folders/{folderId}
+          method: put
+
+
+  deleteFolder:
+    handler: src/functions/faculty/course/deleteFolder.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/folders/{folderId}
+          method: delete
+  
+  createMaterial:
+    handler: src/functions/faculty/course/createMaterial.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/materials
+          method: post
+
+  processVideoUpload:
+    handler: src/functions/background/processVideoUpload.handler
+    events:
+      - sqs:
+          arn: !GetAtt VideoUploadQueue.Arn
+          batchSize: 1   # process one video at a time
+  
+  getAllProcessingMaterial:
+    handler: src/functions/faculty/course/getProcessingMaterial.handler
+    events:
+      - http:
+          path: faculty/courses/processing-materials
+          method: get
+
+  
+  tpstreamsWebhook:
+    handler: src/functions/webhooks/tpstreamsWebhook.handler
+    events:
+      - http:
+          path: /webhooks/tpstreams
+          method: post
+          # No auth — TPStreams calls this directly
+
+
+  deleteMaterial:
+    handler: src/functions/faculty/course/deleteMaterial.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/materials/{materialId}
+          method: delete
+
+
+  getCourseContent:
+    handler: src/functions/faculty/course/getCourseContent.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/content
+          method: get
+
+  
+  createCourseBundle:
+    handler: src/functions/faculty/bundle/createBundle.handler
+    events:
+      - http:
+          path: faculty/bundle
+          method: post
+
+  getMyBundles:
+    handler: src/functions/faculty/bundle/getMyBundles.handler
+    events:
+      - http:
+          path: faculty/bundle
+          method: get
+
+  
+  getBundleById:
+    handler: src/functions/faculty/bundle/getBundelById.handler
+    events:
+      - http:
+          path: faculty/bundle/{bundleId}
+          method: get
+
+
+  
+  getAllStudents:
+    handler: src/functions/faculty/students/getAllStudents.handler
+    events:
+      - http:
+          path: faculty/students
+          method: get
+  
+  
+  createAnnouncement:
+    handler: src/functions/faculty/announcement/createAnnouncement.handler
+    events:
+      - http:
+          path: faculty/announcements
+          method: post
+  
+  getAllAnnouncements:
+    handler: src/functions/faculty/announcement/getAllAnnouncement.handler
+    events:
+      - http:
+          path: faculty/announcements
+          method: get
+
+  
+  updateAnnouncement:
+    handler: src/functions/faculty/announcement/updateAnnouncement.handler
+    events:
+      - http:
+          path: faculty/announcements/{id}
+          method: put
+  
+  deleteAnnouncement:
+    handler: src/functions/faculty/announcement/deleteAnnouncement.handler
+    events:
+      - http:
+          path: faculty/announcements/{id}
+          method: delete  
