@@ -193,3 +193,75 @@ functions:
       - http:
           path: faculty/dashboard/graph
           method: get
+
+
+  
+  # ── Test ─────────────────────────────────────────────────────
+
+  createTest:
+    handler: src/functions/test/createTest.handler
+    events:
+      - http:
+          path: faculty/test
+          method: post
+  
+  getMyAllTests:
+    handler: src/functions/test/getMyAllTestes.handler
+    events:
+      - http:
+          path: faculty/test
+          method: get
+    
+  
+  getTestById:
+    handler: src/functions/test/getTestById.handler
+    events:
+      - http:
+          path: faculty/test/{testId}
+          method: get
+
+  updateTest:
+    handler: src/functions/test/updateTest.handler
+    events:
+      - http:
+          path: faculty/test/{testId}
+          method: put
+
+
+  deleteTest:
+    handler: src/functions/test/deleteTest.handler
+    events:
+      - http:
+          path: faculty/test/{testId}
+          method: delete
+
+  createTestQuestion:
+    handler: src/functions/test/createQuestions.handler
+    events:
+      - http:
+          path: faculty/test/{testId}/questions
+          method: post
+  
+  updateTestQuestion:
+    handler: src/functions/test/updateQuestion.handler
+    events:
+      - http:
+          path: faculty/test/{testId}/questions/{questionId}
+          method: put
+
+  deleteTestQuestion:
+    handler: src/functions/test/deleteQuestions.handler
+    events:
+      - http:
+          path: faculty/test/{testId}/questions/{questionId}
+          method: delete
+
+  
+  publishTest:
+    handler: src/functions/test/publishTest.handler
+    events:
+      - http:
+          path: faculty/test/{testId}/publish
+          method: put 
+
+  

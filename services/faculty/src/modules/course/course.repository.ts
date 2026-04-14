@@ -388,6 +388,32 @@ export const facultyCourseRepository = {
             throw new Error(error.message);
         }
     },
+
+    getCourseReviews: async (courseId: string) => {
+        try {
+            const { data: reviews, error } = await supabase
+                .from("reviews")
+                .select("*")
+                .eq("course_id", courseId)
+                .order("created_at", { ascending: false });
+
+            if (error) throw new Error(error.message);
+            if (!reviews) throw new Error("Reviews not found");
+
+            const averageRating =
+                reviews.length > 0
+                    ? Math.round(
+                          (reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / reviews.length) * 10
+                      ) / 10
+                    : 0;
+
+            return { reviews, averageRating, totalReviews: reviews.length };
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
 };
 
 // ── helpers ──────────────────────────────────────────────────────────────────

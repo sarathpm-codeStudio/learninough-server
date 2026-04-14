@@ -44,3 +44,39 @@ export type AnnouncementData = {
     course_id?: string,
 
 }
+
+
+export type TestBaseDetailsData = {
+
+    title: string,
+    chapter?: string,
+    course_id?: string,
+    module_id?: string,
+    total_marks: number,
+    is_draft: boolean,
+    is_deleted: boolean,
+    instructions: string,
+    type: string,
+    is_new: boolean,
+    test_id?: string,
+    duration: number,
+    is_random: boolean,
+}
+
+
+export type QuestionData = {
+
+    test_id: string,
+    question: string,
+    type: string,
+    marks: number,
+    option?: [
+        {
+            option_text: string,
+            is_correct: boolean,
+            label: string,
+        }
+    ],
+
+
+}
