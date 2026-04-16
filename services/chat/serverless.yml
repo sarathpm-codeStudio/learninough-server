@@ -1,0 +1,74 @@
+
+
+
+service: faculty-service
+
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-south-1
+
+
+plugins:
+  - serverless-offline
+
+functions:
+
+  # ── Course ──────────────────────────────────────────────────
+
+  setOnline:
+    handler: src/functions/presence/setOnline.handler
+    events:
+      - http:
+          path: presence/setOnline
+          method: post
+
+  setOffline:
+    handler: src/functions/presence/setOffline.handler
+    events:
+      - http:
+          path: presence/setOffline
+          method: post
+
+  getPresence:
+    handler: src/functions/presence/getPresence.handler
+    events:
+      - http:
+          path: presence/{userId}
+          method: get
+
+  startChat:
+    handler: src/functions/chat/startChat.handler
+    events:
+      - http:
+          path: chat/startChat
+          method: post  
+
+  sendMessage:
+    handler: src/functions/chat/sendMessage.handler
+    events:
+      - http:
+          path: chat/sendMessage
+          method: post
+
+  markDelivered:
+    handler: src/functions/chat/markDelivered.handler
+    events:
+      - http:
+          path: chat/markDelivered/{messageId}
+          method: put
+
+  markSeen:
+    handler: src/functions/chat/markSeen.handler
+    events:
+      - http:
+          path: chat/markSeen/{messageId}
+          method: put 
+
+  getAllMyChatRooms:
+    handler: src/functions/chat/getAllChatRooms.handler
+    events:
+      - http:
+          path: chat/getAllMyChatRooms
+          method: get

@@ -7,6 +7,10 @@ export enum MaterialStatus { PENDING = "PENDING", PROCESSING = "PROCESSING", REA
 export enum MaterialType { VIDEO = "VIDEO", PDF = "PDF", LINK = "LINK", NOTES = "NOTES", IMAGE = "IMAGE" }
 
 
+export enum userRole { FACULTY = "FACULTY", STUDENT = "STUDENT", ADMIN = "ADMIN" }
+
+
+
 export type MaterialData = {
 
     parent_id?: string,
