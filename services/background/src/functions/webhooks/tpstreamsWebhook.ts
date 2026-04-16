@@ -1,5 +1,5 @@
-import { handleResponse } from "../../../../shared/utils/response";
-import { videoWebhookService } from "../modules/webhook/video.webhook.service";
+import { handleResponse } from "../../../../../shared/utils/response";
+import { videoWebhookService } from "../../modules/webhook/video.webhook.service";
 
 
 export const handler = async (event: any) => {

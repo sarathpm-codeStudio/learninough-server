@@ -1,5 +1,5 @@
-import { handleResponse } from "../../../../shared/utils/response";
-import { videoService } from "../modules/video/video.service";
+import { handleResponse } from "../../../../../shared/utils/response";
+import { videoService } from "../../modules/video/video.service";
 
 
 export const handler = async (event: any) => {

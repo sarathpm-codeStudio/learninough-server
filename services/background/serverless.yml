@@ -14,6 +14,11 @@ provider:
             - sqs:ReceiveMessage
             - sqs:DeleteMessage
           Resource: !GetAtt VideoUploadQueue.Arn
+        - Effect: Allow
+          Action:
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+          Resource: !GetAtt ChatNotificationQueue.Arn
 
 plugins:
   - serverless-offline
@@ -26,28 +31,47 @@ resources:
         QueueName: video-upload-queue
         VisibilityTimeout: 300
 
+    ChatNotificationQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: chat-notification-queue
+        VisibilityTimeout: 300
+
 functions:
 
   # ── SQS Background Jobs ──────────────────────────────────────
 
   processVideoUpload:
-    handler: src/functions/processVideoUpload.handler
+    handler: src/functions/video/processVideoUpload.handler
     events:
       - sqs:
           arn: !GetAtt VideoUploadQueue.Arn
           batchSize: 1
 
+
+  chatNotificationWorker:
+    handler: src/functions/chat/chat.notification.handler
+    events:
+      - sqs:
+          arn: !GetAtt ChatNotificationQueue.Arn
+          batchSize: 1
+
+
+  # ── cron Jobs ──────────────────────────────────────
+
   syncVideoProgress:
-    handler: src/functions/syncVideoProgress.handler
+    handler: src/functions/video/syncVideoProgress.handler
     events:
       - schedule:
           rate: rate(5 minutes)
           enabled: false
 
+
+
   # ── Webhooks ─────────────────────────────────────────────────
 
   tpstreamsWebhook:
-    handler: src/functions/tpstreamsWebhook.handler
+    handler: src/functions/webhooks/tpstreamsWebhook.handler
     events:
       - http:
           path: /webhooks/tpstreams

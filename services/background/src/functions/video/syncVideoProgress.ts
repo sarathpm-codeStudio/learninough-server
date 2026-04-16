@@ -1,4 +1,4 @@
-import { handleResponse } from "../../../../shared/utils/response";
+import { handleResponse } from "../../../../../shared/utils/response";
 
 
 export const handler = async (event: any) => {
