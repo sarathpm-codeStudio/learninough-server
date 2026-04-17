@@ -77,6 +77,22 @@ functions:
           path: faculty/courses/processing-materials
           method: get
 
+  getAllCourseReviews:
+    handler: src/functions/course/getAllReviews.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/reviews
+          method: get
+
+
+  addReviewReply:
+    handler: src/functions/course/reviewReply.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/reviews/{reviewId}/reply
+          method: post  
+
+
   # ── Folder ──────────────────────────────────────────────────
 
   createFolderInCourse:

@@ -250,6 +250,41 @@ export const facultyCourseService = {
         }
     },
 
+    getCourseReviews: async (event: any) => {
+
+        try {
+
+            const courseId = event.pathParameters.courseId;
+            const { page, limit } = event.queryStringParameters;
+
+            const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit);
+
+            return reviews;
+
+        } catch (error: any) {
+
+            throw new Error(error)
+        }
+    },
+
+    addReviewReply: async (event: any) => {
+        try {
+
+            const { reply } = JSON.parse(event.body);
+
+            const result = await facultyCourseRepository.addReviewReply(event.pathParameters.reviewId, reply, event.user.id);
+
+            return result;
+
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    }
+
 
 
 

@@ -389,30 +389,133 @@ export const facultyCourseRepository = {
         }
     },
 
-    getCourseReviews: async (courseId: string) => {
+    getCourseReviews: async (courseId: string, page: number = 1, limit: number = 10) => {
         try {
-            const { data: reviews, error } = await supabase
+
+            const from = (page - 1) * limit;
+            const to = from + limit - 1;
+
+            // 1. Get paginated reviews with student + reply details
+            const { data: reviews, error, count } = await supabase
                 .from("reviews")
-                .select("*")
+                .select(`
+                *,
+                student:profiles!reviews_student_id_fkey (
+                    id, name, avatar_url
+                ),
+                review_replies (
+                    id,
+                    reply,
+                    created_at,
+                    updated_at,
+                    is_deleted,
+                    faculty:profiles!review_replies_faculty_id_fkey (
+                        id, name, avatar_url
+                    )
+                )
+            `, { count: "exact" })
                 .eq("course_id", courseId)
-                .order("created_at", { ascending: false });
+                .eq("is_approved", true)
+                .eq("review_replies.is_deleted", false)
+                .order("created_at", { ascending: false })
+                .range(from, to);
 
             if (error) throw new Error(error.message);
             if (!reviews) throw new Error("Reviews not found");
 
-            const averageRating =
-                reviews.length > 0
-                    ? Math.round(
-                          (reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / reviews.length) * 10
-                      ) / 10
-                    : 0;
+            // 2. Get ALL ratings for accurate average
+            // (not just current page)
+            const { data: allRatings, error: ratingError } = await supabase
+                .from("reviews")
+                .select("rating")
+                .eq("course_id", courseId)
+                .eq("is_approved", true);
 
-            return { reviews, averageRating, totalReviews: reviews.length };
+            if (ratingError) throw new Error(ratingError.message);
+
+            // 3. Calculate average rating from ALL reviews
+            const averageRating = allRatings && allRatings.length > 0
+                ? Math.round(
+                    (allRatings.reduce((sum, r) => sum + (r.rating ?? 0), 0) / allRatings.length) * 10
+                ) / 10
+                : 0;
+
+            // 4. Calculate rating breakdown (1-5 stars count)
+            const ratingBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            (allRatings ?? []).forEach(r => {
+                if (r.rating >= 1 && r.rating <= 5) {
+                    ratingBreakdown[r.rating as 1 | 2 | 3 | 4 | 5]++;
+                }
+            });
+
+            // 5. Pagination meta
+            const totalPages = Math.ceil((count ?? 0) / limit);
+
+            return {
+                reviews,
+                average_rating: averageRating,
+                total_reviews: allRatings?.length ?? 0,
+                rating_breakdown: ratingBreakdown,
+                pagination: {
+                    total: count ?? 0,
+                    total_pages: totalPages,
+                    current_page: page,
+                    limit,
+                    has_next: page < totalPages,
+                    has_prev: page > 1,
+                }
+            };
 
         } catch (error: any) {
             throw new Error(error.message);
         }
     },
+
+    addReviewReply: async (reviewId: string, reply: string, facultyId: string) => {
+
+        try {
+
+            // Verify review exists and belongs to faculty's course
+            const { data: review } = await supabase
+                .from('reviews')
+                .select("*")
+                .eq('id', reviewId)
+                .eq('is_approved', true)
+                .single();
+
+            if (!review) throw new Error("Review not found");
+
+            // Check faculty owns this course
+            const { data: course } = await supabase
+                .from('courses')
+                .select("*")
+                .eq('id', review.course_id)
+                .eq('faculty_id', facultyId)
+                .single();
+
+            if (!course) throw new Error("Not your course review");
+
+            // Add reply
+            const { data: result } = await supabase
+                .from('review_replies')
+                .insert({
+                    review_id: reviewId,
+                    reply: reply,
+                    faculty_id: facultyId
+                })
+                .select("*")
+                .single();
+
+            if (!result) throw new Error("Failed to add reply");
+
+            return reply;
+
+
+        } catch (error: any) {
+
+            throw new Error(error.message);
+        }
+    }
 
 };
 
