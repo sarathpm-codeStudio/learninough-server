@@ -15,7 +15,7 @@ plugins:
 
 functions:
 
-  # ── Course ──────────────────────────────────────────────────
+  # ── presence ──────────────────────────────────────────────────
 
   setOnline:
     handler: src/functions/presence/setOnline.handler
@@ -37,6 +37,9 @@ functions:
       - http:
           path: presence/{userId}
           method: get
+
+  # ── chat ──────────────────────────────────────────────────
+
 
   startChat:
     handler: src/functions/chat/startChat.handler
@@ -71,4 +74,11 @@ functions:
     events:
       - http:
           path: chat/getAllMyChatRooms
+          method: get
+
+  getAllMessageInRoom:
+    handler: src/functions/chat/getAllMessageInRoom.handler
+    events:
+      - http:
+          path: chat/getAllMessageInRoom/{roomId}
           method: get

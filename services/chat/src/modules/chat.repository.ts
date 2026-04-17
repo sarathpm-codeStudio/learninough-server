@@ -341,6 +341,7 @@ export const chatRepository = {
         }
     },
 
+
     getAllMyChatRooms: async (userId: string) => {
 
         try {
@@ -477,6 +478,82 @@ export const chatRepository = {
             return { rooms: enrichedRooms };
 
 
+
+        } catch (error: any) {
+
+            throw new Error(error.message)
+        }
+    },
+
+    getAllChatInRoom: async (data: { roomId: string, cursor: string, limit: number }, userId: string) => {
+
+        try {
+
+            // 1. Verify user belongs to this room
+            const { data: room } = await supabase
+                .from('chat_rooms')
+                .select('faculty_id, student_id')
+                .eq('id', data.roomId)
+                .eq('is_deleted', false)
+                .single();
+
+            if (!room) throw new Error("Room not found")
+
+            const isMember = room.faculty_id === userId ||
+                room.student_id === userId;
+            if (!isMember) throw new Error("Not your room")
+
+
+            // 2. Build query — newest first with cursor pagination
+            let query = supabase
+                .from('chat_messages')
+                .select(`
+        *,
+        sender:profiles!chat_messages_sender_id_fkey (
+          id, name, avatar_url
+        )
+      `)
+                .eq('room_id', data.roomId)
+                .eq('is_deleted', false)
+                .order('created_at', { ascending: false })
+                .limit(data.limit + 1); // fetch one extra to check hasMore
+
+            // If cursor provided — get messages BEFORE this timestamp
+            if (data.cursor) {
+                query = query.lt('created_at', data.cursor);
+            }
+
+            const { data: messages, error } = await query;
+
+            if (error) {
+                console.error('getMessages error:', error);
+                throw new Error("Failed to fetch messages")
+            }
+
+            // 3. Check if more messages exist
+            const hasMore = messages.length > data.limit;
+            const result = hasMore ? messages.slice(0, data.limit) : messages;
+            const nextCursor = hasMore
+                ? result[result.length - 1].created_at
+                : null;
+
+            // 6. Mark messages as seen
+            // User is now looking at this screen
+            await supabase
+                .from('chat_messages')
+                .update({
+                    status: 'seen',
+                    seen_at: new Date().toISOString(),
+                })
+                .eq('room_id', data.roomId)
+                .eq('receiver_id', userId)
+                .in('status', ['sent', 'delivered']);
+
+            return {
+                messages: result,
+                next_cursor: nextCursor,
+                has_more: hasMore,
+            }
 
         } catch (error: any) {
 

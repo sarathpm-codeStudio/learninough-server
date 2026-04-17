@@ -153,6 +153,25 @@ export const chatService = {
         }
     },
 
+    getAllChatInRoom: async (event: any) => {
+        try {
+
+            const { roomId } = event.pathParameters;
+            const { cursor, limit } = event.queryStringParameters
+
+            const result = await chatRepository.getAllChatInRoom({ roomId, cursor, limit }, event.user.id);
+
+            return result;
+
+        } catch (error: any) {
+
+            throw new Error(error.message)
+        }
+    }
+
+
+
+
 
 
 

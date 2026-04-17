@@ -12,12 +12,12 @@ provider:
         - Effect: Allow
           Action:
             - sqs:ReceiveMessage
-            - sqs:DeleteMessage
+            # - sqs:DeleteMessage
           Resource: !GetAtt VideoUploadQueue.Arn
         - Effect: Allow
           Action:
             - sqs:ReceiveMessage
-            - sqs:DeleteMessage
+            # - sqs:DeleteMessage
           Resource: !GetAtt ChatNotificationQueue.Arn
 
 plugins:

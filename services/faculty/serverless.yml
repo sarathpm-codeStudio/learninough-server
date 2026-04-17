@@ -265,3 +265,32 @@ functions:
           method: put 
 
   
+  # ── Coupon ─────────────────────────────────────────────────────
+
+  createCoupon:
+    handler: src/functions/coupon/createCoupon.handler
+    events:
+      - http:
+          path: faculty/coupon
+          method: post
+
+  getMyAllCoupons:
+    handler: src/functions/coupon/getAllCoupon.handler
+    events:
+      - http:
+          path: faculty/coupon
+          method: get
+
+  updateCouponStatus:
+    handler: src/functions/coupon/updateStatus.handler
+    events:
+      - http:
+          path: faculty/coupon/{couponId}/status
+          method: put
+
+  deleteCoupon:
+    handler: src/functions/coupon/deleteCoupon.handler
+    events:
+      - http:
+          path: faculty/coupon/{couponId}
+          method: delete
