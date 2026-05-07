@@ -12823,13 +12823,13 @@ var require_main4 = __commonJS({
   }
 });
 
-// src/functions/course/updateCourse.ts
-var updateCourse_exports = {};
-__export(updateCourse_exports, {
+// src/functions/course/reviewReply.ts
+var reviewReply_exports = {};
+__export(reviewReply_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(updateCourse_exports);
+module.exports = __toCommonJS(reviewReply_exports);
 
 // ../../node_modules/@supabase/supabase-js/dist/index.mjs
 var dist_exports = {};
@@ -35550,13 +35550,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/course/updateCourse.ts
+// src/functions/course/reviewReply.ts
 var handlerFun = async (event) => {
   try {
-    const course = await facultyCourseService.updateCourseDetails(event);
-    return handleResponse.success(course, "Course updated successfully", 200);
+    const result = await facultyCourseService.addReviewReply(event);
+    return handleResponse.success(result, "Review reply added successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error updating course", 400);
+    return handleResponse.error(err, "Error adding review reply", 400);
   }
 };
 var handler = compose(
@@ -35569,4 +35569,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=updateCourse.js.map
+//# sourceMappingURL=reviewReply.js.map

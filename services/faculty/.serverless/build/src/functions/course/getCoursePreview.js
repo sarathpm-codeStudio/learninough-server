@@ -21433,15 +21433,71 @@ var facultyCourseRepository = {
       throw new Error(error48.message);
     }
   },
-  getCourseReviews: async (courseId) => {
+  getCourseReviews: async (courseId, page = 1, limit = 10) => {
     try {
-      const { data: reviews, error: error48 } = await supabase.from("reviews").select("*").eq("course_id", courseId).order("created_at", { ascending: false });
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      const { data: reviews, error: error48, count } = await supabase.from("reviews").select(`
+                *,
+                student:profiles!reviews_student_id_fkey (
+                    id, name, avatar_url
+                ),
+                review_replies (
+                    id,
+                    reply,
+                    created_at,
+                    updated_at,
+                    is_deleted,
+                    faculty:profiles!review_replies_faculty_id_fkey (
+                        id, name, avatar_url
+                    )
+                )
+            `, { count: "exact" }).eq("course_id", courseId).eq("is_approved", true).eq("review_replies.is_deleted", false).order("created_at", { ascending: false }).range(from, to);
       if (error48) throw new Error(error48.message);
       if (!reviews) throw new Error("Reviews not found");
-      const averageRating = reviews.length > 0 ? Math.round(
-        reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / reviews.length * 10
+      const { data: allRatings, error: ratingError } = await supabase.from("reviews").select("rating").eq("course_id", courseId).eq("is_approved", true);
+      if (ratingError) throw new Error(ratingError.message);
+      const averageRating = allRatings && allRatings.length > 0 ? Math.round(
+        allRatings.reduce((sum, r) => sum + (r.rating ?? 0), 0) / allRatings.length * 10
       ) / 10 : 0;
-      return { reviews, averageRating, totalReviews: reviews.length };
+      const ratingBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      (allRatings ?? []).forEach((r) => {
+        if (r.rating >= 1 && r.rating <= 5) {
+          ratingBreakdown[r.rating]++;
+        }
+      });
+      const totalPages = Math.ceil((count ?? 0) / limit);
+      return {
+        reviews,
+        average_rating: averageRating,
+        total_reviews: allRatings?.length ?? 0,
+        rating_breakdown: ratingBreakdown,
+        pagination: {
+          total: count ?? 0,
+          total_pages: totalPages,
+          current_page: page,
+          limit,
+          has_next: page < totalPages,
+          has_prev: page > 1
+        }
+      };
+    } catch (error48) {
+      throw new Error(error48.message);
+    }
+  },
+  addReviewReply: async (reviewId, reply, facultyId) => {
+    try {
+      const { data: review } = await supabase.from("reviews").select("*").eq("id", reviewId).eq("is_approved", true).single();
+      if (!review) throw new Error("Review not found");
+      const { data: course } = await supabase.from("courses").select("*").eq("id", review.course_id).eq("faculty_id", facultyId).single();
+      if (!course) throw new Error("Not your course review");
+      const { data: result } = await supabase.from("review_replies").insert({
+        review_id: reviewId,
+        reply,
+        faculty_id: facultyId
+      }).select("*").single();
+      if (!result) throw new Error("Failed to add reply");
+      return reply;
     } catch (error48) {
       throw new Error(error48.message);
     }
@@ -35403,6 +35459,26 @@ var facultyCourseService = {
       const parentId = event.queryStringParameters.parentId || null;
       const content = await facultyCourseRepository.getCourseContent(courseId, parentId);
       return content;
+    } catch (error48) {
+      console.log("error", error48);
+      throw new Error(error48);
+    }
+  },
+  getCourseReviews: async (event) => {
+    try {
+      const courseId = event.pathParameters.courseId;
+      const { page, limit } = event.queryStringParameters;
+      const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit);
+      return reviews;
+    } catch (error48) {
+      throw new Error(error48);
+    }
+  },
+  addReviewReply: async (event) => {
+    try {
+      const { reply } = JSON.parse(event.body);
+      const result = await facultyCourseRepository.addReviewReply(event.pathParameters.reviewId, reply, event.user.id);
+      return result;
     } catch (error48) {
       console.log("error", error48);
       throw new Error(error48);

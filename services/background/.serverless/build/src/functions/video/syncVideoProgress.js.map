@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../../src/functions/video/syncVideoProgress.ts"],
+  "sourcesContent": ["import { handleResponse } from \"../../../../../shared/utils/response\";\n\n\nexport const handler = async (event: any) => {\n\n    try {\n\n        // TODO: implement video progress sync logic\n\n    } catch (err: any) {\n\n        return handleResponse.error(err, \"Error syncing video progress\", 400);\n\n    }\n};\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAGO,IAAM,UAAU,OAAO,UAAe;AAEzC,MAAI;AAAA,EAIJ,SAAS,KAAU;AAEf,WAAO,eAAe,MAAM,KAAK,gCAAgC,GAAG;AAAA,EAExE;AACJ;",
+  "names": []
+}
