@@ -2,7 +2,7 @@ export type Role = "STUDENT" | "FACULTY" | "ADMIN";
 
 export enum AccountStatus { PENDING = "PENDING", APPROVED = "APPROVED", REJECTED = "REJECTED" }
 
-export enum MaterialStatus { PENDING = "PENDING", PROCESSING = "PROCESSING", READY = "READY", FAILED = "FAILED" }
+export enum MaterialStatus { PENDING = "PENDING", TRANSCODING = "TRANSCODING", COMPLETED = "COMPLETED", FAILED = "FAILED" }
 
 export enum MaterialType { VIDEO = "VIDEO", PDF = "PDF", LINK = "LINK", NOTES = "NOTES", IMAGE = "IMAGE" }
 
@@ -13,6 +13,7 @@ export enum userRole { FACULTY = "FACULTY", STUDENT = "STUDENT", ADMIN = "ADMIN"
 
 export type MaterialData = {
 
+    unique_id?: string,
     parent_id?: string,
     title: string,
     type: MaterialType,

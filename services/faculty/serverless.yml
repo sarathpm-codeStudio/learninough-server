@@ -4,6 +4,7 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: ap-south-1
+  timeout: 30
   environment:
     VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue
   iam:
@@ -17,6 +18,11 @@ provider:
 plugins:
   - serverless-offline
 
+custom:
+  serverless-offline:
+    httpPort: 3000
+    lambdaPort: 3001
+
 functions:
 
   # ── Course ──────────────────────────────────────────────────
@@ -26,6 +32,13 @@ functions:
     events:
       - http:
           path: faculty/courses
+          method: post
+
+  uploadCourseIntroVideo:
+    handler: src/functions/course/uploadCourseIntroVideo.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/intro-video
           method: post
 
   getMyCourses:
@@ -54,14 +67,14 @@ functions:
     events:
       - http:
           path: faculty/courses/{courseId}
-          method: put
+          method: patch
 
   publishCourse:
     handler: src/functions/course/publishCourse.handler
     events:
       - http:
           path: faculty/courses/{courseId}/publish
-          method: put
+          method: patch
 
   getCourseContent:
     handler: src/functions/course/getCourseContent.handler
@@ -92,6 +105,13 @@ functions:
           path: faculty/courses/{courseId}/reviews/{reviewId}/reply
           method: post  
 
+  addCoursePricing:
+    handler: src/functions/course/addCoursePricing.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/pricing
+          method: patch
+
 
   # ── Folder ──────────────────────────────────────────────────
 
@@ -107,7 +127,7 @@ functions:
     events:
       - http:
           path: faculty/courses/{courseId}/folders/{folderId}
-          method: put
+          method: patch
 
   deleteFolder:
     handler: src/functions/folder/deleteFolder.handler
@@ -124,6 +144,13 @@ functions:
       - http:
           path: faculty/courses/{courseId}/materials
           method: post
+
+  updateMaterial:
+    handler: src/functions/material/updateMaterial.handler
+    events:
+      - http:
+          path: faculty/courses/{courseId}/materials/{materialId}
+          method: patch
 
   deleteMaterial:
     handler: src/functions/material/deleteMaterial.handler
@@ -310,3 +337,13 @@ functions:
       - http:
           path: faculty/coupon/{couponId}
           method: delete
+
+
+  # ── Video ─────────────────────────────────────────────────────
+
+  createVideoUploadProgress:
+    handler: src/functions/video/processVideoUpload.handler
+    events:
+      - http:
+          path: faculty/video/create-upload-progress
+          method: post

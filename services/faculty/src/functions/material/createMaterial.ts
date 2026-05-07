@@ -8,7 +8,7 @@ export const handlerFun = async (event: any) => {
 
     try {
 
-        const material = await facultyCourseService.uploadMaterial(event);
+        const material = await facultyCourseService.addMaterialToFolder(event);
 
         return handleResponse.success(material, "Material created successfully", 201);
 

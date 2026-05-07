@@ -10,7 +10,7 @@ export const handlerFun = async (event: any) => {
 
         const course = await facultyCourseService.publishCourse(event);
 
-        return handleResponse.success(course, "Course published successfully", 200);
+        return handleResponse.success(course, "", 200);
 
 
     } catch (err: any) {

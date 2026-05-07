@@ -26625,10 +26625,13 @@ var MaterialType = /* @__PURE__ */ ((MaterialType2) => {
 
 // ../../shared/validators/course.validator.ts
 var createCourseSchema = external_exports.object({
+  unique_id: external_exports.string(),
   title: external_exports.string().min(3, "Course name min 3 characters"),
   description: external_exports.string().min(10, "Description too short"),
   category: external_exports.string(),
-  level: external_exports.enum(["Beginner", "Intermediate", "Advanced"])
+  level: external_exports.enum(["Beginner", "Intermediate", "Advanced"]),
+  languages: external_exports.array(external_exports.string()).min(1, "Language is required"),
+  cover_image: external_exports.string().min(1, "Course image is required")
 });
 var updateCourseSchema = external_exports.object({
   title: external_exports.string().min(3, "Course name min 3 characters"),
@@ -26639,7 +26642,8 @@ var updateCourseSchema = external_exports.object({
   duration: external_exports.string()
 });
 var createFolderSchema = external_exports.object({
-  title: external_exports.string()
+  title: external_exports.string(),
+  parent_id: external_exports.string().optional()
 });
 var uploadMaterialSchema = external_exports.object({
   title: external_exports.string(),
@@ -26656,6 +26660,14 @@ var createCourseBundleSchema = external_exports.object({
   img_url: external_exports.string(),
   is_new: external_exports.boolean(),
   is_draft: external_exports.boolean()
+});
+var addCoursePricingSchema = external_exports.object({
+  duration: external_exports.string().min(1, "Duration is required"),
+  price: external_exports.number(),
+  discount_type: external_exports.string().optional(),
+  discount: external_exports.number().optional(),
+  final_price: external_exports.number(),
+  enableCoupons: external_exports.boolean()
 });
 
 // ../../node_modules/@supabase/supabase-js/dist/index.mjs
@@ -35200,12 +35212,16 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error: error48 } = await supabase.auth.getUser(token);
   if (error48 || !data.user) return handleResponse.error(error48, "User not found", 401);
-  event.user = data.user;
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  if (profileError) return handleResponse.error(profileError, "User not found", 401);
+  console.log("profile", profile);
+  event.user = { ...data.user, profile };
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  if (event.user.user_metadata.role !== role) {
+  console.log("user", event?.user);
+  if (event.user.profile.role !== role) {
     return handleResponse.error(null, "You are not authorized to perform this action", 401);
   }
   return handler2(event);

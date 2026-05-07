@@ -40301,12 +40301,16 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error: error48 } = await supabase.auth.getUser(token);
   if (error48 || !data.user) return handleResponse.error(error48, "User not found", 401);
-  event.user = data.user;
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  if (profileError) return handleResponse.error(profileError, "User not found", 401);
+  console.log("profile", profile);
+  event.user = { ...data.user, profile };
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  if (event.user.user_metadata.role !== role) {
+  console.log("user", event?.user);
+  if (event.user.profile.role !== role) {
     return handleResponse.error(null, "You are not authorized to perform this action", 401);
   }
   return handler2(event);

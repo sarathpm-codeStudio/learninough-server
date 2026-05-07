@@ -21185,36 +21185,34 @@ if (!supabaseUrl || !supabaseKey) {
 var supabase = createClient(supabaseUrl, supabaseKey);
 
 // ../../shared/constants/types.ts
-var MaterialType = /* @__PURE__ */ ((MaterialType2) => {
-  MaterialType2["VIDEO"] = "VIDEO";
-  MaterialType2["PDF"] = "PDF";
-  MaterialType2["LINK"] = "LINK";
-  MaterialType2["NOTES"] = "NOTES";
-  MaterialType2["IMAGE"] = "IMAGE";
-  return MaterialType2;
+var MaterialType = /* @__PURE__ */ ((MaterialType3) => {
+  MaterialType3["VIDEO"] = "VIDEO";
+  MaterialType3["PDF"] = "PDF";
+  MaterialType3["LINK"] = "LINK";
+  MaterialType3["NOTES"] = "NOTES";
+  MaterialType3["IMAGE"] = "IMAGE";
+  return MaterialType3;
 })(MaterialType || {});
-
-// ../../shared/utils/queue.ts
-var import_client_sqs = require("@aws-sdk/client-sqs");
-var sqs = new import_client_sqs.SQSClient({ region: process.env.AWS_REGION || "" });
-var pushToQueue = async (queueUrl, payload) => {
-  await sqs.send(new import_client_sqs.SendMessageCommand({
-    QueueUrl: queueUrl,
-    MessageBody: JSON.stringify(payload)
-  }));
-};
 
 // src/modules/course/course.repository.ts
 var facultyCourseRepository = {
   createCourseWithBasicDetails: async (data, facultyId) => {
     try {
+      console.log("data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>####", data);
+      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").single();
       const { data: course, error: error48 } = await supabase.from("courses").insert({
         title: data.title,
+        unique_id: data.unique_id,
         description: data.description,
         category: data.category,
         level: data.level,
-        language: data.language,
-        faculty_id: facultyId
+        languages: data.languages,
+        faculty_id: facultyId,
+        cover_image: data.cover_image,
+        video_asset_id: videoUploadProgress?.asset_id,
+        video_uploading_status: videoUploadProgress?.uploading_status,
+        video_upload_progress: videoUploadProgress?.upload_progress,
+        video_transcoding_progress: videoUploadProgress?.transcoding_progress
       }).select().single();
       if (error48) throw new Error(error48.message);
       return course;
@@ -21222,38 +21220,138 @@ var facultyCourseRepository = {
       throw new Error(error48.message);
     }
   },
-  getMyCourses: async (facultyId, filter) => {
+  uploadCourseIntroVideo: async (data, courseId, facultyId) => {
     try {
-      const { data: courses, error: error48 } = await supabase.from("courses").select(`*, enrollments (count)`).eq("faculty_id", facultyId).eq("is_draft", filter).order("created_at", { ascending: false });
+      await supabase.from("video_upload_progress").insert({
+        faculty_id: facultyId,
+        // asset_id: tpData.asset_id,
+        uploading_status: "uploading",
+        upload_progress: 0,
+        transcoding_progress: 0
+      });
+      return true;
+    } catch (error48) {
+      throw new Error(error48.message);
+    }
+  },
+  getMyCourses: async (facultyId, filter) => {
+    console.log("data", typeof filter);
+    console.log("facultyId", facultyId);
+    try {
+      const { data: courses, error: error48 } = await supabase.from("courses").select(`*`).eq("faculty_id", facultyId).eq("is_draft", filter).order("created_at", { ascending: false });
       if (error48) throw new Error(error48.message);
       return courses;
     } catch (error48) {
       throw new Error(error48.message);
     }
   },
+  addCoursePricing: async (data, courseId, facultyId) => {
+    try {
+      console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data);
+      const { data: course, error: error48 } = await supabase.from("courses").update({
+        duration: data.duration,
+        price: data.price,
+        discount: data.discount,
+        discount_type: data.discount_type,
+        final_price: data.final_price,
+        enableCoupons: data.enableCoupons
+      }).eq("id", courseId).select().single();
+      if (error48) throw new Error(error48.message);
+      return course;
+    } catch (error48) {
+      throw new Error(error48.message);
+    }
+  },
+  // getPreviewCourse: async (courseId: string) => {
+  //     try {
+  //         const { data: course, error: courseError } = await supabase
+  //             .from("courses")
+  //             .select("*")
+  //             .eq("id", courseId)
+  //             .single();
+  //         if (courseError) throw new Error(courseError.message);
+  //         if (!course) throw new Error("Course not found");
+  //         // Fetch materials to compute groupBy client-side
+  //         const { data: materials, error: matError } = await supabase
+  //             .from("course_materials")
+  //             .select("type, duration_sec")
+  //             .eq("course_id", courseId)
+  //             .eq("is_deleted", false);
+  //         if (matError) throw new Error(matError.message);
+  //         // Count tests
+  //         const { count: testCount, error: testError } = await supabase
+  //             .from("tests")
+  //             .select("*", { count: "exact", head: true })
+  //             .eq("course_id", courseId);
+  //         if (testError) throw new Error(testError.message);
+  //         // Compute groupBy in JS
+  //         let videoCount = 0;
+  //         let pdfCount = 0;
+  //         let imageCount = 0;
+  //         let totalDuration = 0;
+  //         materials?.forEach((item: any) => {
+  //             if (item.type === "VIDEO") { videoCount++; totalDuration += item.duration_sec || 0; }
+  //             if (item.type === "PDF") pdfCount++;
+  //             if (item.type === "IMAGE") imageCount++;
+  //         });
+  //         const hours = Math.floor(totalDuration / 3600);
+  //         const minutes = Math.floor((totalDuration % 3600) / 60);
+  //         return {
+  //             ...course,
+  //             content_inventory: {
+  //                 video_lessons: videoCount,
+  //                 pdf_resources: pdfCount,
+  //                 images: imageCount,
+  //                 tests: testCount ?? 0,
+  //                 total_contents: videoCount + pdfCount + imageCount + (testCount ?? 0),
+  //             },
+  //             video_duration: {
+  //                 total_seconds: totalDuration,
+  //                 formatted: `${hours} Hours ${minutes} Minutes`,
+  //             },
+  //         };
+  //     } catch (error: any) {
+  //         throw new Error(error.message);
+  //     }
+  // },
   getPreviewCourse: async (courseId) => {
     try {
-      const { data: course, error: courseError } = await supabase.from("courses").select("*").eq("id", courseId).single();
+      const [
+        { data: course, error: courseError },
+        { data: materials, error: matError },
+        { count: testCount, error: testError }
+      ] = await Promise.all([
+        supabase.from("courses").select("*").eq("id", courseId).single(),
+        supabase.from("course_materials").select("type, duration_sec, material_status").eq("course_id", courseId).eq("is_deleted", false).or("type.neq.VIDEO,material_status.neq.FAILED"),
+        // ✅ exclude FAILED videos
+        supabase.from("tests").select("*", { count: "exact", head: true }).eq("course_id", courseId).eq("is_deleted", false)
+      ]);
       if (courseError) throw new Error(courseError.message);
       if (!course) throw new Error("Course not found");
-      const { data: materials, error: matError } = await supabase.from("course_materials").select("type, duration_sec").eq("course_id", courseId).eq("is_deleted", false);
       if (matError) throw new Error(matError.message);
-      const { count: testCount, error: testError } = await supabase.from("tests").select("*", { count: "exact", head: true }).eq("course_id", courseId);
       if (testError) throw new Error(testError.message);
       let videoCount = 0;
       let pdfCount = 0;
       let imageCount = 0;
       let totalDuration = 0;
       materials?.forEach((item) => {
-        if (item.type === "VIDEO") {
-          videoCount++;
-          totalDuration += item.duration_sec || 0;
+        switch (item.type) {
+          case "VIDEO":
+            videoCount++;
+            totalDuration += item.duration_sec || 0;
+            break;
+          case "PDF":
+            pdfCount++;
+            break;
+          case "IMAGE":
+            imageCount++;
+            break;
         }
-        if (item.type === "PDF") pdfCount++;
-        if (item.type === "IMAGE") imageCount++;
       });
       const hours = Math.floor(totalDuration / 3600);
       const minutes = Math.floor(totalDuration % 3600 / 60);
+      const seconds = totalDuration % 60;
+      const formatted = hours > 0 ? `${hours}h ${minutes}m` : minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
       return {
         ...course,
         content_inventory: {
@@ -21265,7 +21363,7 @@ var facultyCourseRepository = {
         },
         video_duration: {
           total_seconds: totalDuration,
-          formatted: `${hours} Hours ${minutes} Minutes`
+          formatted
         }
       };
     } catch (error48) {
@@ -21284,16 +21382,18 @@ var facultyCourseRepository = {
   },
   updateCourseDetails: async (data, courseId, facultyId) => {
     try {
+      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").single();
       const { data: course, error: error48 } = await supabase.from("courses").update({
         title: data.title,
         description: data.description,
         category: data.category,
         level: data.level,
-        price: data.price,
-        discount_type: data.discount_type,
-        discount: data.discount_value,
-        duration: data.duration,
-        language: data.language
+        languages: data.languages,
+        cover_image: data.cover_image,
+        video_asset_id: videoUploadProgress?.asset_id,
+        video_uploading_status: videoUploadProgress?.uploading_status,
+        video_upload_progress: videoUploadProgress?.upload_progress,
+        video_transcoding_progress: videoUploadProgress?.transcoding_progress
       }).eq("id", courseId).eq("faculty_id", facultyId).select().single();
       if (error48) throw new Error(error48.message);
       if (!course) throw new Error("Course not found");
@@ -21302,18 +21402,142 @@ var facultyCourseRepository = {
       throw new Error(error48.message);
     }
   },
+  // publishCourse: async (courseId: string, facultyId: string) => {
+  //     try {
+  //         // 1. Check course ownership
+  //         const { data: course, error: courseError } = await supabase
+  //             .from("courses")
+  //             .select("id, faculty_id")
+  //             .eq("id", courseId)
+  //             .eq("faculty_id", facultyId)
+  //             .single()
+  //         if (courseError) throw new Error(courseError.message)
+  //         if (!course) throw new Error("Course not found")
+  //         // 2. Get all videos
+  //         const { data: materials, error: matError } = await supabase
+  //             .from("course_materials")
+  //             .select("id, title, video_uploading_status")
+  //             .eq("course_id", courseId)
+  //             .eq("is_deleted", false)
+  //             .eq("type", "VIDEO")
+  //         if (matError) throw new Error(matError.message)
+  //         // 3. Check FAILED first — highest priority ❌
+  //         const failedVideos = materials?.filter(
+  //             (m: any) => m.video_uploading_status === "FAILED"
+  //         ) ?? []
+  //         // ❌ ANY failed → abort everything
+  //         // No pending_publish, no auto publish
+  //         // User must fix failed videos first
+  //         if (failedVideos.length > 0) {
+  //             return {
+  //                 course: null,
+  //                 status: 'failed',
+  //                 message: "Failed to publish course. Please check the course materials. Some videos failed to process.",
+  //             }
+  //         }
+  //         // 4. Check processing — only if NO failures
+  //         const processingVideos = materials?.filter(
+  //             (m: any) => m.video_uploading_status !== "COMPLETED"
+  //         ) ?? []
+  //         // ⏳ Still processing → set pending_publish
+  //         if (processingVideos.length > 0) {
+  //             const { data: updated, error: updateError } = await supabase
+  //                 .from("courses")
+  //                 .update({ pending_publish: true })
+  //                 .eq("id", courseId)
+  //                 .select()
+  //                 .single()
+  //             if (updateError) throw new Error(updateError.message)
+  //             return {
+  //                 course: updated,
+  //                 status: 'pending',
+  //                 message: `Course will publish automatically when all videos are ready.`,
+  //             }
+  //         }
+  //         // 5. All COMPLETED → publish now ✅
+  //         const { data: updated, error: updateError } = await supabase
+  //             .from("courses")
+  //             .update({
+  //                 is_draft: false,
+  //                 pending_publish: false,
+  //             })
+  //             .eq("id", courseId)
+  //             .select()
+  //             .single()
+  //         if (updateError) throw new Error(updateError.message)
+  //         return {
+  //             course: updated,
+  //             status: 'published',
+  //             message: 'Course published successfully! 🎉',
+  //         }
+  //     } catch (error: any) {
+  //         throw new Error(error.message)
+  //     }
+  // },
   publishCourse: async (courseId, facultyId) => {
     try {
-      const { data: course, error: error48 } = await supabase.from("courses").update({ is_draft: false }).eq("id", courseId).eq("faculty_id", facultyId).select().single();
-      if (error48) throw new Error(error48.message);
+      const { data: course, error: courseError } = await supabase.from("courses").select("id, faculty_id, title, video_uploading_status").eq("id", courseId).eq("faculty_id", facultyId).single();
+      if (courseError) throw new Error(courseError.message);
       if (!course) throw new Error("Course not found");
-      return course;
+      const { data: materials, error: matError } = await supabase.from("course_materials").select("id, title, material_status").eq("course_id", courseId).eq("is_deleted", false).eq("type", "VIDEO");
+      if (matError) throw new Error(matError.message);
+      const introFailed = course.video_uploading_status === "FAILED" /* FAILED */;
+      const introProcessing = course.video_uploading_status !== "COMPLETED" /* COMPLETED */ && course.video_uploading_status !== "FAILED" /* FAILED */ && course.video_uploading_status !== null;
+      const failedVideos = [
+        // Failed material videos
+        ...materials?.filter(
+          (m) => m.material_status === "FAILED" /* FAILED */
+        ) ?? [],
+        // Failed intro video ✅
+        ...introFailed ? [{
+          id: courseId,
+          title: "Intro Video"
+        }] : []
+      ];
+      const processingVideos = [
+        // Processing material videos
+        ...materials?.filter(
+          (m) => m.material_status !== "COMPLETED" /* COMPLETED */ && m.material_status !== "FAILED" /* FAILED */
+        ) ?? [],
+        // Processing intro video ✅
+        ...introProcessing ? [{
+          id: courseId,
+          title: "Intro Video"
+        }] : []
+      ];
+      if (failedVideos.length > 0) {
+        return {
+          course: null,
+          status: "failed",
+          message: "Course cannot be published because some videos failed to process. Please re-upload them and try again."
+        };
+      }
+      if (processingVideos.length > 0) {
+        const { data: updated2, error: updateError2 } = await supabase.from("courses").update({ pending_publish: true }).eq("id", courseId).select().single();
+        if (updateError2) throw new Error(updateError2.message);
+        return {
+          // course: updated,
+          status: "pending",
+          message: "Course will publish automatically when all videos are ready."
+        };
+      }
+      const { data: updated, error: updateError } = await supabase.from("courses").update({
+        is_draft: false,
+        pending_publish: false
+      }).eq("id", courseId).select().single();
+      if (updateError) throw new Error(updateError.message);
+      return {
+        // course: updated,
+        status: "published",
+        message: "Course published successfully! \u{1F389}"
+      };
     } catch (error48) {
       throw new Error(error48.message);
     }
   },
   createFolder: async (data, courseId, facultyId) => {
     try {
+      console.log("folder data #######################################################################", data);
       const { data: course, error: courseError } = await supabase.from("courses").select("id").eq("id", courseId).eq("faculty_id", facultyId).single();
       if (courseError) throw new Error(courseError.message);
       if (!course) throw new Error("Course not found");
@@ -21343,7 +21567,7 @@ var facultyCourseRepository = {
   },
   deleteFolder: async (folderId) => {
     try {
-      const { data: folder, error: error48 } = await supabase.from("course_folders").delete().eq("id", folderId).select().single();
+      const { data: folder, error: error48 } = await supabase.from("course_folders").update({ is_deleted: true }).eq("id", folderId).select().single();
       if (error48) throw new Error(error48.message);
       if (!folder) throw new Error("Folder not found");
       return folder;
@@ -21362,7 +21586,9 @@ var facultyCourseRepository = {
         if (!folder) throw new Error("Folder not found");
       }
       const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null);
+      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "module").single();
       const { data: material, error: error48 } = await supabase.from("course_materials").insert({
+        unique_id: data.unique_id,
         course_id: courseId,
         folder_id: data.parent_id ?? null,
         sort_order: nextSortOrder,
@@ -21371,18 +21597,35 @@ var facultyCourseRepository = {
         type: data.type,
         file_url: data.file_url ?? null,
         external_url: data.external_url ?? null,
-        file_size: data.file_size ?? null
+        file_size: data.file_size ?? null,
+        video_asset_id: videoUploadProgress?.asset_id,
+        video_uploading_status: videoUploadProgress?.uploading_status,
+        video_upload_progress: videoUploadProgress?.upload_progress,
+        video_transcoding_progress: videoUploadProgress?.transcoding_progress
       }).select().single();
       if (error48) throw new Error(error48.message);
       if (!material) throw new Error("Material not created");
-      if (material.type === "VIDEO" /* VIDEO */) {
-        await pushToQueue(process.env.VIDEO_UPLOAD_QUEUE_URL, {
-          material_id: material.id,
-          course_id: courseId,
-          video_data: data.video_data,
-          file_name: data.file_name
-        });
-      }
+      return material;
+    } catch (error48) {
+      throw new Error(error48.message);
+    }
+  },
+  updateMaterial: async (data, materialId) => {
+    try {
+      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "module").single();
+      const { data: material, error: error48 } = await supabase.from("course_materials").update({
+        title: data.title,
+        type: data.type,
+        file_url: data.file_url ?? null,
+        external_url: data.external_url ?? null,
+        file_size: data.file_size ?? null,
+        video_asset_id: videoUploadProgress?.asset_id,
+        video_uploading_status: videoUploadProgress?.uploading_status,
+        video_upload_progress: videoUploadProgress?.upload_progress,
+        video_transcoding_progress: videoUploadProgress?.transcoding_progress
+      }).eq("id", materialId).select().single();
+      if (error48) throw new Error(error48.message);
+      if (!material) throw new Error("Material not created");
       return material;
     } catch (error48) {
       throw new Error(error48.message);
@@ -21404,7 +21647,7 @@ var facultyCourseRepository = {
   },
   deleteMaterial: async (materialId) => {
     try {
-      const { data: material, error: error48 } = await supabase.from("course_materials").delete().eq("id", materialId).select().single();
+      const { data: material, error: error48 } = await supabase.from("course_materials").update({ is_deleted: true }).eq("id", materialId).select().single();
       if (error48) throw new Error(error48.message);
       if (!material) throw new Error("Material not found");
       return material;
@@ -21413,9 +21656,10 @@ var facultyCourseRepository = {
     }
   },
   getCourseContent: async (courseId, parentId) => {
+    console.log("content data $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
     try {
-      let folderQuery = supabase.from("course_folders").select("*").eq("course_id", courseId).order("sort_order", { ascending: true });
-      let materialQuery = supabase.from("course_materials").select("*").eq("course_id", courseId).order("sort_order", { ascending: true });
+      let folderQuery = supabase.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false).order("sort_order", { ascending: true });
+      let materialQuery = supabase.from("course_materials").select("*").eq("is_deleted", false).eq("course_id", courseId).order("sort_order", { ascending: true });
       if (parentId === null) {
         folderQuery = folderQuery.is("parent_id", null);
         materialQuery = materialQuery.is("folder_id", null);
@@ -21433,12 +21677,71 @@ var facultyCourseRepository = {
       throw new Error(error48.message);
     }
   },
-  getCourseReviews: async (courseId) => {
+  getCourseReviews: async (courseId, page = 1, limit = 10) => {
     try {
-      const { data: reviews, error: error48 } = await supabase.from("reviews").select("*").eq("course_id", courseId).order("created_at", { ascending: false });
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      const { data: reviews, error: error48, count } = await supabase.from("reviews").select(`
+                *,
+                student:profiles!reviews_student_id_fkey (
+                    id, name, avatar_url
+                ),
+                review_replies (
+                    id,
+                    reply,
+                    created_at,
+                    updated_at,
+                    is_deleted,
+                    faculty:profiles!review_replies_faculty_id_fkey (
+                        id, name, avatar_url
+                    )
+                )
+            `, { count: "exact" }).eq("course_id", courseId).eq("is_approved", true).eq("review_replies.is_deleted", false).order("created_at", { ascending: false }).range(from, to);
       if (error48) throw new Error(error48.message);
       if (!reviews) throw new Error("Reviews not found");
-      return reviews;
+      const { data: allRatings, error: ratingError } = await supabase.from("reviews").select("rating").eq("course_id", courseId).eq("is_approved", true);
+      if (ratingError) throw new Error(ratingError.message);
+      const averageRating = allRatings && allRatings.length > 0 ? Math.round(
+        allRatings.reduce((sum, r) => sum + (r.rating ?? 0), 0) / allRatings.length * 10
+      ) / 10 : 0;
+      const ratingBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      (allRatings ?? []).forEach((r) => {
+        if (r.rating >= 1 && r.rating <= 5) {
+          ratingBreakdown[r.rating]++;
+        }
+      });
+      const totalPages = Math.ceil((count ?? 0) / limit);
+      return {
+        reviews,
+        average_rating: averageRating,
+        total_reviews: allRatings?.length ?? 0,
+        rating_breakdown: ratingBreakdown,
+        pagination: {
+          total: count ?? 0,
+          total_pages: totalPages,
+          current_page: page,
+          limit,
+          has_next: page < totalPages,
+          has_prev: page > 1
+        }
+      };
+    } catch (error48) {
+      throw new Error(error48.message);
+    }
+  },
+  addReviewReply: async (reviewId, reply, facultyId) => {
+    try {
+      const { data: review } = await supabase.from("reviews").select("*").eq("id", reviewId).eq("is_approved", true).single();
+      if (!review) throw new Error("Review not found");
+      const { data: course } = await supabase.from("courses").select("*").eq("id", review.course_id).eq("faculty_id", facultyId).single();
+      if (!course) throw new Error("Not your course review");
+      const { data: result } = await supabase.from("review_replies").insert({
+        review_id: reviewId,
+        reply,
+        faculty_id: facultyId
+      }).select("*").single();
+      if (!result) throw new Error("Failed to add reply");
+      return reply;
     } catch (error48) {
       throw new Error(error48.message);
     }
@@ -35244,10 +35547,13 @@ config2(en_default());
 
 // ../../shared/validators/course.validator.ts
 var createCourseSchema = external_exports.object({
+  unique_id: external_exports.string(),
   title: external_exports.string().min(3, "Course name min 3 characters"),
   description: external_exports.string().min(10, "Description too short"),
   category: external_exports.string(),
-  level: external_exports.enum(["Beginner", "Intermediate", "Advanced"])
+  level: external_exports.enum(["Beginner", "Intermediate", "Advanced"]),
+  languages: external_exports.array(external_exports.string()).min(1, "Language is required"),
+  cover_image: external_exports.string().min(1, "Course image is required")
 });
 var updateCourseSchema = external_exports.object({
   title: external_exports.string().min(3, "Course name min 3 characters"),
@@ -35258,7 +35564,8 @@ var updateCourseSchema = external_exports.object({
   duration: external_exports.string()
 });
 var createFolderSchema = external_exports.object({
-  title: external_exports.string()
+  title: external_exports.string(),
+  parent_id: external_exports.string().optional()
 });
 var uploadMaterialSchema = external_exports.object({
   title: external_exports.string(),
@@ -35276,11 +35583,20 @@ var createCourseBundleSchema = external_exports.object({
   is_new: external_exports.boolean(),
   is_draft: external_exports.boolean()
 });
+var addCoursePricingSchema = external_exports.object({
+  duration: external_exports.string().min(1, "Duration is required"),
+  price: external_exports.number(),
+  discount_type: external_exports.string().optional(),
+  discount: external_exports.number().optional(),
+  final_price: external_exports.number(),
+  enableCoupons: external_exports.boolean()
+});
 
 // src/modules/course/course.service.ts
 var facultyCourseService = {
   createCourseWithBasicDetails: async (event) => {
     try {
+      console.log("validatedData>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", JSON.parse(event.body));
       const validatedData = validate(createCourseSchema, JSON.parse(event.body));
       console.log("validatedData>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", validatedData);
       const course = await facultyCourseRepository.createCourseWithBasicDetails(validatedData, event.user.id);
@@ -35290,9 +35606,29 @@ var facultyCourseService = {
       throw new Error(error48);
     }
   },
+  uploadCourseIntroVideo: async (event) => {
+    try {
+      const result = await facultyCourseRepository.uploadCourseIntroVideo(event.body, event.pathParameters.courseId, event.user.id);
+      return result;
+    } catch (error48) {
+      console.log("error", error48);
+      throw new Error(error48);
+    }
+  },
+  addCoursePricing: async (event) => {
+    try {
+      const validatedData = validate(addCoursePricingSchema, JSON.parse(event.body));
+      const result = await facultyCourseRepository.addCoursePricing(validatedData, event.pathParameters.courseId, event.user.id);
+      return result;
+    } catch (error48) {
+      console.log("error", error48);
+      throw new Error(error48);
+    }
+  },
   getMyCourses: async (event) => {
     try {
-      const { filter } = event.queryStringParameters;
+      const filter = event.queryStringParameters.filter === "true";
+      console.log("filter>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", filter);
       const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter);
       return courses;
     } catch (error48) {
@@ -35320,7 +35656,7 @@ var facultyCourseService = {
   },
   updateCourseDetails: async (event) => {
     try {
-      const validatedData = validate(updateCourseSchema, JSON.parse(event.body));
+      const validatedData = validate(createCourseSchema, JSON.parse(event.body));
       const course = await facultyCourseRepository.updateCourseDetails(validatedData, event.pathParameters.courseId, event.user.id);
       return course;
     } catch (error48) {
@@ -35366,10 +35702,18 @@ var facultyCourseService = {
       throw new Error(error48);
     }
   },
-  uploadMaterial: async (event) => {
+  addMaterialToFolder: async (event) => {
     try {
-      const validatedData = validate(uploadMaterialSchema, JSON.parse(event.body));
-      const material = await facultyCourseRepository.addMaterialToFolder(validatedData, event.pathParameters.courseId, event.user.id);
+      const material = await facultyCourseRepository.addMaterialToFolder(JSON.parse(event.body), event.pathParameters.courseId, event.user.id);
+      return material;
+    } catch (error48) {
+      console.log("error", error48);
+      throw new Error(error48);
+    }
+  },
+  updateMaterial: async (event) => {
+    try {
+      const material = await facultyCourseRepository.updateMaterial(JSON.parse(event.body), event.pathParameters.materialId);
       return material;
     } catch (error48) {
       console.log("error", error48);
@@ -35396,10 +35740,31 @@ var facultyCourseService = {
   },
   getCourseContent: async (event) => {
     try {
+      console.log("event}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}", event);
       const courseId = event.pathParameters.courseId;
-      const parentId = event.queryStringParameters.parentId || null;
+      const parentId = event.queryStringParameters?.parentId || null;
       const content = await facultyCourseRepository.getCourseContent(courseId, parentId);
       return content;
+    } catch (error48) {
+      console.log("error", error48);
+      throw new Error(error48);
+    }
+  },
+  getCourseReviews: async (event) => {
+    try {
+      const courseId = event.pathParameters.courseId;
+      const { page, limit } = event.queryStringParameters;
+      const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit);
+      return reviews;
+    } catch (error48) {
+      throw new Error(error48);
+    }
+  },
+  addReviewReply: async (event) => {
+    try {
+      const { reply } = JSON.parse(event.body);
+      const result = await facultyCourseRepository.addReviewReply(event.pathParameters.reviewId, reply, event.user.id);
+      return result;
     } catch (error48) {
       console.log("error", error48);
       throw new Error(error48);
@@ -35446,12 +35811,16 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error: error48 } = await supabase.auth.getUser(token);
   if (error48 || !data.user) return handleResponse.error(error48, "User not found", 401);
-  event.user = data.user;
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  if (profileError) return handleResponse.error(profileError, "User not found", 401);
+  console.log("profile", profile);
+  event.user = { ...data.user, profile };
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  if (event.user.user_metadata.role !== role) {
+  console.log("user", event?.user);
+  if (event.user.profile.role !== role) {
     return handleResponse.error(null, "You are not authorized to perform this action", 401);
   }
   return handler2(event);
