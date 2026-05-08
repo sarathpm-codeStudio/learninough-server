@@ -14,7 +14,11 @@ export const verifyAuth = (handler: any) => async (event: any) => {
     if (error || !data.user) return handleResponse.error(error, "User not found", 401);
 
     // ✅ Attach user to event — no need to fetch again in next middleware
-    event.user = data.user;
+    // get user profile from profiles table
+    const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+    if (profileError) return handleResponse.error(profileError, "User not found", 401);
+    console.log("profile", profile)
+    event.user = { ...data.user, profile };
 
     return handler(event);
 };
@@ -23,7 +27,9 @@ export const verifyRole = (role: Role) => (handler: any) => async (event: any) =
     // ✅ Reuse user already attached by verifyAuth
     if (!event.user) return handleResponse.error(null, "User not found", 401);
 
-    if (event.user.user_metadata.role !== role) {
+    console.log("user", event?.user)
+
+    if (event.user.profile.role !== role) {
         return handleResponse.error(null, "You are not authorized to perform this action", 401);
     }
 

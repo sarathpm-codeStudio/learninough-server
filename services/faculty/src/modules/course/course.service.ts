@@ -1,7 +1,7 @@
 
 import { facultyCourseRepository } from "./course.repository"
 import { validate } from "../../../../../shared/utils/validate";
-import { createCourseSchema, updateCourseSchema, createFolderSchema, uploadMaterialSchema, createCourseBundleSchema } from "../../../../../shared/validators/course.validator";
+import { createCourseSchema, updateCourseSchema, createFolderSchema, uploadMaterialSchema, createCourseBundleSchema, addCoursePricingSchema } from "../../../../../shared/validators/course.validator";
 import { MaterialData } from "../../../../../shared/constants/types";
 
 
@@ -11,6 +11,9 @@ export const facultyCourseService = {
     createCourseWithBasicDetails: async (event: any) => {
 
         try {
+
+            console.log("validatedData>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", JSON.parse(event.body));
+
 
             const validatedData = validate(createCourseSchema, JSON.parse(event.body));
 
@@ -30,12 +33,48 @@ export const facultyCourseService = {
 
     },
 
+    uploadCourseIntroVideo: async (event: any) => {
+        try {
+
+            const result = await facultyCourseRepository.uploadCourseIntroVideo(event.body, event.pathParameters.courseId, event.user.id);
+
+            return result;
+
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
+
+    addCoursePricing: async (event: any) => {
+        try {
+
+            const validatedData = validate(addCoursePricingSchema, JSON.parse(event.body));
+
+            const result = await facultyCourseRepository.addCoursePricing(validatedData, event.pathParameters.courseId, event.user.id);
+
+            return result;
+
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
+
     getMyCourses: async (event: any) => {
 
         try {
 
 
-            const { filter } = event.queryStringParameters
+            const filter = event.queryStringParameters.filter === "true"
+
+            console.log("filter>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", filter);
 
             const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter);
 
@@ -88,12 +127,11 @@ export const facultyCourseService = {
     },
 
 
-
     updateCourseDetails: async (event: any) => {
 
         try {
 
-            const validatedData = validate(updateCourseSchema, JSON.parse(event.body));
+            const validatedData = validate(createCourseSchema, JSON.parse(event.body));
 
 
             const course = await facultyCourseRepository.updateCourseDetails(validatedData, event.pathParameters.courseId, event.user.id);
@@ -181,12 +219,30 @@ export const facultyCourseService = {
         }
     },
 
-    uploadMaterial: async (event: any) => {
+    addMaterialToFolder: async (event: any) => {
         try {
 
-            const validatedData: MaterialData = validate(uploadMaterialSchema, JSON.parse(event.body));
+            // const validatedData: MaterialData = validate(uploadMaterialSchema, JSON.parse(event.body));
 
-            const material = await facultyCourseRepository.addMaterialToFolder(validatedData, event.pathParameters.courseId, event.user.id);
+            const material = await facultyCourseRepository.addMaterialToFolder(JSON.parse(event.body), event.pathParameters.courseId, event.user.id);
+
+            return material;
+
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
+
+    updateMaterial: async (event: any) => {
+        try {
+
+            // const validatedData = validate(uploadMaterialSchema, JSON.parse(event.body));
+
+            const material = await facultyCourseRepository.updateMaterial(JSON.parse(event.body), event.pathParameters.materialId);
 
             return material;
 
@@ -234,8 +290,9 @@ export const facultyCourseService = {
     getCourseContent: async (event: any) => {
         try {
 
+            console.log("event}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}", event);
             const courseId = event.pathParameters.courseId;
-            const parentId = event.queryStringParameters.parentId || null;
+            const parentId = event.queryStringParameters?.parentId || null;
 
             const content = await facultyCourseRepository.getCourseContent(courseId, parentId);
 

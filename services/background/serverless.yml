@@ -4,24 +4,39 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: ap-south-1
+  timeout: 30
   environment:
     VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue
+    COURSE_INTRO_VIDEO_QUEUE_URL: !Ref CourseIntroVideoUploadQueue
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
             - sqs:ReceiveMessage
-            # - sqs:DeleteMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
           Resource: !GetAtt VideoUploadQueue.Arn
         - Effect: Allow
           Action:
             - sqs:ReceiveMessage
-            # - sqs:DeleteMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource: !GetAtt CourseIntroVideoUploadQueue.Arn
+        - Effect: Allow
+          Action:
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
           Resource: !GetAtt ChatNotificationQueue.Arn
 
 plugins:
   - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3002
+    lambdaPort: 3003
 
 resources:
   Resources:
@@ -29,6 +44,12 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: video-upload-queue
+        VisibilityTimeout: 300
+
+    CourseIntroVideoUploadQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: course-intro-video-upload-queue
         VisibilityTimeout: 300
 
     ChatNotificationQueue:
@@ -39,6 +60,19 @@ resources:
 
 functions:
 
+
+
+  # ── HTTP Endpoints ─────────────────────────────────────────
+
+  createVideoUploadProgress:
+    handler: src/functions/video/processVideoUpload.handler
+    events:
+      - http:
+          path: /video/create-upload-progress
+          method: post
+          
+
+
   # ── SQS Background Jobs ──────────────────────────────────────
 
   processVideoUpload:
@@ -46,6 +80,13 @@ functions:
     events:
       - sqs:
           arn: !GetAtt VideoUploadQueue.Arn
+          batchSize: 1
+
+  courseIntroVideoUpload:
+    handler: src/functions/video/courseIntroVideoUpload.handler
+    events:
+      - sqs:
+          arn: !GetAtt CourseIntroVideoUploadQueue.Arn
           batchSize: 1
 
 

@@ -4,10 +4,13 @@ import { MaterialType } from "../constants/types";
 
 // for basic details of course
 export const createCourseSchema = z.object({
+    unique_id: z.string(),
     title: z.string().min(3, "Course name min 3 characters"),
     description: z.string().min(10, "Description too short"),
     category: z.string(),
     level: z.enum(["Beginner", "Intermediate", "Advanced"]),
+    languages: z.array(z.string()).min(1, "Language is required"),
+    cover_image: z.string().min(1, "Course image is required"),
 
 });
 
@@ -27,6 +30,7 @@ export const updateCourseSchema = z.object({
 export const createFolderSchema = z.object({
 
     title: z.string(),
+    parent_id: z.string().optional(),
 
 });
 
@@ -49,6 +53,18 @@ export const createCourseBundleSchema = z.object({
     is_new: z.boolean(),
     is_draft: z.boolean(),
 });
+
+
+export const addCoursePricingSchema = z.object({
+    duration: z.string().min(1, "Duration is required"),
+    price: z.number(),
+    discount_type: z.string().optional(),
+    discount: z.number().optional(),
+    final_price: z.number(),
+    enableCoupons: z.boolean(),
+});
+
+
 
 
 // Type is automatically inferred — no need to write interface manually

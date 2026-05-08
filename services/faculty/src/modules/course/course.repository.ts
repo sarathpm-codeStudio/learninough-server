@@ -8,15 +8,38 @@ export const facultyCourseRepository = {
 
     createCourseWithBasicDetails: async (data: any, facultyId: string) => {
         try {
+
+
+            console.log("data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>####", data);
+
+            // check this course have intro video
+            const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase
+                .from("video_upload_progress")
+                .select("*")
+                .eq("unique_id", data.unique_id)
+                .eq("type", "intro")
+                .single();
+
+
+
+
             const { data: course, error } = await supabase
                 .from("courses")
                 .insert({
                     title: data.title,
+                    unique_id: data.unique_id,
                     description: data.description,
                     category: data.category,
                     level: data.level,
-                    language: data.language,
+                    languages: data.languages,
                     faculty_id: facultyId,
+                    cover_image: data.cover_image,
+                    video_asset_id: videoUploadProgress?.asset_id,
+                    video_uploading_status: videoUploadProgress?.uploading_status,
+                    video_upload_progress: videoUploadProgress?.upload_progress,
+                    video_transcoding_progress: videoUploadProgress?.transcoding_progress,
+
+
                 })
                 .select()
                 .single();
@@ -29,11 +52,76 @@ export const facultyCourseRepository = {
         }
     },
 
+    uploadCourseIntroVideo: async (data: any, courseId: string, facultyId: string) => {
+        try {
+
+            // Check course ownership
+            // const { data: course, error: courseError } = await supabase
+            //     .from("courses")
+            //     .select("id")
+            //     .eq("id", courseId)
+            //     .eq("faculty_id", facultyId)
+            //     .single();
+
+            // if (courseError) throw new Error(courseError.message);
+            // if (!course) throw new Error("Course not found");
+
+            // Call TPStreams API to get signed upload URL
+            // const tpResponse = await fetch(
+            //     `https://app.tpstreams.com/api/v1/${process.env.TPSTREAMS_ORG_ID}/assets/videos/`,
+            //     {
+            //         method: 'POST',
+            //         headers: {
+            //             Authorization: `Token ${process.env.TPSTREAMS_API_KEY}`,
+            //             'Content-Type': 'application/json',
+            //         },
+            //         body: JSON.stringify({
+            //             title: data.title,
+
+
+            //         }),
+            //     }
+            // );
+
+            // const tpData = await tpResponse.json();
+            // console.log('TPStreams response:', tpData);
+
+            // if (!tpData.upload_url) {
+            //     throw new Error('Failed to get TPStreams upload URL');
+            // }
+
+            // await supabase
+            //     .from("courses")
+            //     .update({
+            //         video_asset_id: tpData.asset_id,
+            //         video_upload_id: tpData.id,
+            //     })
+            //     .eq("id", courseId);
+
+            await supabase
+                .from("video_upload_progress")
+                .insert({
+                    faculty_id: facultyId,
+                    // asset_id: tpData.asset_id,
+                    uploading_status: 'uploading',
+                    upload_progress: 0,
+                    transcoding_progress: 0,
+                });
+
+            return true;
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
     getMyCourses: async (facultyId: string, filter: boolean) => {
+        console.log("data", typeof filter);
+        console.log("facultyId", facultyId);
         try {
             const { data: courses, error } = await supabase
                 .from("courses")
-                .select(`*, enrollments (count)`)
+                .select(`*`)
                 .eq("faculty_id", facultyId)
                 .eq("is_draft", filter)
                 .order("created_at", { ascending: false });
@@ -46,48 +134,168 @@ export const facultyCourseRepository = {
         }
     },
 
-    getPreviewCourse: async (courseId: string) => {
+    addCoursePricing: async (data: any, courseId: string, facultyId: string) => {
         try {
-            const { data: course, error: courseError } = await supabase
+
+
+            console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data)
+
+
+
+            const { data: course, error } = await supabase
                 .from("courses")
-                .select("*")
+                .update({
+                    duration: data.duration,
+                    price: data.price,
+                    discount: data.discount,
+                    discount_type: data.discount_type,
+                    final_price: data.final_price,
+                    enableCoupons: data.enableCoupons,
+
+                })
                 .eq("id", courseId)
+                .select()
                 .single();
 
-            if (courseError) throw new Error(courseError.message);
-            if (!course) throw new Error("Course not found");
+            if (error) throw new Error(error.message);
+            return course;
 
-            // Fetch materials to compute groupBy client-side
-            const { data: materials, error: matError } = await supabase
-                .from("course_materials")
-                .select("type, duration_sec")
-                .eq("course_id", courseId)
-                .eq("is_deleted", false);
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
 
-            if (matError) throw new Error(matError.message);
+    // getPreviewCourse: async (courseId: string) => {
+    //     try {
+    //         const { data: course, error: courseError } = await supabase
+    //             .from("courses")
+    //             .select("*")
+    //             .eq("id", courseId)
+    //             .single();
 
-            // Count tests
-            const { count: testCount, error: testError } = await supabase
-                .from("tests")
-                .select("*", { count: "exact", head: true })
-                .eq("course_id", courseId);
+    //         if (courseError) throw new Error(courseError.message);
+    //         if (!course) throw new Error("Course not found");
 
-            if (testError) throw new Error(testError.message);
+    //         // Fetch materials to compute groupBy client-side
+    //         const { data: materials, error: matError } = await supabase
+    //             .from("course_materials")
+    //             .select("type, duration_sec")
+    //             .eq("course_id", courseId)
+    //             .eq("is_deleted", false);
 
-            // Compute groupBy in JS
-            let videoCount = 0;
-            let pdfCount = 0;
-            let imageCount = 0;
-            let totalDuration = 0;
+    //         if (matError) throw new Error(matError.message);
+
+    //         // Count tests
+    //         const { count: testCount, error: testError } = await supabase
+    //             .from("tests")
+    //             .select("*", { count: "exact", head: true })
+    //             .eq("course_id", courseId);
+
+    //         if (testError) throw new Error(testError.message);
+
+    //         // Compute groupBy in JS
+    //         let videoCount = 0;
+    //         let pdfCount = 0;
+    //         let imageCount = 0;
+    //         let totalDuration = 0;
+
+    //         materials?.forEach((item: any) => {
+    //             if (item.type === "VIDEO") { videoCount++; totalDuration += item.duration_sec || 0; }
+    //             if (item.type === "PDF") pdfCount++;
+    //             if (item.type === "IMAGE") imageCount++;
+    //         });
+
+    //         const hours = Math.floor(totalDuration / 3600);
+    //         const minutes = Math.floor((totalDuration % 3600) / 60);
+
+    //         return {
+    //             ...course,
+    //             content_inventory: {
+    //                 video_lessons: videoCount,
+    //                 pdf_resources: pdfCount,
+    //                 images: imageCount,
+    //                 tests: testCount ?? 0,
+    //                 total_contents: videoCount + pdfCount + imageCount + (testCount ?? 0),
+    //             },
+    //             video_duration: {
+    //                 total_seconds: totalDuration,
+    //                 formatted: `${hours} Hours ${minutes} Minutes`,
+    //             },
+    //         };
+
+    //     } catch (error: any) {
+    //         throw new Error(error.message);
+    //     }
+    // },
+
+
+    getPreviewCourse: async (courseId: string) => {
+        try {
+
+            // ─── Parallel fetch ───────────────────────────────────
+            const [
+                { data: course, error: courseError },
+                { data: materials, error: matError },
+                { count: testCount, error: testError },
+            ] = await Promise.all([
+
+                supabase
+                    .from("courses")
+                    .select("*")
+                    .eq("id", courseId)
+                    .single(),
+
+                supabase
+                    .from("course_materials")
+                    .select("type, duration_sec, material_status")
+                    .eq("course_id", courseId)
+                    .eq("is_deleted", false)
+                    .or("type.neq.VIDEO,material_status.neq.FAILED"), // ✅ exclude FAILED videos
+
+                supabase
+                    .from("tests")
+                    .select("*", { count: "exact", head: true })
+                    .eq("course_id", courseId)
+                    .eq("is_deleted", false),
+            ])
+
+            // ─── Error checks ─────────────────────────────────────
+            if (courseError) throw new Error(courseError.message)
+            if (!course) throw new Error("Course not found")
+            if (matError) throw new Error(matError.message)
+            if (testError) throw new Error(testError.message)
+
+            // ─── Compute stats ─────────────────────────────────────
+            let videoCount = 0
+            let pdfCount = 0
+            let imageCount = 0
+            let totalDuration = 0
 
             materials?.forEach((item: any) => {
-                if (item.type === "VIDEO") { videoCount++; totalDuration += item.duration_sec || 0; }
-                if (item.type === "PDF") pdfCount++;
-                if (item.type === "IMAGE") imageCount++;
-            });
+                switch (item.type) {
+                    case "VIDEO":
+                        videoCount++
+                        totalDuration += item.duration_sec || 0
+                        break
+                    case "PDF":
+                        pdfCount++
+                        break
+                    case "IMAGE":
+                        imageCount++
+                        break
+                }
+            })
 
-            const hours = Math.floor(totalDuration / 3600);
-            const minutes = Math.floor((totalDuration % 3600) / 60);
+            // ─── Format duration ───────────────────────────────────
+            const hours = Math.floor(totalDuration / 3600)
+            const minutes = Math.floor((totalDuration % 3600) / 60)
+            const seconds = totalDuration % 60
+
+            const formatted = hours > 0
+                ? `${hours}h ${minutes}m`
+                : minutes > 0
+                    ? `${minutes}m ${seconds}s`
+                    : `${seconds}s`
 
             return {
                 ...course,
@@ -96,18 +304,20 @@ export const facultyCourseRepository = {
                     pdf_resources: pdfCount,
                     images: imageCount,
                     tests: testCount ?? 0,
-                    total_contents: videoCount + pdfCount + imageCount + (testCount ?? 0),
+                    total_contents: videoCount + pdfCount +
+                        imageCount + (testCount ?? 0),
                 },
                 video_duration: {
                     total_seconds: totalDuration,
-                    formatted: `${hours} Hours ${minutes} Minutes`,
+                    formatted,
                 },
-            };
+            }
 
         } catch (error: any) {
-            throw new Error(error.message);
+            throw new Error(error.message)
         }
     },
+
 
     getCourseById: async (courseId: string) => {
         try {
@@ -128,6 +338,16 @@ export const facultyCourseRepository = {
 
     updateCourseDetails: async (data: any, courseId: string, facultyId: string) => {
         try {
+
+            // check this course have intro video
+            const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase
+                .from("video_upload_progress")
+                .select("*")
+                .eq("unique_id", data.unique_id)
+                .eq("type", "intro")
+                .single();
+
+
             const { data: course, error } = await supabase
                 .from("courses")
                 .update({
@@ -135,11 +355,12 @@ export const facultyCourseRepository = {
                     description: data.description,
                     category: data.category,
                     level: data.level,
-                    price: data.price,
-                    discount_type: data.discount_type,
-                    discount: data.discount_value,
-                    duration: data.duration,
-                    language: data.language,
+                    languages: data.languages,
+                    cover_image: data.cover_image,
+                    video_asset_id: videoUploadProgress?.asset_id,
+                    video_uploading_status: videoUploadProgress?.uploading_status,
+                    video_upload_progress: videoUploadProgress?.upload_progress,
+                    video_transcoding_progress: videoUploadProgress?.transcoding_progress,
                 })
                 .eq("id", courseId)
                 .eq("faculty_id", facultyId)
@@ -155,28 +376,212 @@ export const facultyCourseRepository = {
         }
     },
 
+
+    // publishCourse: async (courseId: string, facultyId: string) => {
+    //     try {
+
+    //         // 1. Check course ownership
+    //         const { data: course, error: courseError } = await supabase
+    //             .from("courses")
+    //             .select("id, faculty_id")
+    //             .eq("id", courseId)
+    //             .eq("faculty_id", facultyId)
+    //             .single()
+
+    //         if (courseError) throw new Error(courseError.message)
+    //         if (!course) throw new Error("Course not found")
+
+    //         // 2. Get all videos
+    //         const { data: materials, error: matError } = await supabase
+    //             .from("course_materials")
+    //             .select("id, title, video_uploading_status")
+    //             .eq("course_id", courseId)
+    //             .eq("is_deleted", false)
+    //             .eq("type", "VIDEO")
+
+    //         if (matError) throw new Error(matError.message)
+
+    //         // 3. Check FAILED first — highest priority ❌
+    //         const failedVideos = materials?.filter(
+    //             (m: any) => m.video_uploading_status === "FAILED"
+    //         ) ?? []
+
+    //         // ❌ ANY failed → abort everything
+    //         // No pending_publish, no auto publish
+    //         // User must fix failed videos first
+    //         if (failedVideos.length > 0) {
+
+    //             return {
+    //                 course: null,
+    //                 status: 'failed',
+    //                 message: "Failed to publish course. Please check the course materials. Some videos failed to process.",
+
+    //             }
+    //         }
+
+    //         // 4. Check processing — only if NO failures
+    //         const processingVideos = materials?.filter(
+    //             (m: any) => m.video_uploading_status !== "COMPLETED"
+    //         ) ?? []
+
+    //         // ⏳ Still processing → set pending_publish
+    //         if (processingVideos.length > 0) {
+    //             const { data: updated, error: updateError } = await supabase
+    //                 .from("courses")
+    //                 .update({ pending_publish: true })
+    //                 .eq("id", courseId)
+    //                 .select()
+    //                 .single()
+
+    //             if (updateError) throw new Error(updateError.message)
+
+    //             return {
+    //                 course: updated,
+    //                 status: 'pending',
+    //                 message: `Course will publish automatically when all videos are ready.`,
+    //             }
+    //         }
+
+    //         // 5. All COMPLETED → publish now ✅
+    //         const { data: updated, error: updateError } = await supabase
+    //             .from("courses")
+    //             .update({
+    //                 is_draft: false,
+    //                 pending_publish: false,
+    //             })
+    //             .eq("id", courseId)
+    //             .select()
+    //             .single()
+
+    //         if (updateError) throw new Error(updateError.message)
+
+    //         return {
+    //             course: updated,
+    //             status: 'published',
+    //             message: 'Course published successfully! 🎉',
+    //         }
+
+    //     } catch (error: any) {
+    //         throw new Error(error.message)
+    //     }
+    // },
+
+
     publishCourse: async (courseId: string, facultyId: string) => {
         try {
-            const { data: course, error } = await supabase
+
+            // 1. Check course ownership
+            const { data: course, error: courseError } = await supabase
                 .from("courses")
-                .update({ is_draft: false })
+                .select("id, faculty_id, title, video_uploading_status")
                 .eq("id", courseId)
                 .eq("faculty_id", facultyId)
-                .select()
-                .single();
+                .single()
 
-            if (error) throw new Error(error.message);
-            if (!course) throw new Error("Course not found");
-            return course;
+            if (courseError) throw new Error(courseError.message)
+            if (!course) throw new Error("Course not found")
+
+            // 2. Get all material videos
+            const { data: materials, error: matError } = await supabase
+                .from("course_materials")
+                .select("id, title, material_status")
+                .eq("course_id", courseId)
+                .eq("is_deleted", false)
+                .eq("type", "VIDEO")
+
+            if (matError) throw new Error(matError.message)
+
+            // 3. Check intro video status from courses table ✅
+            const introFailed = course.video_uploading_status === MaterialStatus.FAILED
+            const introProcessing = course.video_uploading_status !== MaterialStatus.COMPLETED
+                && course.video_uploading_status !== MaterialStatus.FAILED
+                && course.video_uploading_status !== null
+            // null = no intro video uploaded → skip check ✅
+
+            // 4. Combine intro + material failed videos
+            const failedVideos = [
+                // Failed material videos
+                ...(materials?.filter(
+                    (m: any) => m.material_status === MaterialStatus.FAILED
+                ) ?? []),
+                // Failed intro video ✅
+                ...(introFailed ? [{
+                    id: courseId,
+                    title: 'Intro Video',
+                }] : []),
+            ]
+
+            // 5. Combine intro + material processing videos
+            const processingVideos = [
+                // Processing material videos
+                ...(materials?.filter(
+                    (m: any) =>
+                        m.material_status !== MaterialStatus.COMPLETED &&
+                        m.material_status !== MaterialStatus.FAILED
+                ) ?? []),
+                // Processing intro video ✅
+                ...(introProcessing ? [{
+                    id: courseId,
+                    title: 'Intro Video',
+                }] : []),
+            ]
+
+            // 6. Has FAILED videos → abort ❌
+            if (failedVideos.length > 0) {
+                return {
+                    course: null,
+                    status: 'failed',
+                    message: "Course cannot be published because some videos failed to process. Please re-upload them and try again.",
+
+                }
+            }
+
+            // 7. Still processing → pending_publish ⏳
+            if (processingVideos.length > 0) {
+                const { data: updated, error: updateError } = await supabase
+                    .from("courses")
+                    .update({ pending_publish: true })
+                    .eq("id", courseId)
+                    .select()
+                    .single()
+
+                if (updateError) throw new Error(updateError.message)
+
+                return {
+                    // course: updated,
+                    status: 'pending',
+                    message: "Course will publish automatically when all videos are ready.",
+                }
+            }
+
+            // 8. All COMPLETED → publish now ✅
+            const { data: updated, error: updateError } = await supabase
+                .from("courses")
+                .update({
+                    is_draft: false,
+                    pending_publish: false,
+                })
+                .eq("id", courseId)
+                .select()
+                .single()
+
+            if (updateError) throw new Error(updateError.message)
+
+            return {
+                // course: updated,
+                status: 'published',
+                message: 'Course published successfully! 🎉',
+            }
 
         } catch (error: any) {
-            throw new Error(error.message);
+            throw new Error(error.message)
         }
     },
 
     createFolder: async (data: any, courseId: string, facultyId: string) => {
         try {
             // Check course is owned by this faculty
+            console.log("folder data #######################################################################", data);
             const { data: course, error: courseError } = await supabase
                 .from("courses")
                 .select("id")
@@ -231,7 +636,7 @@ export const facultyCourseRepository = {
         try {
             const { data: folder, error } = await supabase
                 .from("course_folders")
-                .delete()
+                .update({ is_deleted: true })
                 .eq("id", folderId)
                 .select()
                 .single();
@@ -273,9 +678,19 @@ export const facultyCourseRepository = {
 
             const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null);
 
+            // check this material have video upload progress or not
+            const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase
+                .from("video_upload_progress")
+                .select("*")
+                .eq("unique_id", data.unique_id)
+                .eq("type", "module")
+                .single();
+
+
             const { data: material, error } = await supabase
                 .from("course_materials")
                 .insert({
+                    unique_id: data.unique_id,
                     course_id: courseId,
                     folder_id: data.parent_id ?? null,
                     sort_order: nextSortOrder,
@@ -285,6 +700,11 @@ export const facultyCourseRepository = {
                     file_url: data.file_url ?? null,
                     external_url: data.external_url ?? null,
                     file_size: data.file_size ?? null,
+                    video_asset_id: videoUploadProgress?.asset_id,
+                    video_uploading_status: videoUploadProgress?.uploading_status,
+                    video_upload_progress: videoUploadProgress?.upload_progress,
+                    video_transcoding_progress: videoUploadProgress?.transcoding_progress,
+
                 })
                 .select()
                 .single();
@@ -292,15 +712,7 @@ export const facultyCourseRepository = {
             if (error) throw new Error(error.message);
             if (!material) throw new Error("Material not created");
 
-            // If video → push to SQS background queue
-            if (material.type === MaterialType.VIDEO) {
-                await pushToQueue(process.env.VIDEO_UPLOAD_QUEUE_URL!, {
-                    material_id: material.id,
-                    course_id: courseId,
-                    video_data: data.video_data,
-                    file_name: data.file_name,
-                });
-            }
+
 
             return material;
 
@@ -308,6 +720,53 @@ export const facultyCourseRepository = {
             throw new Error(error.message);
         }
     },
+
+    updateMaterial: async (data: MaterialData, materialId: string) => {
+        try {
+
+
+            // check this material have video upload progress or not
+            const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase
+                .from("video_upload_progress")
+                .select("*")
+                .eq("unique_id", data.unique_id)
+                .eq("type", "module")
+                .single();
+
+
+            const { data: material, error } = await supabase
+                .from("course_materials")
+                .update({
+
+                    title: data.title,
+                    type: data.type,
+                    file_url: data.file_url ?? null,
+                    external_url: data.external_url ?? null,
+                    file_size: data.file_size ?? null,
+                    video_asset_id: videoUploadProgress?.asset_id,
+                    video_uploading_status: videoUploadProgress?.uploading_status,
+                    video_upload_progress: videoUploadProgress?.upload_progress,
+                    video_transcoding_progress: videoUploadProgress?.transcoding_progress,
+
+                })
+                .eq("id", materialId)
+                .select()
+                .single();
+
+            if (error) throw new Error(error.message);
+            if (!material) throw new Error("Material not created");
+
+            return material;
+
+
+
+
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
 
     getAllProcessingMaterial: async (facultyId: string) => {
         try {
@@ -337,7 +796,7 @@ export const facultyCourseRepository = {
         try {
             const { data: material, error } = await supabase
                 .from("course_materials")
-                .delete()
+                .update({ is_deleted: true })
                 .eq("id", materialId)
                 .select()
                 .single();
@@ -352,16 +811,20 @@ export const facultyCourseRepository = {
     },
 
     getCourseContent: async (courseId: string, parentId: string | null) => {
+
+        console.log("content data $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
         try {
             let folderQuery = supabase
                 .from("course_folders")
                 .select("*")
                 .eq("course_id", courseId)
+                .eq("is_deleted", false)
                 .order("sort_order", { ascending: true });
 
             let materialQuery = supabase
                 .from("course_materials")
                 .select("*")
+                .eq("is_deleted", false)
                 .eq("course_id", courseId)
                 .order("sort_order", { ascending: true });
 
