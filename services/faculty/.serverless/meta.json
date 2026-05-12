@@ -1,0 +1,875 @@
+{
+  "/home/dev/Desktop/learninough-server/services/faculty/serverless.yml": {
+    "versionFramework": "4.35.1",
+    "servicePath": "/home/dev/Desktop/learninough-server/services/faculty/serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "faculty-service",
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs20.x",
+        "region": "ap-south-1",
+        "timeout": 30,
+        "environment": {
+          "VIDEO_UPLOAD_QUEUE_URL": {
+            "Ref": "VideoUploadQueue"
+          }
+        },
+        "iam": {
+          "role": {
+            "statements": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "sqs:SendMessage"
+                ],
+                "Resource": {
+                  "Fn::Sub": "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue"
+                }
+              }
+            ]
+          }
+        },
+        "stage": "dev",
+        "versionFunctions": true
+      },
+      "plugins": [
+        "serverless-offline"
+      ],
+      "custom": {
+        "serverless-offline": {
+          "httpPort": 3000,
+          "lambdaPort": 3001
+        }
+      },
+      "functions": {
+        "createCourse": {
+          "handler": "src/functions/course/createCourse.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-createCourse"
+        },
+        "uploadCourseIntroVideo": {
+          "handler": "src/functions/course/uploadCourseIntroVideo.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/intro-video",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-uploadCourseIntroVideo"
+        },
+        "getMyCourses": {
+          "handler": "src/functions/course/getMycourse.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getMyCourses"
+        },
+        "getCourseById": {
+          "handler": "src/functions/course/getCourseById.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getCourseById"
+        },
+        "getCoursePreview": {
+          "handler": "src/functions/course/getCoursePreview.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/preview",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getCoursePreview"
+        },
+        "updateCourse": {
+          "handler": "src/functions/course/updateCourse.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}",
+                "method": "patch"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-updateCourse"
+        },
+        "publishCourse": {
+          "handler": "src/functions/course/publishCourse.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/publish",
+                "method": "patch"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-publishCourse"
+        },
+        "getCourseContent": {
+          "handler": "src/functions/course/getCourseContent.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/content",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getCourseContent"
+        },
+        "getAllProcessingMaterial": {
+          "handler": "src/functions/course/getProcessingMaterial.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/processing-materials",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getAllProcessingMaterial"
+        },
+        "getAllCourseReviews": {
+          "handler": "src/functions/course/getAllReviews.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/reviews",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getAllCourseReviews"
+        },
+        "addReviewReply": {
+          "handler": "src/functions/course/reviewReply.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/reviews/{reviewId}/reply",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-addReviewReply"
+        },
+        "addCoursePricing": {
+          "handler": "src/functions/course/addCoursePricing.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/pricing",
+                "method": "patch"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-addCoursePricing"
+        },
+        "createFolderInCourse": {
+          "handler": "src/functions/folder/createFolder.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/folders",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-createFolderInCourse"
+        },
+        "updateFolder": {
+          "handler": "src/functions/folder/updateFolder.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/folders/{folderId}",
+                "method": "patch"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-updateFolder"
+        },
+        "deleteFolder": {
+          "handler": "src/functions/folder/deleteFolder.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/folders/{folderId}",
+                "method": "delete"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-deleteFolder"
+        },
+        "createMaterial": {
+          "handler": "src/functions/material/createMaterial.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/materials",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-createMaterial"
+        },
+        "updateMaterial": {
+          "handler": "src/functions/material/updateMaterial.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/materials/{materialId}",
+                "method": "patch"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-updateMaterial"
+        },
+        "deleteMaterial": {
+          "handler": "src/functions/material/deleteMaterial.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/materials/{materialId}",
+                "method": "delete"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-deleteMaterial"
+        },
+        "createCourseBundle": {
+          "handler": "src/functions/bundle/createBundle.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bundle",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-createCourseBundle"
+        },
+        "getMyBundles": {
+          "handler": "src/functions/bundle/getMyBundles.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bundle",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getMyBundles"
+        },
+        "getBundleById": {
+          "handler": "src/functions/bundle/getBundelById.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bundle/{bundleId}",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getBundleById"
+        },
+        "getAllStudents": {
+          "handler": "src/functions/students/getAllStudents.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/students",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getAllStudents"
+        },
+        "createAnnouncement": {
+          "handler": "src/functions/announcements/createAnnouncement.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/announcements",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-createAnnouncement"
+        },
+        "getAllAnnouncements": {
+          "handler": "src/functions/announcements/getAllAnnouncement.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/announcements",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getAllAnnouncements"
+        },
+        "updateAnnouncement": {
+          "handler": "src/functions/announcements/updateAnnouncement.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/announcements/{id}",
+                "method": "put"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-updateAnnouncement"
+        },
+        "deleteAnnouncement": {
+          "handler": "src/functions/announcements/deleteAnnouncement.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/announcements/{id}",
+                "method": "delete"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-deleteAnnouncement"
+        },
+        "getCounterData": {
+          "handler": "src/functions/dashboard/getCounterData.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/dashboard/counter",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getCounterData"
+        },
+        "getGraphData": {
+          "handler": "src/functions/dashboard/getGraphData.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/dashboard/graph",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getGraphData"
+        },
+        "createTest": {
+          "handler": "src/functions/test/createTest.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-createTest"
+        },
+        "getMyAllTests": {
+          "handler": "src/functions/test/getMyAllTestes.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getMyAllTests"
+        },
+        "getTestById": {
+          "handler": "src/functions/test/getTestById.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getTestById"
+        },
+        "updateTest": {
+          "handler": "src/functions/test/updateTest.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}",
+                "method": "put"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-updateTest"
+        },
+        "deleteTest": {
+          "handler": "src/functions/test/deleteTest.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}",
+                "method": "delete"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-deleteTest"
+        },
+        "createTestQuestion": {
+          "handler": "src/functions/test/createQuestions.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}/questions",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-createTestQuestion"
+        },
+        "updateTestQuestion": {
+          "handler": "src/functions/test/updateQuestion.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}/questions/{questionId}",
+                "method": "put"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-updateTestQuestion"
+        },
+        "deleteTestQuestion": {
+          "handler": "src/functions/test/deleteQuestions.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}/questions/{questionId}",
+                "method": "delete"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-deleteTestQuestion"
+        },
+        "publishTest": {
+          "handler": "src/functions/test/publishTest.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}/publish",
+                "method": "put"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-publishTest"
+        },
+        "createCoupon": {
+          "handler": "src/functions/coupon/createCoupon.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupon",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-createCoupon"
+        },
+        "getMyAllCoupons": {
+          "handler": "src/functions/coupon/getAllCoupon.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupon",
+                "method": "get"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-getMyAllCoupons"
+        },
+        "updateCouponStatus": {
+          "handler": "src/functions/coupon/updateStatus.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupon/{couponId}/status",
+                "method": "put"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-updateCouponStatus"
+        },
+        "deleteCoupon": {
+          "handler": "src/functions/coupon/deleteCoupon.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupon/{couponId}",
+                "method": "delete"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-deleteCoupon"
+        },
+        "createVideoUploadProgress": {
+          "handler": "src/functions/video/processVideoUpload.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/video/create-upload-progress",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "faculty-service-dev-createVideoUploadProgress"
+        }
+      }
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs20.x",
+      "region": "ap-south-1",
+      "timeout": 30,
+      "environment": {
+        "VIDEO_UPLOAD_QUEUE_URL": {
+          "Ref": "VideoUploadQueue"
+        }
+      },
+      "iam": {
+        "role": {
+          "statements": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "sqs:SendMessage"
+              ],
+              "Resource": {
+                "Fn::Sub": "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue"
+              }
+            }
+          ]
+        }
+      },
+      "stage": "dev",
+      "versionFunctions": true
+    },
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "error": {
+      "message": "Build failed with 2 errors:\n../../shared/config/redis.ts:4:24: ERROR: Could not resolve \"dotenv\"\n../../shared/config/supabase.ts:3:24: ERROR: Could not resolve \"dotenv\"",
+      "stack": "ServerlessError2: Build failed with 2 errors:\n../../shared/config/redis.ts:4:24: ERROR: Could not resolve \"dotenv\"\n../../shared/config/supabase.ts:3:24: ERROR: Could not resolve \"dotenv\"\n    at Esbuild._build (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2178:10737)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async before:offline:start (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2172:5054)\n    at async PluginManager.runHooks (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2320:11241)\n    at async PluginManager.invoke (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2320:11951)\n    at async PluginManager.run (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2320:12707)\n    at async Serverless.run (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2372:10549)\n    at async runFramework (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2399:1781)\n    at async TraditionalRunner.run (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2395:28530)\n    at async route (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2566:2848)",
+      "code": "ESBULD_BUILD_ERROR"
+    },
+    "serviceRawFile": "\n\n\n# service: faculty-service\n\n# useDotenv: true\n\n# provider:\n#   name:       aws\n#   runtime:    nodejs20.x\n#   region:     ap-south-1\n#   stage:      ${opt:stage, 'dev'}\n#   timeout:    29\n#   memorySize: 256\n#   environment:\n#     SUPABASE_URL:                ${env:SUPABASE_URL}\n#     SUPABASE_ANON_KEY:           ${env:SUPABASE_ANON_KEY}\n#     SUPABASE_SERVICE_ROLE_KEY:   ${env:SUPABASE_SERVICE_ROLE_KEY}\n#     UPSTASH_REDIS_URL:           ${env:UPSTASH_REDIS_URL}\n#     UPSTASH_REDIS_TOKEN:         ${env:UPSTASH_REDIS_TOKEN}\n#     TPSTREAMS_API_KEY:           ${env:TPSTREAMS_API_KEY}\n#     TPSTREAMS_ORG_ID:            ${env:TPSTREAMS_ORG_ID}\n#     CHAT_NOTIFICATION_QUEUE_URL: ${env:CHAT_NOTIFICATION_QUEUE_URL}\n#     FIREBASE_PROJECT_ID:         ${env:FIREBASE_PROJECT_ID}\n#     FIREBASE_PRIVATE_KEY:        ${env:FIREBASE_PRIVATE_KEY}\n#     FIREBASE_CLIENT_EMAIL:       ${env:FIREBASE_CLIENT_EMAIL}\n\n#   iam:\n#     role:\n#       statements:\n#         - Effect: Allow\n#           Action:\n#             - sqs:SendMessage\n#           Resource: !Sub \"arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue\"\n\n# # ✅ Disable ESBuild for local\n# build:\n#   esbuild: false\n\n# plugins:\n#   - serverless-offline\n\n# custom:\n#   serverless-offline:\n#     httpPort:   3000\n#     lambdaPort: 3001\n\n# functions:\n\n#   # ── Course ──────────────────────────────────────────────────\n#   createCourse:\n#     handler: src/functions/course/createCourse.handler\n#     events:\n#       - http:\n#           path:   faculty/courses\n#           method: post\n\n#   uploadCourseIntroVideo:\n#     handler: src/functions/course/uploadCourseIntroVideo.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/intro-video\n#           method: post\n\n#   getMyCourses:\n#     handler: src/functions/course/getMycourse.handler\n#     events:\n#       - http:\n#           path:   faculty/courses\n#           method: get\n\n#   getCourseById:\n#     handler: src/functions/course/getCourseById.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}\n#           method: get\n\n#   getCoursePreview:\n#     handler: src/functions/course/getCoursePreview.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/preview\n#           method: get\n\n#   updateCourse:\n#     handler: src/functions/course/updateCourse.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}\n#           method: patch\n\n#   publishCourse:\n#     handler: src/functions/course/publishCourse.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/publish\n#           method: patch\n\n#   getCourseContent:\n#     handler: src/functions/course/getCourseContent.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/content\n#           method: get\n\n#   getAllProcessingMaterial:\n#     handler: src/functions/course/getProcessingMaterial.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/processing-materials\n#           method: get\n\n#   getAllCourseReviews:\n#     handler: src/functions/course/getAllReviews.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/reviews\n#           method: get\n\n#   addReviewReply:\n#     handler: src/functions/course/reviewReply.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/reviews/{reviewId}/reply\n#           method: post\n\n#   addCoursePricing:\n#     handler: src/functions/course/addCoursePricing.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/pricing\n#           method: patch\n\n#   # ── Folder ──────────────────────────────────────────────────\n#   createFolderInCourse:\n#     handler: src/functions/folder/createFolder.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/folders\n#           method: post\n\n#   updateFolder:\n#     handler: src/functions/folder/updateFolder.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/folders/{folderId}\n#           method: patch\n\n#   deleteFolder:\n#     handler: src/functions/folder/deleteFolder.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/folders/{folderId}\n#           method: delete\n\n#   # ── Material ─────────────────────────────────────────────────\n#   createMaterial:\n#     handler: src/functions/material/createMaterial.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/materials\n#           method: post\n\n#   updateMaterial:\n#     handler: src/functions/material/updateMaterial.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/materials/{materialId}\n#           method: patch\n\n#   deleteMaterial:\n#     handler: src/functions/material/deleteMaterial.handler\n#     events:\n#       - http:\n#           path:   faculty/courses/{courseId}/materials/{materialId}\n#           method: delete\n\n#   # ── Bundle ───────────────────────────────────────────────────\n#   createCourseBundle:\n#     handler: src/functions/bundle/createBundle.handler\n#     events:\n#       - http:\n#           path:   faculty/bundle\n#           method: post\n\n#   getMyBundles:\n#     handler: src/functions/bundle/getMyBundles.handler\n#     events:\n#       - http:\n#           path:   faculty/bundle\n#           method: get\n\n#   getBundleById:\n#     handler: src/functions/bundle/getBundelById.handler\n#     events:\n#       - http:\n#           path:   faculty/bundle/{bundleId}\n#           method: get\n\n#   # ── Students ─────────────────────────────────────────────────\n#   getAllStudents:\n#     handler: src/functions/students/getAllStudents.handler\n#     events:\n#       - http:\n#           path:   faculty/students\n#           method: get\n\n#   # ── Announcements ────────────────────────────────────────────\n#   createAnnouncement:\n#     handler: src/functions/announcements/createAnnouncement.handler\n#     events:\n#       - http:\n#           path:   faculty/announcements\n#           method: post\n\n#   getAllAnnouncements:\n#     handler: src/functions/announcements/getAllAnnouncement.handler\n#     events:\n#       - http:\n#           path:   faculty/announcements\n#           method: get\n\n#   updateAnnouncement:\n#     handler: src/functions/announcements/updateAnnouncement.handler\n#     events:\n#       - http:\n#           path:   faculty/announcements/{id}\n#           method: put\n\n#   deleteAnnouncement:\n#     handler: src/functions/announcements/deleteAnnouncement.handler\n#     events:\n#       - http:\n#           path:   faculty/announcements/{id}\n#           method: delete\n\n#   # ── Dashboard ────────────────────────────────────────────────\n#   getCounterData:\n#     handler: src/functions/dashboard/getCounterData.handler\n#     events:\n#       - http:\n#           path:   faculty/dashboard/counter\n#           method: get\n\n#   getGraphData:\n#     handler: src/functions/dashboard/getGraphData.handler\n#     events:\n#       - http:\n#           path:   faculty/dashboard/graph\n#           method: get\n\n#   # ── Test ─────────────────────────────────────────────────────\n#   createTest:\n#     handler: src/functions/test/createTest.handler\n#     events:\n#       - http:\n#           path:   faculty/test\n#           method: post\n\n#   getMyAllTests:\n#     handler: src/functions/test/getMyAllTestes.handler\n#     events:\n#       - http:\n#           path:   faculty/test\n#           method: get\n\n#   getTestById:\n#     handler: src/functions/test/getTestById.handler\n#     events:\n#       - http:\n#           path:   faculty/test/{testId}\n#           method: get\n\n#   updateTest:\n#     handler: src/functions/test/updateTest.handler\n#     events:\n#       - http:\n#           path:   faculty/test/{testId}\n#           method: put\n\n#   deleteTest:\n#     handler: src/functions/test/deleteTest.handler\n#     events:\n#       - http:\n#           path:   faculty/test/{testId}\n#           method: delete\n\n#   createTestQuestion:\n#     handler: src/functions/test/createQuestions.handler\n#     events:\n#       - http:\n#           path:   faculty/test/{testId}/questions\n#           method: post\n\n#   updateTestQuestion:\n#     handler: src/functions/test/updateQuestion.handler\n#     events:\n#       - http:\n#           path:   faculty/test/{testId}/questions/{questionId}\n#           method: put\n\n#   deleteTestQuestion:\n#     handler: src/functions/test/deleteQuestions.handler\n#     events:\n#       - http:\n#           path:   faculty/test/{testId}/questions/{questionId}\n#           method: delete\n\n#   publishTest:\n#     handler: src/functions/test/publishTest.handler\n#     events:\n#       - http:\n#           path:   faculty/test/{testId}/publish\n#           method: put\n\n#   # ── Coupon ─────────────────────────────────────────────────────\n#   createCoupon:\n#     handler: src/functions/coupon/createCoupon.handler\n#     events:\n#       - http:\n#           path:   faculty/coupon\n#           method: post\n\n#   getMyAllCoupons:\n#     handler: src/functions/coupon/getAllCoupon.handler\n#     events:\n#       - http:\n#           path:   faculty/coupon\n#           method: get\n\n#   updateCouponStatus:\n#     handler: src/functions/coupon/updateStatus.handler\n#     events:\n#       - http:\n#           path:   faculty/coupon/{couponId}/status\n#           method: put\n\n#   deleteCoupon:\n#     handler: src/functions/coupon/deleteCoupon.handler\n#     events:\n#       - http:\n#           path:   faculty/coupon/{couponId}\n#           method: delete\n\n#   # ── Video ─────────────────────────────────────────────────────\n#   createVideoUploadProgress:\n#     handler: src/functions/video/processVideoUpload.handler\n#     events:\n#       - http:\n#           path:   faculty/video/create-upload-progress\n#           method: post\n\n\n\n\n\n\n\n\n\n\nservice: faculty-service\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n  region: ap-south-1\n  timeout: 30\n  environment:\n    VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue\n  iam:\n    role:\n      statements:\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage\n          Resource: !Sub \"arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue\"\n\nplugins:\n  - serverless-offline\n\ncustom:\n  serverless-offline:\n    httpPort: 3000\n    lambdaPort: 3001\n\nfunctions:\n\n  # ── Course ──────────────────────────────────────────────────\n\n  createCourse:\n    handler: src/functions/course/createCourse.handler\n    events:\n      - http:\n          path: faculty/courses\n          method: post\n\n  uploadCourseIntroVideo:\n    handler: src/functions/course/uploadCourseIntroVideo.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/intro-video\n          method: post\n\n  getMyCourses:\n    handler: src/functions/course/getMycourse.handler\n    events:\n      - http:\n          path: faculty/courses\n          method: get\n\n  getCourseById:\n    handler: src/functions/course/getCourseById.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}\n          method: get\n\n  getCoursePreview:\n    handler: src/functions/course/getCoursePreview.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/preview\n          method: get\n\n  updateCourse:\n    handler: src/functions/course/updateCourse.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}\n          method: patch\n\n  publishCourse:\n    handler: src/functions/course/publishCourse.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/publish\n          method: patch\n\n  getCourseContent:\n    handler: src/functions/course/getCourseContent.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/content\n          method: get\n\n  getAllProcessingMaterial:\n    handler: src/functions/course/getProcessingMaterial.handler\n    events:\n      - http:\n          path: faculty/courses/processing-materials\n          method: get\n\n  getAllCourseReviews:\n    handler: src/functions/course/getAllReviews.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/reviews\n          method: get\n\n\n  addReviewReply:\n    handler: src/functions/course/reviewReply.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/reviews/{reviewId}/reply\n          method: post  \n\n  addCoursePricing:\n    handler: src/functions/course/addCoursePricing.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/pricing\n          method: patch\n\n\n  # ── Folder ──────────────────────────────────────────────────\n\n  createFolderInCourse:\n    handler: src/functions/folder/createFolder.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/folders\n          method: post\n\n  updateFolder:\n    handler: src/functions/folder/updateFolder.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/folders/{folderId}\n          method: patch\n\n  deleteFolder:\n    handler: src/functions/folder/deleteFolder.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/folders/{folderId}\n          method: delete\n\n  # ── Material ─────────────────────────────────────────────────\n\n  createMaterial:\n    handler: src/functions/material/createMaterial.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/materials\n          method: post\n\n  updateMaterial:\n    handler: src/functions/material/updateMaterial.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/materials/{materialId}\n          method: patch\n\n  deleteMaterial:\n    handler: src/functions/material/deleteMaterial.handler\n    events:\n      - http:\n          path: faculty/courses/{courseId}/materials/{materialId}\n          method: delete\n\n  # ── Bundle ───────────────────────────────────────────────────\n\n  createCourseBundle:\n    handler: src/functions/bundle/createBundle.handler\n    events:\n      - http:\n          path: faculty/bundle\n          method: post\n\n  getMyBundles:\n    handler: src/functions/bundle/getMyBundles.handler\n    events:\n      - http:\n          path: faculty/bundle\n          method: get\n\n  getBundleById:\n    handler: src/functions/bundle/getBundelById.handler\n    events:\n      - http:\n          path: faculty/bundle/{bundleId}\n          method: get\n\n  # ── Students ─────────────────────────────────────────────────\n\n  getAllStudents:\n    handler: src/functions/students/getAllStudents.handler\n    events:\n      - http:\n          path: faculty/students\n          method: get\n\n  # ── Announcements ────────────────────────────────────────────\n\n  createAnnouncement:\n    handler: src/functions/announcements/createAnnouncement.handler\n    events:\n      - http:\n          path: faculty/announcements\n          method: post\n\n  getAllAnnouncements:\n    handler: src/functions/announcements/getAllAnnouncement.handler\n    events:\n      - http:\n          path: faculty/announcements\n          method: get\n\n  updateAnnouncement:\n    handler: src/functions/announcements/updateAnnouncement.handler\n    events:\n      - http:\n          path: faculty/announcements/{id}\n          method: put\n\n  deleteAnnouncement:\n    handler: src/functions/announcements/deleteAnnouncement.handler\n    events:\n      - http:\n          path: faculty/announcements/{id}\n          method: delete\n\n  # ── Dashboard ────────────────────────────────────────────────\n\n  getCounterData:\n    handler: src/functions/dashboard/getCounterData.handler\n    events:\n      - http:\n          path: faculty/dashboard/counter\n          method: get\n\n  getGraphData:\n    handler: src/functions/dashboard/getGraphData.handler\n    events:\n      - http:\n          path: faculty/dashboard/graph\n          method: get\n\n\n  \n  # ── Test ─────────────────────────────────────────────────────\n\n  createTest:\n    handler: src/functions/test/createTest.handler\n    events:\n      - http:\n          path: faculty/test\n          method: post\n  \n  getMyAllTests:\n    handler: src/functions/test/getMyAllTestes.handler\n    events:\n      - http:\n          path: faculty/test\n          method: get\n    \n  \n  getTestById:\n    handler: src/functions/test/getTestById.handler\n    events:\n      - http:\n          path: faculty/test/{testId}\n          method: get\n\n  updateTest:\n    handler: src/functions/test/updateTest.handler\n    events:\n      - http:\n          path: faculty/test/{testId}\n          method: put\n\n\n  deleteTest:\n    handler: src/functions/test/deleteTest.handler\n    events:\n      - http:\n          path: faculty/test/{testId}\n          method: delete\n\n  createTestQuestion:\n    handler: src/functions/test/createQuestions.handler\n    events:\n      - http:\n          path: faculty/test/{testId}/questions\n          method: post\n  \n  updateTestQuestion:\n    handler: src/functions/test/updateQuestion.handler\n    events:\n      - http:\n          path: faculty/test/{testId}/questions/{questionId}\n          method: put\n\n  deleteTestQuestion:\n    handler: src/functions/test/deleteQuestions.handler\n    events:\n      - http:\n          path: faculty/test/{testId}/questions/{questionId}\n          method: delete\n\n  \n  publishTest:\n    handler: src/functions/test/publishTest.handler\n    events:\n      - http:\n          path: faculty/test/{testId}/publish\n          method: put \n\n  \n  # ── Coupon ─────────────────────────────────────────────────────\n\n  createCoupon:\n    handler: src/functions/coupon/createCoupon.handler\n    events:\n      - http:\n          path: faculty/coupon\n          method: post\n\n  getMyAllCoupons:\n    handler: src/functions/coupon/getAllCoupon.handler\n    events:\n      - http:\n          path: faculty/coupon\n          method: get\n\n  updateCouponStatus:\n    handler: src/functions/coupon/updateStatus.handler\n    events:\n      - http:\n          path: faculty/coupon/{couponId}/status\n          method: put\n\n  deleteCoupon:\n    handler: src/functions/coupon/deleteCoupon.handler\n    events:\n      - http:\n          path: faculty/coupon/{couponId}\n          method: delete\n\n\n  # ── Video ─────────────────────────────────────────────────────\n\n  createVideoUploadProgress:\n    handler: src/functions/video/processVideoUpload.handler\n    events:\n      - http:\n          path: faculty/video/create-upload-progress\n          method: post",
+    "command": [
+      "offline"
+    ],
+    "options": {},
+    "orgId": "5acd3926-d700-405e-92da-dc1a13a30598",
+    "orgName": "sarath1937",
+    "userId": "n0TL8qG4d4qRbh4SlP",
+    "userName": "sarath1937",
+    "serviceProviderAwsAccountId": "397251795477",
+    "serviceProviderAwsCfStackName": "faculty-service-dev",
+    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:ap-south-1:397251795477:stack/faculty-service-dev/49cbcad0-4dc3-11f1-9528-06d7b508c00b",
+    "serviceProviderAwsCfStackCreated": "2026-05-12T05:27:37.867Z",
+    "serviceProviderAwsCfStackUpdated": "2026-05-12T06:30:04.096Z",
+    "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
+    "serviceProviderAwsCfStackOutputs": [
+      {
+        "OutputKey": "AddCoursePricingLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-addCoursePricing:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-AddCoursePricingLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "UpdateCourseLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-updateCourse:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-UpdateCourseLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "UpdateFolderLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-updateFolder:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-UpdateFolderLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetCounterDataLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getCounterData:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetCounterDataLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "CreateCourseBundleLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-createCourseBundle:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-CreateCourseBundleLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "UpdateMaterialLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-updateMaterial:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-UpdateMaterialLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "UpdateAnnouncementLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-updateAnnouncement:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-UpdateAnnouncementLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetGraphDataLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getGraphData:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetGraphDataLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ServerlessDeploymentBucketName",
+        "OutputValue": "serverless-framework-deployments-ap-south-1-978cf2f5-1fe8",
+        "ExportName": "sls-faculty-service-dev-ServerlessDeploymentBucketName"
+      },
+      {
+        "OutputKey": "CreateVideoUploadProgressLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-createVideoUploadProgress:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-CreateVideoUploadProgressLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "CreateMaterialLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-createMaterial:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-CreateMaterialLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "CreateTestQuestionLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-createTestQuestion:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-CreateTestQuestionLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetAllAnnouncementsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getAllAnnouncements:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetAllAnnouncementsLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "DeleteCouponLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-deleteCoupon:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-DeleteCouponLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "UpdateTestLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-updateTest:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-UpdateTestLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "CreateFolderInCourseLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-createFolderInCourse:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-CreateFolderInCourseLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "UpdateCouponStatusLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-updateCouponStatus:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-UpdateCouponStatusLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "UpdateTestQuestionLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-updateTestQuestion:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-UpdateTestQuestionLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "UploadCourseIntroVideoLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-uploadCourseIntroVideo:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-UploadCourseIntroVideoLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "DeleteTestLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-deleteTest:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-DeleteTestLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetTestByIdLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getTestById:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetTestByIdLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "CreateAnnouncementLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-createAnnouncement:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-CreateAnnouncementLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "PublishTestLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-publishTest:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-PublishTestLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetMyCoursesLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getMyCourses:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetMyCoursesLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "DeleteTestQuestionLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-deleteTestQuestion:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-DeleteTestQuestionLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetAllProcessingMaterialLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getAllProcessingMaterial:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetAllProcessingMaterialLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "AddReviewReplyLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-addReviewReply:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-AddReviewReplyLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "PublishCourseLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-publishCourse:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-PublishCourseLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetAllCourseReviewsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getAllCourseReviews:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetAllCourseReviewsLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "CreateTestLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-createTest:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-CreateTestLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetCourseContentLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getCourseContent:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetCourseContentLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "CreateCourseLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-createCourse:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-CreateCourseLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetMyBundlesLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getMyBundles:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetMyBundlesLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "DeleteMaterialLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-deleteMaterial:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-DeleteMaterialLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "DeleteAnnouncementLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-deleteAnnouncement:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-DeleteAnnouncementLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetCoursePreviewLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getCoursePreview:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetCoursePreviewLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "DeleteFolderLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-deleteFolder:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-DeleteFolderLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "CreateCouponLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-createCoupon:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-CreateCouponLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetMyAllCouponsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getMyAllCoupons:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetMyAllCouponsLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetBundleByIdLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getBundleById:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetBundleByIdLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetCourseByIdLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getCourseById:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetCourseByIdLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetAllStudentsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getAllStudents:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetAllStudentsLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetMyAllTestsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:faculty-service-dev-getMyAllTests:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-faculty-service-dev-GetMyAllTestsLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ServiceEndpoint",
+        "OutputValue": "https://w2a67ybe7f.execute-api.ap-south-1.amazonaws.com/dev",
+        "Description": "URL of the service endpoint",
+        "ExportName": "sls-faculty-service-dev-ServiceEndpoint"
+      }
+    ]
+  }
+}
