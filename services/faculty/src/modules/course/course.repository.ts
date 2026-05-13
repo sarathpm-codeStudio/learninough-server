@@ -484,7 +484,7 @@ export const facultyCourseRepository = {
             // 2. Get all material videos
             const { data: materials, error: matError } = await supabase
                 .from("course_materials")
-                .select("id, title, material_status")
+                .select("id, title, video_uploading_status")
                 .eq("course_id", courseId)
                 .eq("is_deleted", false)
                 .eq("type", "VIDEO")
@@ -502,7 +502,7 @@ export const facultyCourseRepository = {
             const failedVideos = [
                 // Failed material videos
                 ...(materials?.filter(
-                    (m: any) => m.material_status === MaterialStatus.FAILED
+                    (m: any) => m.video_uploading_status === MaterialStatus.FAILED
                 ) ?? []),
                 // Failed intro video ✅
                 ...(introFailed ? [{
@@ -516,8 +516,8 @@ export const facultyCourseRepository = {
                 // Processing material videos
                 ...(materials?.filter(
                     (m: any) =>
-                        m.material_status !== MaterialStatus.COMPLETED &&
-                        m.material_status !== MaterialStatus.FAILED
+                        m.video_uploading_status !== MaterialStatus.COMPLETED &&
+                        m.video_uploading_status !== MaterialStatus.FAILED
                 ) ?? []),
                 // Processing intro video ✅
                 ...(introProcessing ? [{
@@ -535,6 +535,9 @@ export const facultyCourseRepository = {
 
                 }
             }
+
+
+            console.log("processingVideos", processingVideos)
 
             // 7. Still processing → pending_publish ⏳
             if (processingVideos.length > 0) {
