@@ -536,6 +536,14 @@ functions:
           method: delete
           cors:   true
 
+  getFullFoldersInCourse:
+    handler: src/functions/course/getFullFoldersIncourse.handler
+    events:
+      - http:
+          path:   faculty/courses/{courseId}/folders
+          method: get
+          cors:   true
+
   # ── Material ─────────────────────────────────────────────────
   createMaterial:
     handler: src/functions/material/createMaterial.handler

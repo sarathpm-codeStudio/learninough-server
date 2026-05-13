@@ -340,7 +340,23 @@ export const facultyCourseService = {
 
             throw new Error(error)
         }
-    }
+    },
+
+    getFullFoldersInCourse: async (event: any) => {
+        try {
+
+            const folders = await facultyCourseRepository.getFullFoldersInCourse(event.pathParameters.courseId, event.user.id);
+
+            return folders;
+
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
 
 
 

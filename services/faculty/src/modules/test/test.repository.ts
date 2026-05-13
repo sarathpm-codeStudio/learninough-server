@@ -26,64 +26,8 @@ export const facultyTestRepository = {
 
 
 
-            // if is new create new test
-            if (data.is_new) {
+            // new create new test
 
-                console.log("data new>>>>>>", data);
-
-                const { data: result, error } = await supabase
-                    .from("tests")
-                    .insert({
-                        faculty_id: faculty_id,
-                        title: data.title,
-                        chapter: data.chapter,
-                        course_id: data?.course_id || null,
-                        module_id: data?.module_id || null,
-                        total_marks: data.total_marks,
-                        is_draft: data.is_draft,
-                        duration_minutes: data.duration,
-                        instructions: data.instructions,
-                        type: data.type,
-                        is_random: data.is_random,
-                    })
-                    .select()
-                    .single();
-
-                if (error) {
-                    console.log("error create test ", error);
-                    throw error;
-                }
-
-                return result;
-
-
-            } else {
-
-                // if not new update draft test
-                const { data: result, error } = await supabase
-                    .from("test")
-                    .update({
-                        faculty_id: faculty_id,
-                        title: data.title,
-                        chapter: data.chapter,
-                        course_id: data?.course_id || null,
-                        module_id: data?.module_id || null,
-                        total_marks: data.total_marks,
-                        is_draft: data.is_draft,
-                        duration_minutes: data.duration,
-                        instructions: data.instructions,
-                        type: data.type,
-                        is_random: data.is_random,
-                    })
-                    .eq("id", data.test_id)
-                    .select()
-                    .single();
-
-                if (error) throw error;
-
-                return result;
-
-            }
 
         } catch (error: any) {
 
@@ -360,4 +304,37 @@ export const facultyTestRepository = {
     },
 
 
-}   
+}
+
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+async function getNextSortOrder(courseId: string, parentId: string | null): Promise<number> {
+    let folderQuery = supabase
+        .from("course_folders")
+        .select("sort_order")
+        .eq("course_id", courseId)
+        .order("sort_order", { ascending: false })
+        .limit(1);
+
+    let materialQuery = supabase
+        .from("course_materials")
+        .select("sort_order")
+        .eq("course_id", courseId)
+        .order("sort_order", { ascending: false })
+        .limit(1);
+
+    if (parentId === null) {
+        folderQuery = folderQuery.is("parent_id", null);
+        materialQuery = materialQuery.is("folder_id", null);
+    } else {
+        folderQuery = folderQuery.eq("parent_id", parentId);
+        materialQuery = materialQuery.eq("folder_id", parentId);
+    }
+
+    const [{ data: lastFolder }, { data: lastMaterial }] = await Promise.all([folderQuery, materialQuery]);
+
+    const lastFolderOrder = lastFolder?.[0]?.sort_order ?? 0;
+    const lastMaterialOrder = lastMaterial?.[0]?.sort_order ?? 0;
+    return Math.max(lastFolderOrder, lastMaterialOrder) + 1;
+}

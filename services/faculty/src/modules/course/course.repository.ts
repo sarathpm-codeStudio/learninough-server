@@ -981,6 +981,34 @@ export const facultyCourseRepository = {
 
             throw new Error(error.message);
         }
+    },
+
+    getFullFoldersInCourse: async (courseId: string, facultyId: string) => {
+        try {
+
+            const { data: course } = await supabase
+                .from('courses')
+                .select("*")
+                .eq('id', courseId)
+                .eq('faculty_id', facultyId)
+                .single();
+
+            if (!course) throw new Error("Not your course");
+
+            const { data: folders } = await supabase
+                .from('course_folders')
+                .select("*")
+                .eq('course_id', courseId)
+                .eq('is_deleted', false)
+
+            if (!folders) throw new Error("No folders found");
+
+            return folders;
+
+        } catch (error: any) {
+
+            throw new Error(error.message);
+        }
     }
 
 };

@@ -4264,6 +4264,17 @@ var facultyCourseRepository = {
     } catch (error) {
       throw new Error(error.message);
     }
+  },
+  getFullFoldersInCourse: async (courseId, facultyId) => {
+    try {
+      const { data: course } = await supabase.from("courses").select("*").eq("id", courseId).eq("faculty_id", facultyId).single();
+      if (!course) throw new Error("Not your course");
+      const { data: folders } = await supabase.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false);
+      if (!folders) throw new Error("No folders found");
+      return folders;
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 };
 async function getNextSortOrder(courseId, parentId) {
@@ -4517,6 +4528,15 @@ var facultyCourseService = {
       const { reply } = JSON.parse(event.body);
       const result = await facultyCourseRepository.addReviewReply(event.pathParameters.reviewId, reply, event.user.id);
       return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getFullFoldersInCourse: async (event) => {
+    try {
+      const folders = await facultyCourseRepository.getFullFoldersInCourse(event.pathParameters.courseId, event.user.id);
+      return folders;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);

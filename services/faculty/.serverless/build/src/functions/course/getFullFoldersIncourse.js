@@ -3646,13 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/material/updateMaterial.ts
-var updateMaterial_exports = {};
-__export(updateMaterial_exports, {
+// src/functions/course/getFullFoldersIncourse.ts
+var getFullFoldersIncourse_exports = {};
+__export(getFullFoldersIncourse_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(updateMaterial_exports);
+module.exports = __toCommonJS(getFullFoldersIncourse_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -4612,13 +4612,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/material/updateMaterial.ts
+// src/functions/course/getFullFoldersIncourse.ts
 var handlerFun = async (event) => {
   try {
-    const material = await facultyCourseService.updateMaterial(event);
-    return handleResponse.success(material, "Material updated successfully", 201);
+    const course = await facultyCourseService.getFullFoldersInCourse(event);
+    return handleResponse.success(course, "Full folders in course fetched successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error updating material", 400);
+    return handleResponse.error(err, "Error fetching full folders in course", 400);
   }
 };
 var handler = compose(
@@ -4631,4 +4631,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=updateMaterial.js.map
+//# sourceMappingURL=getFullFoldersIncourse.js.map
