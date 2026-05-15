@@ -683,7 +683,7 @@ functions:
     events:
       - http:
           path:   faculty/test/{testId}
-          method: put
+          method: patch
           cors:   true
 
   deleteTest:
@@ -702,12 +702,20 @@ functions:
           method: post
           cors:   true
 
+  getTestQuestionByTestId:
+    handler: src/functions/test/getQuestionsTestId.handler
+    events:
+      - http:
+          path:   faculty/test/{testId}/questions
+          method: get
+          cors:   true
+
   updateTestQuestion:
     handler: src/functions/test/updateQuestion.handler
     events:
       - http:
           path:   faculty/test/{testId}/questions/{questionId}
-          method: put
+          method: patch
           cors:   true
 
   deleteTestQuestion:
@@ -723,7 +731,7 @@ functions:
     events:
       - http:
           path:   faculty/test/{testId}/publish
-          method: put
+          method: patch
           cors:   true
 
   # ── Coupon ─────────────────────────────────────────────────────

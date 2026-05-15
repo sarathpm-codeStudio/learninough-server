@@ -689,6 +689,12 @@ export const facultyCourseRepository = {
                 .eq("type", "module")
                 .single();
 
+            let materialStatus = "";
+            if (data?.type === "VIDEO" || data?.type === "TEST") {
+                materialStatus = MaterialStatus.PENDING;
+            } else {
+                materialStatus = MaterialStatus.COMPLETED;
+            }
 
             const { data: material, error } = await supabase
                 .from("course_materials")
@@ -697,7 +703,7 @@ export const facultyCourseRepository = {
                     course_id: courseId,
                     folder_id: data.parent_id ?? null,
                     sort_order: nextSortOrder,
-                    material_status: MaterialStatus.PENDING,
+                    material_status: materialStatus,
                     title: data.title,
                     type: data.type,
                     file_url: data.file_url ?? null,
@@ -806,6 +812,19 @@ export const facultyCourseRepository = {
 
             if (error) throw new Error(error.message);
             if (!material) throw new Error("Material not found");
+
+            if (material?.type === "TEST") {
+
+                const { error: testError } = await supabase
+                    .from("tests")
+                    .update({ is_deleted: true })
+                    .eq("unique_id", material.unique_id)
+                    .select()
+                    .single();
+
+                if (testError) throw new Error(testError.message);
+            }
+
             return material;
 
         } catch (error: any) {

@@ -3709,6 +3709,7 @@ var MaterialType = /* @__PURE__ */ ((MaterialType3) => {
   MaterialType3["LINK"] = "LINK";
   MaterialType3["NOTES"] = "NOTES";
   MaterialType3["IMAGE"] = "IMAGE";
+  MaterialType3["TEST"] = "TEST";
   return MaterialType3;
 })(MaterialType || {});
 
@@ -4106,12 +4107,18 @@ var facultyCourseRepository = {
       }
       const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null);
       const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "module").single();
+      let materialStatus = "";
+      if (data?.type === "VIDEO" || data?.type === "TEST") {
+        materialStatus = "PENDING" /* PENDING */;
+      } else {
+        materialStatus = "COMPLETED" /* COMPLETED */;
+      }
       const { data: material, error } = await supabase.from("course_materials").insert({
         unique_id: data.unique_id,
         course_id: courseId,
         folder_id: data.parent_id ?? null,
         sort_order: nextSortOrder,
-        material_status: "PENDING" /* PENDING */,
+        material_status: materialStatus,
         title: data.title,
         type: data.type,
         file_url: data.file_url ?? null,
@@ -4169,6 +4176,10 @@ var facultyCourseRepository = {
       const { data: material, error } = await supabase.from("course_materials").update({ is_deleted: true }).eq("id", materialId).select().single();
       if (error) throw new Error(error.message);
       if (!material) throw new Error("Material not found");
+      if (material?.type === "TEST") {
+        const { error: testError } = await supabase.from("tests").update({ is_deleted: true }).eq("unique_id", material.unique_id).select().single();
+        if (testError) throw new Error(testError.message);
+      }
       return material;
     } catch (error) {
       throw new Error(error.message);

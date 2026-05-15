@@ -3646,13 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/test/updateTest.ts
-var updateTest_exports = {};
-__export(updateTest_exports, {
+// src/functions/test/getQuestionsTestId.ts
+var getQuestionsTestId_exports = {};
+__export(getQuestionsTestId_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(updateTest_exports);
+module.exports = __toCommonJS(getQuestionsTestId_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -4200,13 +4200,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/test/updateTest.ts
+// src/functions/test/getQuestionsTestId.ts
 var handlerFun = async (event) => {
   try {
-    const tests = await facultyTestService.updateTest(event);
-    return handleResponse.success(tests, "Test updated successfully", 200);
+    const test = await facultyTestService.getTestQuestionByTestId(event);
+    return handleResponse.success(test, "Test questions fetched successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error updating test", 400);
+    return handleResponse.error(err, "Error fetching test questions", 400);
   }
 };
 var handler = compose(
@@ -4219,4 +4219,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=updateTest.js.map
+//# sourceMappingURL=getQuestionsTestId.js.map

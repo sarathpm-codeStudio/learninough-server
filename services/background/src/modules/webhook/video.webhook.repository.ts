@@ -17,6 +17,8 @@ export const videoWebhookRepository = {
                     data?.video?.status === "Error" ? MaterialStatus.FAILED :
                         MaterialStatus.TRANSCODING;
 
+            const materialStatus = videoStatus === MaterialStatus.COMPLETED ? MaterialStatus.COMPLETED : MaterialStatus.PENDING;
+
             const { data: updatedUploadProgress, error: uploadProgressError } = await supabase
                 .from("video_upload_progress")
                 .update({
@@ -49,6 +51,7 @@ export const videoWebhookRepository = {
                 const { data: updatedCourse, error: courseError } = await supabase
                     .from("course_materials")
                     .update({
+                        material_status: materialStatus,
                         video_uploading_status: videoStatus,
                         video_upload_progress: data?.video?.progress, // this not valid
                         duration_sec: data?.video?.duration,

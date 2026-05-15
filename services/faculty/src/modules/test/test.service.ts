@@ -12,6 +12,8 @@ export const facultyTestService = {
     createTestBaseDetails: async (event: any) => {
         try {
 
+            console.log("event%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%", JSON.parse(event.body));
+
             const validatedData: any = validate(createTestBaseDetailsSchema, JSON.parse(event.body));
 
             const result = await facultyTestRepository.createTestBaseDetails(validatedData, event.user.id);
@@ -66,7 +68,7 @@ export const facultyTestService = {
     updateTest: async (event: any) => {
         try {
 
-            const result = await facultyTestRepository.updateTest(event.pathParameters.testId, event.body, event.user.id);
+            const result = await facultyTestRepository.updateTest(event.pathParameters.testId, JSON.parse(event.body), event.user.id);
 
             return result;
 
@@ -96,9 +98,9 @@ export const facultyTestService = {
     createTestQuestion: async (event: any) => {
         try {
 
-            const validatedData: any = validate(createTestQuestionSchema, JSON.parse(event.body));
+            // const validatedData: any = validate(createTestQuestionSchema, JSON.parse(event.body));
 
-            const result = await facultyTestRepository.createTestQuestion(validatedData, event.pathParameters.testId);
+            const result = await facultyTestRepository.createTestQuestion(JSON.parse(event.body), event.pathParameters.testId);
 
             return result;
 
@@ -110,12 +112,27 @@ export const facultyTestService = {
         }
     },
 
+    getTestQuestionByTestId: async (event: any) => {
+        try {
+
+            const result = await facultyTestRepository.getTestQuestionByTestId(event.pathParameters.testId);
+
+            return result;
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw error
+        }
+    },
+
     updateTestQuestion: async (event: any) => {
         try {
 
-            const validatedData: any = validate(createTestQuestionSchema, JSON.parse(event.body));
+            // const validatedData: any = validate(createTestQuestionSchema, JSON.parse(event.body));
 
-            const result = await facultyTestRepository.updateTestQuestion(validatedData, event.pathParameters.testId);
+            const result = await facultyTestRepository.updateTestQuestion(JSON.parse(event.body), event.pathParameters.questionId);
 
             return result;
 

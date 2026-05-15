@@ -4,7 +4,7 @@ export enum AccountStatus { PENDING = "PENDING", APPROVED = "APPROVED", REJECTED
 
 export enum MaterialStatus { PENDING = "PENDING", TRANSCODING = "TRANSCODING", COMPLETED = "COMPLETED", FAILED = "FAILED" }
 
-export enum MaterialType { VIDEO = "VIDEO", PDF = "PDF", LINK = "LINK", NOTES = "NOTES", IMAGE = "IMAGE" }
+export enum MaterialType { VIDEO = "VIDEO", PDF = "PDF", LINK = "LINK", NOTES = "NOTES", IMAGE = "IMAGE", TEST = "TEST" }
 
 
 export enum userRole { FACULTY = "FACULTY", STUDENT = "STUDENT", ADMIN = "ADMIN" }
@@ -53,19 +53,20 @@ export type AnnouncementData = {
 
 export type TestBaseDetailsData = {
 
+    unique_id: string,
     title: string,
     chapter?: string,
-    course_id?: string,
-    module_id?: string,
-    total_marks: number,
-    is_draft: boolean,
-    is_deleted: boolean,
+    course: string,
+    module?: string,
+    totalMarks: number,
+    isDraft: boolean,
+    isDeleted: boolean,
     instructions: string,
-    type: string,
-    is_new: boolean,
-    test_id?: string,
+    testType: string,
+    isNew: boolean,
+    testId?: string,
     duration: number,
-    is_random: boolean,
+    isRandom: boolean,
 }
 
 
@@ -75,7 +76,7 @@ export type QuestionData = {
     question: string,
     type: string,
     marks: number,
-    option?: [
+    options?: [
         {
             option_text: string,
             is_correct: boolean,

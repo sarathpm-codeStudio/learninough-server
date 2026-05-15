@@ -3678,6 +3678,7 @@ var MaterialType = /* @__PURE__ */ ((MaterialType2) => {
   MaterialType2["LINK"] = "LINK";
   MaterialType2["NOTES"] = "NOTES";
   MaterialType2["IMAGE"] = "IMAGE";
+  MaterialType2["TEST"] = "TEST";
   return MaterialType2;
 })(MaterialType || {});
 

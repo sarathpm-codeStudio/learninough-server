@@ -6,17 +6,15 @@ import { z } from "zod";
 
 export const createTestBaseDetailsSchema = z.object({
 
+    unique_id: z.string().min(1, "Unique ID is required"),
     title: z.string().min(1, "Title is required"),
     module: z.string().optional(),
-    courseId: z.string().min(1, "Course ID is required"),
-    totalMarks: z.number().min(1, "Total marks is required"),
-    duration: z.number().min(1, "Duration is required"),
-    isDraft: z.boolean(),
+    course: z.string().min(1, "Course ID is required"),
+    totalMarks: z.string().min(1, "Total marks is required"),
+    duration: z.string().min(1, "Duration is required"),
     instructions: z.string().optional(),
-    type: z.string(),
-    isNew: z.boolean(),
-    testId: z.string().optional(),
-    isRandom: z.boolean().optional(),
+    testType: z.string(),
+
 
 });
 

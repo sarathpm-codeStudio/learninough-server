@@ -3704,73 +3704,80 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
 
 // src/modules/test/test.repository.ts
 var facultyTestRepository = {
-  createTestBaseDetails: async (data, faculty_id) => {
+  createTestBaseDetails: async (data, facultyId) => {
     try {
-      if (data.course_id) {
-        const { data: course, error } = await supabase.from("courses").select("*").eq("id", data.course_id).eq("faculty_id", faculty_id).single();
-        if (error) throw error;
-        if (!course) throw new Error("Course not found");
-      }
-      if (data.is_new) {
-        console.log("data new>>>>>>", data);
-        const { data: result, error } = await supabase.from("tests").insert({
-          faculty_id,
-          title: data.title,
-          chapter: data.chapter,
-          course_id: data?.course_id || null,
-          module_id: data?.module_id || null,
-          total_marks: data.total_marks,
-          is_draft: data.is_draft,
-          duration_minutes: data.duration,
-          instructions: data.instructions,
-          type: data.type,
-          is_random: data.is_random
-        }).select().single();
-        if (error) {
-          console.log("error create test ", error);
-          throw error;
-        }
-        return result;
-      } else {
-        const { data: result, error } = await supabase.from("test").update({
-          faculty_id,
-          title: data.title,
-          chapter: data.chapter,
-          course_id: data?.course_id || null,
-          module_id: data?.module_id || null,
-          total_marks: data.total_marks,
-          is_draft: data.is_draft,
-          duration_minutes: data.duration,
-          instructions: data.instructions,
-          type: data.type,
-          is_random: data.is_random
-        }).eq("id", data.test_id).select().single();
-        if (error) throw error;
-        return result;
-      }
+      const { data: course, error } = await supabase.from("courses").select("*").eq("id", data?.course).eq("faculty_id", facultyId).single();
+      if (error) throw error;
+      if (!course) throw new Error("Course not found");
+      const { data: test, error: testError } = await supabase.from("tests").insert({
+        faculty_id: facultyId,
+        unique_id: data.unique_id,
+        title: data.title,
+        course_id: data?.course,
+        module_id: data?.module || null,
+        total_marks: data.totalMarks,
+        duration_minutes: data.duration,
+        instructions: data.instructions,
+        type: data.testType
+      }).select().single();
+      if (testError) throw testError;
+      const nextSortOrder = await getNextSortOrder(data?.course, data?.module && data.module.trim() !== "" ? data.module : null);
+      console.log("nextSortOrder", nextSortOrder);
+      const { data: material, error: materialError } = await supabase.from("course_materials").insert({
+        unique_id: data.unique_id,
+        course_id: data?.course,
+        folder_id: data?.module && data.module.trim() !== "" ? data.module : null,
+        sort_order: nextSortOrder,
+        title: data.title,
+        type: "TEST",
+        material_status: "PENDING"
+      }).select().single();
+      if (materialError) throw new Error(materialError.message);
+      return test;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
     }
   },
+  // getMyAllTests: async (faculty_id: string, filter: string, page: number, limit: number, search: string) => {
+  //     try {
+  //         const from = (page - 1) * limit;
+  //         const to = from + limit - 1;
+  //         // ✅ No await here — keep it as a query builder
+  //         let query = supabase
+  //             .from("tests")
+  //             .select("*")
+  //             .eq("faculty_id", faculty_id);
+  //         if (filter !== "all") {
+  //             query = query.eq("is_draft", filter);
+  //         }
+  //         if (search) {
+  //             query = query.or(`title.ilike.%${search}%,chapter.ilike.%${search}%`);
+  //         }
+  //         // ✅ Only await at the final execution
+  //         const { data: result, error } = await query
+  //             .range(from, to)
+  //             .order("created_at", { ascending: false });
+  //         if (error) throw error;
+  //         return result;
+  //     } catch (error: any) {
+  //         console.log("error", error);
+  //         throw new Error(error?.message || JSON.stringify(error)); // ✅ also fix error serialization
+  //     }
+  // },
   getMyAllTests: async (faculty_id, filter, page, limit, search) => {
-    try {
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
-      let query = await supabase.from("tests").select("*").eq("faculty_id", faculty_id);
-      if (filter !== "all") {
-        query = query.eq("is_draft", filter);
-      }
-      if (search) {
-        query = query.or(`title.ilike.%${search}%,chapter.ilike.%${search}%`);
-      }
-      const { data: result, error } = await query.range(from, to).order("created_at", { ascending: false });
-      if (error) throw error;
-      return result;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    let query = supabase.from("tests").select("*, courses(*)", { count: "exact" }).eq("faculty_id", faculty_id).eq("is_deleted", false);
+    if (filter !== "all") {
+      query = query.eq("is_draft", filter);
     }
+    if (search) {
+      query = query.or(`title.ilike.%${search}%`);
+    }
+    const { data, error, count } = await query.range(from, to).order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { data, total: count ?? 0 };
   },
   getTestById: async (test_id) => {
     try {
@@ -3782,26 +3789,30 @@ var facultyTestRepository = {
       throw new Error(error);
     }
   },
-  updateTest: async (test_id, data, faculty_id) => {
+  updateTest: async (test_id, data, facultyId) => {
     try {
-      if (data.course_id) {
-        const { data: course, error: error2 } = await supabase.from("courses").select("*").eq("id", data.course_id).eq("faculty_id", faculty_id).single();
+      console.log("data", data);
+      if (data.course) {
+        const { data: course, error: error2 } = await supabase.from("courses").select("*").eq("id", data.course).eq("faculty_id", facultyId).single();
         if (error2) throw error2;
         if (!course) throw new Error("Course not found");
       }
+      console.log("test_id", test_id);
       const { data: result, error } = await supabase.from("tests").update({
+        course_id: data.course,
+        module_id: data.module,
         title: data.title,
-        chapter: data.chapter,
-        course_id: data?.course_id || null,
-        module_id: data?.module_id || null,
-        total_marks: data.total_marks,
-        is_draft: data.is_draft,
+        total_marks: data.totalMarks,
         duration_minutes: data.duration,
         instructions: data.instructions,
-        type: data.type,
-        is_random: data.is_random
+        type: data.testType
       }).eq("id", test_id).select().single();
       if (error) throw error;
+      console.log("result", result);
+      const { data: material, error: materialError } = await supabase.from("course_materials").update({
+        title: data.title
+      }).eq("unique_id", result.unique_id).select().single();
+      if (materialError) throw materialError;
       return result;
     } catch (error) {
       console.log("error", error);
@@ -3810,10 +3821,10 @@ var facultyTestRepository = {
   },
   deleteTest: async (test_id) => {
     try {
-      const { data: result, error } = await supabase.from("tests").update({
-        is_deleted: true
-      }).eq("id", test_id).select().single();
+      const { data: result, error } = await supabase.from("tests").update({ is_deleted: true }).eq("id", test_id).select().single();
       if (error) throw error;
+      const { data: module2, error: moduleError } = await supabase.from("course_materials").update({ is_deleted: true }).eq("unique_id", result.unique_id).select().single();
+      if (moduleError) throw moduleError;
       return result;
     } catch (error) {
       console.log("error", error);
@@ -3822,18 +3833,23 @@ var facultyTestRepository = {
   },
   createTestQuestion: async (data, test_id) => {
     try {
+      const { data: lastQuestion, error: countError } = await supabase.from("questions").select("question_number").eq("test_id", test_id).order("question_number", { ascending: false }).limit(1).maybeSingle();
+      if (countError) throw countError;
+      const nextQuestionNumber = (lastQuestion?.question_number ?? 0) + 1;
       const { data: result, error } = await supabase.from("questions").insert({
         test_id,
         question: data.question,
         type: data.type,
-        marks: data.marks
+        marks: data.marks,
+        question_number: nextQuestionNumber
+        // ✅
       }).select().single();
       if (error) throw error;
-      if (data.option && data.option.length > 0) {
-        data.option.forEach(async (option) => {
+      if (data.options && data.options.length > 0) {
+        data.options.forEach(async (option) => {
           const { data: optionResult, error: optionError } = await supabase.from("options").insert({
             question_id: result.id,
-            option_text: option.option_text,
+            option_text: option.text,
             is_correct: option.is_correct,
             label: option.label
           }).select().single();
@@ -3846,25 +3862,86 @@ var facultyTestRepository = {
       throw new Error(error);
     }
   },
-  updateTestQuestion: async (data, test_id) => {
+  // getTestQuestionByTestId: async (test_id: string) => {
+  //     try {
+  //         const { data: result, error } = await supabase.from("questions")
+  //             .select(`
+  //             *,
+  //             options (
+  //                 id,
+  //                 option_text,
+  //                 is_correct,
+  //                 label
+  //             )
+  //         `)
+  //             .eq("test_id", test_id)
+  //             .order("question_number", { ascending: true }); // ✅ order by question_number not created_at
+  //         if (error) throw error;
+  //         console.log("result", result);
+  //         // map result: only MCQ questions get options, others get empty array
+  //         const mapped = result.map((question: any) => ({
+  //             ...question,
+  //             options: question.type === 'mcq' ? (question.options ?? []) : [],
+  //         }));
+  //         return mapped;
+  //     } catch (error: any) {
+  //         console.log("error", error);
+  //         throw new Error(error?.message ?? JSON.stringify(error));
+  //     }
+  // },
+  getTestQuestionByTestId: async (test_id) => {
+    try {
+      if (!test_id || test_id.trim() === "") {
+        throw new Error("test_id is required");
+      }
+      const { data: result, error } = await supabase.from("questions").select(`
+                *,
+                options (
+                    id,
+                    option_text,
+                    is_correct,
+                    label
+                )
+            `).eq("test_id", test_id).order("question_number", { ascending: true });
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(error.message);
+      }
+      if (!result) {
+        console.warn("No questions found for test_id:", test_id);
+        return [];
+      }
+      console.log("result", result);
+      const mapped = result.map((question) => ({
+        ...question,
+        options: question.type === "mcq" ? question.options ?? [] : []
+      }));
+      return mapped;
+    } catch (error) {
+      console.error("Error in getTestQuestionByTestId:", error);
+      return {
+        success: false,
+        error: error?.message ?? "Unknown error occurred",
+        data: null
+      };
+    }
+  },
+  updateTestQuestion: async (data, question_id) => {
     try {
       const { data: result, error } = await supabase.from("questions").update({
-        test_id,
         question: data.question,
         type: data.type,
         marks: data.marks
-      }).eq("id", test_id).select().single();
+      }).eq("id", question_id).select().single();
       if (error) throw error;
-      const { data: deleteResult, error: deleteError } = await supabase.from("options").delete().eq("question_id", result.id);
-      if (deleteError) throw deleteError;
-      if (data.option && data.option.length > 0) {
-        data.option.forEach(async (option) => {
-          const { data: optionResult, error: optionError } = await supabase.from("options").insert({
+      if (data.options && data.options.length > 0) {
+        data.options.forEach(async (option) => {
+          const { data: optionResult, error: optionError } = await supabase.from("options").upsert({
             question_id: result.id,
-            option_text: option.option_text,
+            option_text: option.text,
             is_correct: option.is_correct,
             label: option.label
-          }).select().single();
+          }).eq("question_id", question_id).eq("label", option.label).select().single();
           if (optionError) throw optionError;
         });
       }
@@ -3891,6 +3968,10 @@ var facultyTestRepository = {
       const { data: result, error } = await supabase.from("tests").update({
         is_draft: false
       }).eq("id", test_id).select().single();
+      const { data: materialResult, error: materialError } = await supabase.from("course_materials").update({
+        material_status: "READY"
+      }).eq("unique_id", result.unique_id).select().single();
+      if (materialError) throw materialError;
       if (error) throw error;
       return result;
     } catch (error) {
@@ -3899,22 +3980,33 @@ var facultyTestRepository = {
     }
   }
 };
+async function getNextSortOrder(courseId, parentId) {
+  let folderQuery = supabase.from("course_folders").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
+  let materialQuery = supabase.from("course_materials").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
+  if (parentId === null) {
+    folderQuery = folderQuery.is("parent_id", null);
+    materialQuery = materialQuery.is("folder_id", null);
+  } else {
+    folderQuery = folderQuery.eq("parent_id", parentId);
+    materialQuery = materialQuery.eq("folder_id", parentId);
+  }
+  const [{ data: lastFolder }, { data: lastMaterial }] = await Promise.all([folderQuery, materialQuery]);
+  const lastFolderOrder = lastFolder?.[0]?.sort_order ?? 0;
+  const lastMaterialOrder = lastMaterial?.[0]?.sort_order ?? 0;
+  return Math.max(lastFolderOrder, lastMaterialOrder) + 1;
+}
 
 // ../../shared/validators/test.validator.ts
 var import_zod = require("zod");
 var createTestBaseDetailsSchema = import_zod.z.object({
+  unique_id: import_zod.z.string().min(1, "Unique ID is required"),
   title: import_zod.z.string().min(1, "Title is required"),
-  chapter: import_zod.z.string().optional(),
-  course_id: import_zod.z.string().min(1, "Course ID is required"),
-  module_id: import_zod.z.string().optional(),
-  total_marks: import_zod.z.number().min(1, "Total marks is required"),
-  duration: import_zod.z.number().min(1, "Duration is required"),
-  is_draft: import_zod.z.boolean(),
-  instructions: import_zod.z.string(),
-  type: import_zod.z.string(),
-  is_new: import_zod.z.boolean(),
-  test_id: import_zod.z.string().optional(),
-  is_random: import_zod.z.boolean().optional()
+  module: import_zod.z.string().optional(),
+  course: import_zod.z.string().min(1, "Course ID is required"),
+  totalMarks: import_zod.z.string().min(1, "Total marks is required"),
+  duration: import_zod.z.string().min(1, "Duration is required"),
+  instructions: import_zod.z.string().optional(),
+  testType: import_zod.z.string()
 });
 var createTestQuestionSchema = import_zod.z.object({
   // test_id: z.string().min(1, "Test ID is required"),
@@ -3941,6 +4033,7 @@ var validate = (schema, data) => {
 var facultyTestService = {
   createTestBaseDetails: async (event) => {
     try {
+      console.log("event%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%", JSON.parse(event.body));
       const validatedData = validate(createTestBaseDetailsSchema, JSON.parse(event.body));
       const result = await facultyTestRepository.createTestBaseDetails(validatedData, event.user.id);
       return result;
@@ -3976,7 +4069,7 @@ var facultyTestService = {
   },
   updateTest: async (event) => {
     try {
-      const result = await facultyTestRepository.updateTest(event.pathParameters.testId, event.body, event.user.id);
+      const result = await facultyTestRepository.updateTest(event.pathParameters.testId, JSON.parse(event.body), event.user.id);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -3994,18 +4087,25 @@ var facultyTestService = {
   },
   createTestQuestion: async (event) => {
     try {
-      const validatedData = validate(createTestQuestionSchema, JSON.parse(event.body));
-      const result = await facultyTestRepository.createTestQuestion(validatedData, event.pathParameters.testId);
+      const result = await facultyTestRepository.createTestQuestion(JSON.parse(event.body), event.pathParameters.testId);
       return result;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
     }
   },
+  getTestQuestionByTestId: async (event) => {
+    try {
+      const result = await facultyTestRepository.getTestQuestionByTestId(event.pathParameters.testId);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw error;
+    }
+  },
   updateTestQuestion: async (event) => {
     try {
-      const validatedData = validate(createTestQuestionSchema, JSON.parse(event.body));
-      const result = await facultyTestRepository.updateTestQuestion(validatedData, event.pathParameters.testId);
+      const result = await facultyTestRepository.updateTestQuestion(JSON.parse(event.body), event.pathParameters.questionId);
       return result;
     } catch (error) {
       console.log("error", error);
