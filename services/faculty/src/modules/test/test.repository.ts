@@ -270,6 +270,16 @@ export const facultyTestRepository = {
                 .select()
                 .single();
 
+            // update test total questions
+            const { data: testResult, error: testError } = await supabase.from("tests")
+                .update({
+                    question_count: nextQuestionNumber
+                })
+                .eq("id", test_id)
+                .select()
+                .single();
+            if (testError) throw testError;
+
             if (error) throw error;
 
             // creating options
@@ -452,6 +462,16 @@ export const facultyTestRepository = {
                 .delete()
                 .eq("question_id", question_id);
             if (deleteError) throw deleteError;
+
+            // update test question count
+            const { error: testError } = await supabase.rpc(
+                "decrement_question_count",
+                {
+                    test_id: result.test_id,
+                }
+            );
+
+            if (testError) throw testError;
 
             return result;
 

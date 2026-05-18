@@ -3844,6 +3844,10 @@ var facultyTestRepository = {
         question_number: nextQuestionNumber
         // ✅
       }).select().single();
+      const { data: testResult, error: testError } = await supabase.from("tests").update({
+        question_count: nextQuestionNumber
+      }).eq("id", test_id).select().single();
+      if (testError) throw testError;
       if (error) throw error;
       if (data.options && data.options.length > 0) {
         data.options.forEach(async (option) => {
@@ -3957,6 +3961,13 @@ var facultyTestRepository = {
       if (error) throw error;
       const { data: deleteResult, error: deleteError } = await supabase.from("options").delete().eq("question_id", question_id);
       if (deleteError) throw deleteError;
+      const { error: testError } = await supabase.rpc(
+        "decrement_question_count",
+        {
+          test_id: result.test_id
+        }
+      );
+      if (testError) throw testError;
       return result;
     } catch (error) {
       console.log("error", error);
