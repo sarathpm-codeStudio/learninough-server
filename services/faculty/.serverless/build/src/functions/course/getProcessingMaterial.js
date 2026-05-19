@@ -3753,11 +3753,11 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  getMyCourses: async (facultyId, filter) => {
+  getMyCourses: async (facultyId, filter, search) => {
     console.log("data", typeof filter);
     console.log("facultyId", facultyId);
     try {
-      const { data: courses, error } = await supabase.from("courses").select(`*`).eq("faculty_id", facultyId).eq("is_draft", filter).order("created_at", { ascending: false });
+      const { data: courses, error } = await supabase.from("courses").select(`*`).eq("faculty_id", facultyId).eq("is_draft", filter).ilike("title", `%${search}%`).order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
       return courses;
     } catch (error) {
@@ -4349,13 +4349,12 @@ var createCourseBundleSchema = import_zod.z.object({
   title: import_zod.z.string(),
   description: import_zod.z.string(),
   price: import_zod.z.number(),
-  discount_type: import_zod.z.string(),
-  discount_price: import_zod.z.number(),
-  discount: import_zod.z.number(),
-  course_ids: import_zod.z.array(import_zod.z.string()),
-  img_url: import_zod.z.string(),
-  is_new: import_zod.z.boolean(),
-  is_draft: import_zod.z.boolean()
+  finalPrice: import_zod.z.number(),
+  discount: import_zod.z.string(),
+  courses: import_zod.z.array(import_zod.z.string()),
+  coverImage: import_zod.z.string(),
+  enableCoupons: import_zod.z.boolean().optional(),
+  isDraft: import_zod.z.boolean().optional()
 });
 var addCoursePricingSchema = import_zod.z.object({
   duration: import_zod.z.string().min(1, "Duration is required"),
@@ -4401,9 +4400,11 @@ var facultyCourseService = {
   },
   getMyCourses: async (event) => {
     try {
+      console.log("hasfhasf??????????????????????????????", event.queryStringParameters);
       const filter = event.queryStringParameters.filter === "true";
+      const search = event.queryStringParameters.search || "";
       console.log("filter>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", filter);
-      const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter);
+      const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, search);
       return courses;
     } catch (error) {
       console.log("error", error);

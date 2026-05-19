@@ -29,15 +29,12 @@ export type CourseBundleData = {
     title: string,
     description: string,
     price: number,
-    discount_type: string,
-    discount_price: number,
-    discount: number,
-    course_ids: string[],
-    img_url?: string,
-    is_new: boolean,
-    bundle_id?: string,
-    is_draft: boolean,
-
+    finalPrice: number,
+    discount: string,
+    courses: string[],
+    coverImage: string,
+    enableCoupons?: boolean | undefined,
+    isDraft?: boolean | undefined,
 }
 
 export type AnnouncementData = {

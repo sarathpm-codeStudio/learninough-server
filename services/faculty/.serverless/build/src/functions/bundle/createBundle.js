@@ -3712,13 +3712,12 @@ var createCourseBundleSchema = import_zod.z.object({
   title: import_zod.z.string(),
   description: import_zod.z.string(),
   price: import_zod.z.number(),
-  discount_type: import_zod.z.string(),
-  discount_price: import_zod.z.number(),
-  discount: import_zod.z.number(),
-  course_ids: import_zod.z.array(import_zod.z.string()),
-  img_url: import_zod.z.string(),
-  is_new: import_zod.z.boolean(),
-  is_draft: import_zod.z.boolean()
+  finalPrice: import_zod.z.number(),
+  discount: import_zod.z.string(),
+  courses: import_zod.z.array(import_zod.z.string()),
+  coverImage: import_zod.z.string(),
+  enableCoupons: import_zod.z.boolean().optional(),
+  isDraft: import_zod.z.boolean().optional()
 });
 var addCoursePricingSchema = import_zod.z.object({
   duration: import_zod.z.string().min(1, "Duration is required"),
@@ -3781,56 +3780,32 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
 var bundleRepository = {
   createCourseBundle: async (data, facultyId) => {
     try {
-      if (data.is_new) {
-        const { data: bundle, error } = await supabase.from("course_bundles").insert({
-          faculty_id: facultyId,
-          title: data.title,
-          description: data.description,
-          price: data.price,
-          discount_type: data?.discount_type ?? null,
-          discount_price: data?.discount_price ?? null,
-          discount: data?.discount ?? null,
-          img_url: data.img_url ?? null,
-          is_draft: data.is_draft
-        }).select().single();
-        if (error) {
-          throw new Error(error.message);
-        }
-        const bundleId = bundle?.id;
-        const courseBundleMapping = data.course_ids.map((courseId) => ({
-          bundle_id: bundleId,
-          course_id: courseId
-        }));
-        const { data: courseBundleMappingData, error: courseBundleMappingError } = await supabase.from("course_bundle_courses").insert(courseBundleMapping);
-        if (courseBundleMappingError) {
-          throw new Error(courseBundleMappingError.message);
-        }
-        return { bundle, is_draft: data.is_draft };
-      } else {
-        const { data: bundle, error } = await supabase.from("course_bundles").update({
-          title: data.title,
-          description: data.description,
-          price: data.price,
-          discount_type: data?.discount_type ?? null,
-          discount_price: data?.discount_price ?? null,
-          discount: data?.discount ?? null,
-          img_url: data.img_url ?? null,
-          is_draft: data.is_draft
-        }).eq("id", data.bundle_id).select().single();
-        if (error) {
-          throw new Error(error.message);
-        }
-        const bundleId = bundle?.id;
-        const courseBundleMapping = data.course_ids.map((courseId) => ({
-          bundle_id: bundleId,
-          course_id: courseId
-        }));
-        const { data: courseBundleMappingData, error: courseBundleMappingError } = await supabase.from("course_bundle_courses").update(courseBundleMapping);
-        if (courseBundleMappingError) {
-          throw new Error(courseBundleMappingError.message);
-        }
-        return { bundle, is_draft: data.is_draft };
+      const { data: bundle, error } = await supabase.from("course_bundle").insert({
+        faculty_id: facultyId,
+        title: data.title,
+        description: data.description,
+        price: data.price,
+        final_price: data.finalPrice,
+        discount: Number(data?.discount) ?? null,
+        discount_type: "percentage",
+        image_url: data.coverImage ?? null,
+        enable_coupons: data.enableCoupons ?? false,
+        total_courses_count: data.courses.length,
+        is_draft: data.isDraft ?? false
+      }).select().single();
+      if (error) {
+        throw new Error(error.message);
       }
+      const bundleId = bundle?.id;
+      const courseBundleMapping = data.courses.map((courseId) => ({
+        bundle_id: bundleId,
+        course_id: courseId
+      }));
+      const { data: courseBundleMappingData, error: courseBundleMappingError } = await supabase.from("course_bundle_courses").insert(courseBundleMapping);
+      if (courseBundleMappingError) {
+        throw new Error(courseBundleMappingError.message);
+      }
+      return { bundle };
     } catch (error) {
       throw new Error(error.message);
     }
@@ -3847,6 +3822,8 @@ var bundleRepository = {
         is_active,
         is_draft,
         created_at,
+        final_price,
+        total_courses_count,
 
             course_bundle_courses(count)
 
@@ -3861,32 +3838,76 @@ var bundleRepository = {
   },
   getbundleById: async (bundleId, facultyId) => {
     try {
+      console.log("bundleId", bundleId);
       const { data: bundle, error } = await supabase.from("course_bundle").select(`
         id,
         title,
         description,
         price,
-        discount_price,
+        discount,
         image_url,
         is_active,
         is_draft,
         created_at,
-
+        final_price,
+        enable_coupons,
+        total_courses_count,
         course_bundle_courses (
-      courses (
-        id,
-        title,
-        thumbnail_url
-      )
-    ),
-
-            course_bundle_courses(count)
-
-      `).eq("id", bundleId).eq("faculty_id", facultyId).single();
+            courses (
+                id,
+                title
+            )
+        ),
+        course_bundle_courses_count:course_bundle_courses(count)
+    `).eq("id", bundleId).eq("faculty_id", facultyId).single();
       if (error) {
         throw new Error(error.message);
       }
       return bundle;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  updateBundle: async (bundleId, data, facultyId) => {
+    try {
+      const discount = data.discount != null ? Number(data.discount) : null;
+      const [{ data: bundle, error: bundleError }] = await Promise.all([
+        supabase.from("course_bundle").update({
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          final_price: data.finalPrice,
+          discount: Number(data.discount),
+          discount_type: "percentage",
+          image_url: data.coverImage ?? null,
+          enable_coupons: data.enableCoupons ?? false,
+          total_courses_count: data.courses.length,
+          is_draft: data.isDraft
+        }).eq("id", bundleId).eq("faculty_id", facultyId).select().single()
+      ]);
+      if (bundleError) throw new Error(bundleError.message);
+      const { error: deleteError } = await supabase.from("course_bundle_courses").delete().eq("bundle_id", bundleId);
+      if (deleteError) throw new Error(deleteError.message);
+      if (data.courses.length > 0) {
+        const courseBundleMapping = data.courses.map((courseId) => ({
+          bundle_id: bundleId,
+          course_id: courseId
+        }));
+        const { error: insertError } = await supabase.from("course_bundle_courses").insert(courseBundleMapping);
+        if (insertError) throw new Error(insertError.message);
+      }
+      return { bundle };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  deleteBundle: async (bundleId, facultyId) => {
+    try {
+      const { error } = await supabase.from("course_bundle").delete().eq("id", bundleId).eq("faculty_id", facultyId);
+      if (error) {
+        throw new Error(error.message);
+      }
+      return { success: true };
     } catch (error) {
       throw new Error(error.message);
     }
@@ -3919,6 +3940,27 @@ var bundleService = {
     try {
       const bundleId = event.pathParameters.bundleId;
       const bundle = await bundleRepository.getbundleById(bundleId, event.user.id);
+      return bundle;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  updateBundle: async (event) => {
+    try {
+      const bundleId = event.pathParameters.bundleId;
+      const validatedData = validate(createCourseBundleSchema, JSON.parse(event.body));
+      const bundle = await bundleRepository.updateBundle(bundleId, validatedData, event.user.id);
+      return bundle;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  deleteBundle: async (event) => {
+    try {
+      const bundleId = event.pathParameters.bundleId;
+      const bundle = await bundleRepository.deleteBundle(bundleId, event.user.id);
       return bundle;
     } catch (error) {
       console.log("error", error);
@@ -3999,11 +4041,8 @@ var compose = (...middlewares) => (handler2) => {
 var handlerFun = async (event) => {
   try {
     const bundle = await bundleService.createCourseBundle(event);
-    if (bundle.is_draft) {
-      return handleResponse.success(bundle, "Bundle save to draft successfully", 200);
-    } else {
-      return handleResponse.success(bundle, "Bundle published successfully", 200);
-    }
+    return handleResponse.success(bundle, "Bundle published successfully", 200);
+    ``;
   } catch (err) {
     return handleResponse.error(err, "Error creating bundle", 400);
   }

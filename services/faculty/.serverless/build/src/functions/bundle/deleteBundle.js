@@ -3646,13 +3646,87 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/course/getFullFoldersIncourse.ts
-var getFullFoldersIncourse_exports = {};
-__export(getFullFoldersIncourse_exports, {
+// src/functions/bundle/deleteBundle.ts
+var deleteBundle_exports = {};
+__export(deleteBundle_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(getFullFoldersIncourse_exports);
+module.exports = __toCommonJS(deleteBundle_exports);
+
+// ../../shared/utils/validate.ts
+var validate = (schema, data) => {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.log("result>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", result);
+    const errors = result?.error?.errors?.map((e) => ({
+      field: e.path.join("."),
+      message: e.message
+    }));
+    throw { statusCode: 400, errors };
+  }
+  return result.data;
+};
+
+// ../../shared/validators/course.validator.ts
+var import_zod = require("zod");
+
+// ../../shared/constants/types.ts
+var MaterialType = /* @__PURE__ */ ((MaterialType2) => {
+  MaterialType2["VIDEO"] = "VIDEO";
+  MaterialType2["PDF"] = "PDF";
+  MaterialType2["LINK"] = "LINK";
+  MaterialType2["NOTES"] = "NOTES";
+  MaterialType2["IMAGE"] = "IMAGE";
+  MaterialType2["TEST"] = "TEST";
+  return MaterialType2;
+})(MaterialType || {});
+
+// ../../shared/validators/course.validator.ts
+var createCourseSchema = import_zod.z.object({
+  unique_id: import_zod.z.string(),
+  title: import_zod.z.string().min(3, "Course name min 3 characters"),
+  description: import_zod.z.string().min(10, "Description too short"),
+  category: import_zod.z.string(),
+  level: import_zod.z.enum(["Beginner", "Intermediate", "Advanced"]),
+  languages: import_zod.z.array(import_zod.z.string()).min(1, "Language is required"),
+  cover_image: import_zod.z.string().min(1, "Course image is required")
+});
+var updateCourseSchema = import_zod.z.object({
+  title: import_zod.z.string().min(3, "Course name min 3 characters"),
+  description: import_zod.z.string().min(10, "Description too short"),
+  category: import_zod.z.string(),
+  level: import_zod.z.enum(["Beginner", "Intermediate", "Advanced"]),
+  price: import_zod.z.number(),
+  duration: import_zod.z.string()
+});
+var createFolderSchema = import_zod.z.object({
+  title: import_zod.z.string(),
+  parent_id: import_zod.z.string().optional()
+});
+var uploadMaterialSchema = import_zod.z.object({
+  title: import_zod.z.string(),
+  type: import_zod.z.nativeEnum(MaterialType)
+});
+var createCourseBundleSchema = import_zod.z.object({
+  title: import_zod.z.string(),
+  description: import_zod.z.string(),
+  price: import_zod.z.number(),
+  finalPrice: import_zod.z.number(),
+  discount: import_zod.z.string(),
+  courses: import_zod.z.array(import_zod.z.string()),
+  coverImage: import_zod.z.string(),
+  enableCoupons: import_zod.z.boolean().optional(),
+  isDraft: import_zod.z.boolean().optional()
+});
+var addCoursePricingSchema = import_zod.z.object({
+  duration: import_zod.z.string().min(1, "Duration is required"),
+  price: import_zod.z.number(),
+  discount_type: import_zod.z.string().optional(),
+  discount: import_zod.z.number().optional(),
+  final_price: import_zod.z.number(),
+  enableCoupons: import_zod.z.boolean()
+});
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -3702,853 +3776,192 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
   }
 });
 
-// ../../shared/constants/types.ts
-var MaterialType = /* @__PURE__ */ ((MaterialType3) => {
-  MaterialType3["VIDEO"] = "VIDEO";
-  MaterialType3["PDF"] = "PDF";
-  MaterialType3["LINK"] = "LINK";
-  MaterialType3["NOTES"] = "NOTES";
-  MaterialType3["IMAGE"] = "IMAGE";
-  MaterialType3["TEST"] = "TEST";
-  return MaterialType3;
-})(MaterialType || {});
-
-// src/modules/course/course.repository.ts
-var facultyCourseRepository = {
-  createCourseWithBasicDetails: async (data, facultyId) => {
+// src/modules/bundle/bundle.repository.ts
+var bundleRepository = {
+  createCourseBundle: async (data, facultyId) => {
     try {
-      console.log("data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>####", data);
-      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").single();
-      const { data: course, error } = await supabase.from("courses").insert({
+      const { data: bundle, error } = await supabase.from("course_bundle").insert({
+        faculty_id: facultyId,
         title: data.title,
-        unique_id: data.unique_id,
         description: data.description,
-        category: data.category,
-        level: data.level,
-        languages: data.languages,
-        faculty_id: facultyId,
-        cover_image: data.cover_image,
-        video_asset_id: videoUploadProgress?.asset_id,
-        video_uploading_status: videoUploadProgress?.uploading_status,
-        video_upload_progress: videoUploadProgress?.upload_progress,
-        video_transcoding_progress: videoUploadProgress?.transcoding_progress
-      }).select().single();
-      if (error) throw new Error(error.message);
-      return course;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  uploadCourseIntroVideo: async (data, courseId, facultyId) => {
-    try {
-      await supabase.from("video_upload_progress").insert({
-        faculty_id: facultyId,
-        // asset_id: tpData.asset_id,
-        uploading_status: "uploading",
-        upload_progress: 0,
-        transcoding_progress: 0
-      });
-      return true;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  getMyCourses: async (facultyId, filter, search) => {
-    console.log("data", typeof filter);
-    console.log("facultyId", facultyId);
-    try {
-      const { data: courses, error } = await supabase.from("courses").select(`*`).eq("faculty_id", facultyId).eq("is_draft", filter).ilike("title", `%${search}%`).order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return courses;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  addCoursePricing: async (data, courseId, facultyId) => {
-    try {
-      console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data);
-      const { data: course, error } = await supabase.from("courses").update({
-        duration: data.duration,
         price: data.price,
-        discount: data.discount,
-        discount_type: data.discount_type,
-        final_price: data.final_price,
-        enableCoupons: data.enableCoupons
-      }).eq("id", courseId).select().single();
-      if (error) throw new Error(error.message);
-      return course;
+        final_price: data.finalPrice,
+        discount: Number(data?.discount) ?? null,
+        discount_type: "percentage",
+        image_url: data.coverImage ?? null,
+        enable_coupons: data.enableCoupons ?? false,
+        total_courses_count: data.courses.length,
+        is_draft: data.isDraft ?? false
+      }).select().single();
+      if (error) {
+        throw new Error(error.message);
+      }
+      const bundleId = bundle?.id;
+      const courseBundleMapping = data.courses.map((courseId) => ({
+        bundle_id: bundleId,
+        course_id: courseId
+      }));
+      const { data: courseBundleMappingData, error: courseBundleMappingError } = await supabase.from("course_bundle_courses").insert(courseBundleMapping);
+      if (courseBundleMappingError) {
+        throw new Error(courseBundleMappingError.message);
+      }
+      return { bundle };
     } catch (error) {
       throw new Error(error.message);
     }
   },
-  // getPreviewCourse: async (courseId: string) => {
-  //     try {
-  //         const { data: course, error: courseError } = await supabase
-  //             .from("courses")
-  //             .select("*")
-  //             .eq("id", courseId)
-  //             .single();
-  //         if (courseError) throw new Error(courseError.message);
-  //         if (!course) throw new Error("Course not found");
-  //         // Fetch materials to compute groupBy client-side
-  //         const { data: materials, error: matError } = await supabase
-  //             .from("course_materials")
-  //             .select("type, duration_sec")
-  //             .eq("course_id", courseId)
-  //             .eq("is_deleted", false);
-  //         if (matError) throw new Error(matError.message);
-  //         // Count tests
-  //         const { count: testCount, error: testError } = await supabase
-  //             .from("tests")
-  //             .select("*", { count: "exact", head: true })
-  //             .eq("course_id", courseId);
-  //         if (testError) throw new Error(testError.message);
-  //         // Compute groupBy in JS
-  //         let videoCount = 0;
-  //         let pdfCount = 0;
-  //         let imageCount = 0;
-  //         let totalDuration = 0;
-  //         materials?.forEach((item: any) => {
-  //             if (item.type === "VIDEO") { videoCount++; totalDuration += item.duration_sec || 0; }
-  //             if (item.type === "PDF") pdfCount++;
-  //             if (item.type === "IMAGE") imageCount++;
-  //         });
-  //         const hours = Math.floor(totalDuration / 3600);
-  //         const minutes = Math.floor((totalDuration % 3600) / 60);
-  //         return {
-  //             ...course,
-  //             content_inventory: {
-  //                 video_lessons: videoCount,
-  //                 pdf_resources: pdfCount,
-  //                 images: imageCount,
-  //                 tests: testCount ?? 0,
-  //                 total_contents: videoCount + pdfCount + imageCount + (testCount ?? 0),
-  //             },
-  //             video_duration: {
-  //                 total_seconds: totalDuration,
-  //                 formatted: `${hours} Hours ${minutes} Minutes`,
-  //             },
-  //         };
-  //     } catch (error: any) {
-  //         throw new Error(error.message);
-  //     }
-  // },
-  getPreviewCourse: async (courseId) => {
+  getMyBundles: async (facultyId, filter) => {
     try {
-      const [
-        { data: course, error: courseError },
-        { data: materials, error: matError },
-        { count: testCount, error: testError }
-      ] = await Promise.all([
-        supabase.from("courses").select("*").eq("id", courseId).single(),
-        supabase.from("course_materials").select("type, duration_sec, material_status").eq("course_id", courseId).eq("is_deleted", false).or("type.neq.VIDEO,material_status.neq.FAILED"),
-        // ✅ exclude FAILED videos
-        supabase.from("tests").select("*", { count: "exact", head: true }).eq("course_id", courseId).eq("is_deleted", false)
+      const { data: bundles, error } = await supabase.from("course_bundle").select(`
+        id,
+        title,
+        description,
+        price,
+        discount_price,
+        image_url,
+        is_active,
+        is_draft,
+        created_at,
+        final_price,
+        total_courses_count,
+
+            course_bundle_courses(count)
+
+      `).eq("faculty_id", facultyId).eq("is_draft", filter);
+      if (error) {
+        throw new Error(error.message);
+      }
+      return bundles;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  getbundleById: async (bundleId, facultyId) => {
+    try {
+      console.log("bundleId", bundleId);
+      const { data: bundle, error } = await supabase.from("course_bundle").select(`
+        id,
+        title,
+        description,
+        price,
+        discount,
+        image_url,
+        is_active,
+        is_draft,
+        created_at,
+        final_price,
+        enable_coupons,
+        total_courses_count,
+        course_bundle_courses (
+            courses (
+                id,
+                title
+            )
+        ),
+        course_bundle_courses_count:course_bundle_courses(count)
+    `).eq("id", bundleId).eq("faculty_id", facultyId).single();
+      if (error) {
+        throw new Error(error.message);
+      }
+      return bundle;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  updateBundle: async (bundleId, data, facultyId) => {
+    try {
+      const discount = data.discount != null ? Number(data.discount) : null;
+      const [{ data: bundle, error: bundleError }] = await Promise.all([
+        supabase.from("course_bundle").update({
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          final_price: data.finalPrice,
+          discount: Number(data.discount),
+          discount_type: "percentage",
+          image_url: data.coverImage ?? null,
+          enable_coupons: data.enableCoupons ?? false,
+          total_courses_count: data.courses.length,
+          is_draft: data.isDraft
+        }).eq("id", bundleId).eq("faculty_id", facultyId).select().single()
       ]);
-      if (courseError) throw new Error(courseError.message);
-      if (!course) throw new Error("Course not found");
-      if (matError) throw new Error(matError.message);
-      if (testError) throw new Error(testError.message);
-      let videoCount = 0;
-      let pdfCount = 0;
-      let imageCount = 0;
-      let totalDuration = 0;
-      materials?.forEach((item) => {
-        switch (item.type) {
-          case "VIDEO":
-            videoCount++;
-            totalDuration += item.duration_sec || 0;
-            break;
-          case "PDF":
-            pdfCount++;
-            break;
-          case "IMAGE":
-            imageCount++;
-            break;
-        }
-      });
-      const hours = Math.floor(totalDuration / 3600);
-      const minutes = Math.floor(totalDuration % 3600 / 60);
-      const seconds = totalDuration % 60;
-      const formatted = hours > 0 ? `${hours}h ${minutes}m` : minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-      return {
-        ...course,
-        content_inventory: {
-          video_lessons: videoCount,
-          pdf_resources: pdfCount,
-          images: imageCount,
-          tests: testCount ?? 0,
-          total_contents: videoCount + pdfCount + imageCount + (testCount ?? 0)
-        },
-        video_duration: {
-          total_seconds: totalDuration,
-          formatted
-        }
-      };
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  getCourseById: async (courseId) => {
-    try {
-      const { data: course, error } = await supabase.from("courses").select("*").eq("id", courseId).single();
-      if (error) throw new Error(error.message);
-      if (!course) throw new Error("Course not found");
-      return course;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  updateCourseDetails: async (data, courseId, facultyId) => {
-    try {
-      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").single();
-      const { data: course, error } = await supabase.from("courses").update({
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        level: data.level,
-        languages: data.languages,
-        cover_image: data.cover_image,
-        video_asset_id: videoUploadProgress?.asset_id,
-        video_uploading_status: videoUploadProgress?.uploading_status,
-        video_upload_progress: videoUploadProgress?.upload_progress,
-        video_transcoding_progress: videoUploadProgress?.transcoding_progress
-      }).eq("id", courseId).eq("faculty_id", facultyId).select().single();
-      if (error) throw new Error(error.message);
-      if (!course) throw new Error("Course not found");
-      return course;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  // publishCourse: async (courseId: string, facultyId: string) => {
-  //     try {
-  //         // 1. Check course ownership
-  //         const { data: course, error: courseError } = await supabase
-  //             .from("courses")
-  //             .select("id, faculty_id")
-  //             .eq("id", courseId)
-  //             .eq("faculty_id", facultyId)
-  //             .single()
-  //         if (courseError) throw new Error(courseError.message)
-  //         if (!course) throw new Error("Course not found")
-  //         // 2. Get all videos
-  //         const { data: materials, error: matError } = await supabase
-  //             .from("course_materials")
-  //             .select("id, title, video_uploading_status")
-  //             .eq("course_id", courseId)
-  //             .eq("is_deleted", false)
-  //             .eq("type", "VIDEO")
-  //         if (matError) throw new Error(matError.message)
-  //         // 3. Check FAILED first — highest priority ❌
-  //         const failedVideos = materials?.filter(
-  //             (m: any) => m.video_uploading_status === "FAILED"
-  //         ) ?? []
-  //         // ❌ ANY failed → abort everything
-  //         // No pending_publish, no auto publish
-  //         // User must fix failed videos first
-  //         if (failedVideos.length > 0) {
-  //             return {
-  //                 course: null,
-  //                 status: 'failed',
-  //                 message: "Failed to publish course. Please check the course materials. Some videos failed to process.",
-  //             }
-  //         }
-  //         // 4. Check processing — only if NO failures
-  //         const processingVideos = materials?.filter(
-  //             (m: any) => m.video_uploading_status !== "COMPLETED"
-  //         ) ?? []
-  //         // ⏳ Still processing → set pending_publish
-  //         if (processingVideos.length > 0) {
-  //             const { data: updated, error: updateError } = await supabase
-  //                 .from("courses")
-  //                 .update({ pending_publish: true })
-  //                 .eq("id", courseId)
-  //                 .select()
-  //                 .single()
-  //             if (updateError) throw new Error(updateError.message)
-  //             return {
-  //                 course: updated,
-  //                 status: 'pending',
-  //                 message: `Course will publish automatically when all videos are ready.`,
-  //             }
-  //         }
-  //         // 5. All COMPLETED → publish now ✅
-  //         const { data: updated, error: updateError } = await supabase
-  //             .from("courses")
-  //             .update({
-  //                 is_draft: false,
-  //                 pending_publish: false,
-  //             })
-  //             .eq("id", courseId)
-  //             .select()
-  //             .single()
-  //         if (updateError) throw new Error(updateError.message)
-  //         return {
-  //             course: updated,
-  //             status: 'published',
-  //             message: 'Course published successfully! 🎉',
-  //         }
-  //     } catch (error: any) {
-  //         throw new Error(error.message)
-  //     }
-  // },
-  publishCourse: async (courseId, facultyId) => {
-    try {
-      const { data: course, error: courseError } = await supabase.from("courses").select("id, faculty_id, title, video_uploading_status").eq("id", courseId).eq("faculty_id", facultyId).single();
-      if (courseError) throw new Error(courseError.message);
-      if (!course) throw new Error("Course not found");
-      const { data: materials, error: matError } = await supabase.from("course_materials").select("id, title, video_uploading_status").eq("course_id", courseId).eq("is_deleted", false).eq("type", "VIDEO");
-      if (matError) throw new Error(matError.message);
-      const introFailed = course.video_uploading_status === "FAILED" /* FAILED */;
-      const introProcessing = course.video_uploading_status !== "COMPLETED" /* COMPLETED */ && course.video_uploading_status !== "FAILED" /* FAILED */ && course.video_uploading_status !== null;
-      const failedVideos = [
-        // Failed material videos
-        ...materials?.filter(
-          (m) => m.video_uploading_status === "FAILED" /* FAILED */
-        ) ?? [],
-        // Failed intro video ✅
-        ...introFailed ? [{
-          id: courseId,
-          title: "Intro Video"
-        }] : []
-      ];
-      const processingVideos = [
-        // Processing material videos
-        ...materials?.filter(
-          (m) => m.video_uploading_status !== "COMPLETED" /* COMPLETED */ && m.video_uploading_status !== "FAILED" /* FAILED */
-        ) ?? [],
-        // Processing intro video ✅
-        ...introProcessing ? [{
-          id: courseId,
-          title: "Intro Video"
-        }] : []
-      ];
-      if (failedVideos.length > 0) {
-        return {
-          course: null,
-          status: "failed",
-          message: "Course cannot be published because some videos failed to process. Please re-upload them and try again."
-        };
+      if (bundleError) throw new Error(bundleError.message);
+      const { error: deleteError } = await supabase.from("course_bundle_courses").delete().eq("bundle_id", bundleId);
+      if (deleteError) throw new Error(deleteError.message);
+      if (data.courses.length > 0) {
+        const courseBundleMapping = data.courses.map((courseId) => ({
+          bundle_id: bundleId,
+          course_id: courseId
+        }));
+        const { error: insertError } = await supabase.from("course_bundle_courses").insert(courseBundleMapping);
+        if (insertError) throw new Error(insertError.message);
       }
-      console.log("processingVideos", processingVideos);
-      if (processingVideos.length > 0) {
-        const { data: updated2, error: updateError2 } = await supabase.from("courses").update({ pending_publish: true }).eq("id", courseId).select().single();
-        if (updateError2) throw new Error(updateError2.message);
-        return {
-          // course: updated,
-          status: "pending",
-          message: "Course will publish automatically when all videos are ready."
-        };
+      return { bundle };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  deleteBundle: async (bundleId, facultyId) => {
+    try {
+      const { error } = await supabase.from("course_bundle").delete().eq("id", bundleId).eq("faculty_id", facultyId);
+      if (error) {
+        throw new Error(error.message);
       }
-      const { data: updated, error: updateError } = await supabase.from("courses").update({
-        is_draft: false,
-        pending_publish: false
-      }).eq("id", courseId).select().single();
-      if (updateError) throw new Error(updateError.message);
-      return {
-        // course: updated,
-        status: "published",
-        message: "Course published successfully! \u{1F389}"
-      };
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  createFolder: async (data, courseId, facultyId) => {
-    try {
-      console.log("folder data #######################################################################", data);
-      const { data: course, error: courseError } = await supabase.from("courses").select("id").eq("id", courseId).eq("faculty_id", facultyId).single();
-      if (courseError) throw new Error(courseError.message);
-      if (!course) throw new Error("Course not found");
-      const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null);
-      const { data: folder, error } = await supabase.from("course_folders").insert({
-        course_id: courseId,
-        parent_id: data.parent_id ?? null,
-        sort_order: nextSortOrder,
-        title: data.title || "Untitled Folder"
-      }).select().single();
-      if (error) throw new Error(error.message);
-      if (!folder) throw new Error("Folder not created");
-      return folder;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  updateFolder: async (data, folderId) => {
-    try {
-      const { data: folder, error } = await supabase.from("course_folders").update({ title: data.title }).eq("id", folderId).select().single();
-      if (error) throw new Error(error.message);
-      if (!folder) throw new Error("Folder not found");
-      return folder;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  deleteFolder: async (folderId) => {
-    try {
-      const { data: folder, error } = await supabase.from("course_folders").update({ is_deleted: true }).eq("id", folderId).select().single();
-      if (error) throw new Error(error.message);
-      if (!folder) throw new Error("Folder not found");
-      return folder;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  addMaterialToFolder: async (data, courseId, facultyId) => {
-    try {
-      const { data: course, error: courseError } = await supabase.from("courses").select("id").eq("id", courseId).eq("faculty_id", facultyId).single();
-      if (courseError) throw new Error(courseError.message);
-      if (!course) throw new Error("Course not found");
-      if (data.parent_id) {
-        const { data: folder, error: folderError } = await supabase.from("course_folders").select("id").eq("id", data.parent_id).eq("course_id", courseId).single();
-        if (folderError) throw new Error(folderError.message);
-        if (!folder) throw new Error("Folder not found");
-      }
-      const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null);
-      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "module").single();
-      let materialStatus = "";
-      if (data?.type === "VIDEO" || data?.type === "TEST") {
-        materialStatus = "PENDING" /* PENDING */;
-      } else {
-        materialStatus = "COMPLETED" /* COMPLETED */;
-      }
-      const { data: material, error } = await supabase.from("course_materials").insert({
-        unique_id: data.unique_id,
-        course_id: courseId,
-        folder_id: data.parent_id ?? null,
-        sort_order: nextSortOrder,
-        material_status: materialStatus,
-        title: data.title,
-        type: data.type,
-        file_url: data.file_url ?? null,
-        external_url: data.external_url ?? null,
-        file_size: data.file_size ?? null,
-        video_asset_id: videoUploadProgress?.asset_id,
-        video_uploading_status: videoUploadProgress?.uploading_status,
-        video_upload_progress: videoUploadProgress?.upload_progress,
-        video_transcoding_progress: videoUploadProgress?.transcoding_progress
-      }).select().single();
-      if (error) throw new Error(error.message);
-      if (!material) throw new Error("Material not created");
-      return material;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  updateMaterial: async (data, materialId) => {
-    try {
-      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "module").single();
-      const { data: material, error } = await supabase.from("course_materials").update({
-        title: data.title,
-        type: data.type,
-        file_url: data.file_url ?? null,
-        external_url: data.external_url ?? null,
-        file_size: data.file_size ?? null,
-        video_asset_id: videoUploadProgress?.asset_id,
-        video_uploading_status: videoUploadProgress?.uploading_status,
-        video_upload_progress: videoUploadProgress?.upload_progress,
-        video_transcoding_progress: videoUploadProgress?.transcoding_progress
-      }).eq("id", materialId).select().single();
-      if (error) throw new Error(error.message);
-      if (!material) throw new Error("Material not created");
-      return material;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  getAllProcessingMaterial: async (facultyId) => {
-    try {
-      const { data: materials, error } = await supabase.from("course_materials").select(`
-                    id, title, material_status, transcoding_progress, created_at,
-                    courses ( id, title ),
-                    course_folders ( id, name )
-                `).in("material_status", ["PENDING", "PROCESSING"]).eq("type", "VIDEO").eq("is_deleted", false).eq("courses.faculty_id", facultyId).order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      if (!materials) throw new Error("Material not found");
-      return materials;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  deleteMaterial: async (materialId) => {
-    try {
-      const { data: material, error } = await supabase.from("course_materials").update({ is_deleted: true }).eq("id", materialId).select().single();
-      if (error) throw new Error(error.message);
-      if (!material) throw new Error("Material not found");
-      if (material?.type === "TEST") {
-        const { error: testError } = await supabase.from("tests").update({ is_deleted: true }).eq("unique_id", material.unique_id).select().single();
-        if (testError) throw new Error(testError.message);
-      }
-      return material;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  getCourseContent: async (courseId, parentId) => {
-    console.log("content data $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-    try {
-      let folderQuery = supabase.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false).order("sort_order", { ascending: true });
-      let materialQuery = supabase.from("course_materials").select("*").eq("is_deleted", false).eq("course_id", courseId).order("sort_order", { ascending: true });
-      if (parentId === null) {
-        folderQuery = folderQuery.is("parent_id", null);
-        materialQuery = materialQuery.is("folder_id", null);
-      } else {
-        folderQuery = folderQuery.eq("parent_id", parentId);
-        materialQuery = materialQuery.eq("folder_id", parentId);
-      }
-      const [{ data: folders, error: folderError }, { data: materials, error: matError }] = await Promise.all([folderQuery, materialQuery]);
-      if (folderError) throw new Error(folderError.message);
-      if (matError) throw new Error(matError.message);
-      const taggedFolders = (folders ?? []).map((f) => ({ ...f, item_type: "folder" }));
-      const taggedMaterials = (materials ?? []).map((m) => ({ ...m, item_type: "material" }));
-      return [...taggedFolders, ...taggedMaterials].sort((a, b) => a.sort_order - b.sort_order);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  getCourseReviews: async (courseId, page = 1, limit = 10) => {
-    try {
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
-      const { data: reviews, error, count } = await supabase.from("reviews").select(`
-                *,
-                student:profiles!reviews_student_id_fkey (
-                    id, name, avatar_url
-                ),
-                review_replies (
-                    id,
-                    reply,
-                    created_at,
-                    updated_at,
-                    is_deleted,
-                    faculty:profiles!review_replies_faculty_id_fkey (
-                        id, name, avatar_url
-                    )
-                )
-            `, { count: "exact" }).eq("course_id", courseId).eq("is_approved", true).eq("review_replies.is_deleted", false).order("created_at", { ascending: false }).range(from, to);
-      if (error) throw new Error(error.message);
-      if (!reviews) throw new Error("Reviews not found");
-      const { data: allRatings, error: ratingError } = await supabase.from("reviews").select("rating").eq("course_id", courseId).eq("is_approved", true);
-      if (ratingError) throw new Error(ratingError.message);
-      const averageRating = allRatings && allRatings.length > 0 ? Math.round(
-        allRatings.reduce((sum, r) => sum + (r.rating ?? 0), 0) / allRatings.length * 10
-      ) / 10 : 0;
-      const ratingBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      (allRatings ?? []).forEach((r) => {
-        if (r.rating >= 1 && r.rating <= 5) {
-          ratingBreakdown[r.rating]++;
-        }
-      });
-      const totalPages = Math.ceil((count ?? 0) / limit);
-      return {
-        reviews,
-        average_rating: averageRating,
-        total_reviews: allRatings?.length ?? 0,
-        rating_breakdown: ratingBreakdown,
-        pagination: {
-          total: count ?? 0,
-          total_pages: totalPages,
-          current_page: page,
-          limit,
-          has_next: page < totalPages,
-          has_prev: page > 1
-        }
-      };
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  addReviewReply: async (reviewId, reply, facultyId) => {
-    try {
-      const { data: review } = await supabase.from("reviews").select("*").eq("id", reviewId).eq("is_approved", true).single();
-      if (!review) throw new Error("Review not found");
-      const { data: course } = await supabase.from("courses").select("*").eq("id", review.course_id).eq("faculty_id", facultyId).single();
-      if (!course) throw new Error("Not your course review");
-      const { data: result } = await supabase.from("review_replies").insert({
-        review_id: reviewId,
-        reply,
-        faculty_id: facultyId
-      }).select("*").single();
-      if (!result) throw new Error("Failed to add reply");
-      return reply;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  getFullFoldersInCourse: async (courseId, facultyId) => {
-    try {
-      const { data: course } = await supabase.from("courses").select("*").eq("id", courseId).eq("faculty_id", facultyId).single();
-      if (!course) throw new Error("Not your course");
-      const { data: folders } = await supabase.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false);
-      if (!folders) throw new Error("No folders found");
-      return folders;
+      return { success: true };
     } catch (error) {
       throw new Error(error.message);
     }
   }
 };
-async function getNextSortOrder(courseId, parentId) {
-  let folderQuery = supabase.from("course_folders").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
-  let materialQuery = supabase.from("course_materials").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
-  if (parentId === null) {
-    folderQuery = folderQuery.is("parent_id", null);
-    materialQuery = materialQuery.is("folder_id", null);
-  } else {
-    folderQuery = folderQuery.eq("parent_id", parentId);
-    materialQuery = materialQuery.eq("folder_id", parentId);
-  }
-  const [{ data: lastFolder }, { data: lastMaterial }] = await Promise.all([folderQuery, materialQuery]);
-  const lastFolderOrder = lastFolder?.[0]?.sort_order ?? 0;
-  const lastMaterialOrder = lastMaterial?.[0]?.sort_order ?? 0;
-  return Math.max(lastFolderOrder, lastMaterialOrder) + 1;
-}
 
-// ../../shared/utils/validate.ts
-var validate = (schema, data) => {
-  const result = schema.safeParse(data);
-  if (!result.success) {
-    console.log("result>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", result);
-    const errors = result?.error?.errors?.map((e) => ({
-      field: e.path.join("."),
-      message: e.message
-    }));
-    throw { statusCode: 400, errors };
-  }
-  return result.data;
-};
-
-// ../../shared/validators/course.validator.ts
-var import_zod = require("zod");
-var createCourseSchema = import_zod.z.object({
-  unique_id: import_zod.z.string(),
-  title: import_zod.z.string().min(3, "Course name min 3 characters"),
-  description: import_zod.z.string().min(10, "Description too short"),
-  category: import_zod.z.string(),
-  level: import_zod.z.enum(["Beginner", "Intermediate", "Advanced"]),
-  languages: import_zod.z.array(import_zod.z.string()).min(1, "Language is required"),
-  cover_image: import_zod.z.string().min(1, "Course image is required")
-});
-var updateCourseSchema = import_zod.z.object({
-  title: import_zod.z.string().min(3, "Course name min 3 characters"),
-  description: import_zod.z.string().min(10, "Description too short"),
-  category: import_zod.z.string(),
-  level: import_zod.z.enum(["Beginner", "Intermediate", "Advanced"]),
-  price: import_zod.z.number(),
-  duration: import_zod.z.string()
-});
-var createFolderSchema = import_zod.z.object({
-  title: import_zod.z.string(),
-  parent_id: import_zod.z.string().optional()
-});
-var uploadMaterialSchema = import_zod.z.object({
-  title: import_zod.z.string(),
-  type: import_zod.z.nativeEnum(MaterialType)
-});
-var createCourseBundleSchema = import_zod.z.object({
-  title: import_zod.z.string(),
-  description: import_zod.z.string(),
-  price: import_zod.z.number(),
-  finalPrice: import_zod.z.number(),
-  discount: import_zod.z.string(),
-  courses: import_zod.z.array(import_zod.z.string()),
-  coverImage: import_zod.z.string(),
-  enableCoupons: import_zod.z.boolean().optional(),
-  isDraft: import_zod.z.boolean().optional()
-});
-var addCoursePricingSchema = import_zod.z.object({
-  duration: import_zod.z.string().min(1, "Duration is required"),
-  price: import_zod.z.number(),
-  discount_type: import_zod.z.string().optional(),
-  discount: import_zod.z.number().optional(),
-  final_price: import_zod.z.number(),
-  enableCoupons: import_zod.z.boolean()
-});
-
-// src/modules/course/course.service.ts
-var facultyCourseService = {
-  createCourseWithBasicDetails: async (event) => {
+// src/modules/bundle/bundle.service.ts
+var bundleService = {
+  createCourseBundle: async (event) => {
     try {
-      console.log("validatedData>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", JSON.parse(event.body));
-      const validatedData = validate(createCourseSchema, JSON.parse(event.body));
-      console.log("validatedData>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", validatedData);
-      const course = await facultyCourseRepository.createCourseWithBasicDetails(validatedData, event.user.id);
-      return course;
+      const validatedData = validate(createCourseBundleSchema, JSON.parse(event.body));
+      const bundle = await bundleRepository.createCourseBundle(validatedData, event.user.id);
+      return bundle;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
     }
   },
-  uploadCourseIntroVideo: async (event) => {
+  getMyBundles: async (event) => {
     try {
-      const result = await facultyCourseRepository.uploadCourseIntroVideo(event.body, event.pathParameters.courseId, event.user.id);
-      return result;
+      const filter = event.queryStringParameters.filter;
+      const bundles = await bundleRepository.getMyBundles(event.user.id, filter);
+      return bundles;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
     }
   },
-  addCoursePricing: async (event) => {
+  getBundleById: async (event) => {
     try {
-      const validatedData = validate(addCoursePricingSchema, JSON.parse(event.body));
-      const result = await facultyCourseRepository.addCoursePricing(validatedData, event.pathParameters.courseId, event.user.id);
-      return result;
+      const bundleId = event.pathParameters.bundleId;
+      const bundle = await bundleRepository.getbundleById(bundleId, event.user.id);
+      return bundle;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
     }
   },
-  getMyCourses: async (event) => {
+  updateBundle: async (event) => {
     try {
-      console.log("hasfhasf??????????????????????????????", event.queryStringParameters);
-      const filter = event.queryStringParameters.filter === "true";
-      const search = event.queryStringParameters.search || "";
-      console.log("filter>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", filter);
-      const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, search);
-      return courses;
+      const bundleId = event.pathParameters.bundleId;
+      const validatedData = validate(createCourseBundleSchema, JSON.parse(event.body));
+      const bundle = await bundleRepository.updateBundle(bundleId, validatedData, event.user.id);
+      return bundle;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
     }
   },
-  getPreviewCourse: async (event) => {
+  deleteBundle: async (event) => {
     try {
-      const course = await facultyCourseRepository.getPreviewCourse(event.pathParameters.courseId);
-      return course;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  getCourseById: async (event) => {
-    try {
-      const course = await facultyCourseRepository.getCourseById(event.pathParameters.courseId);
-      return course;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  updateCourseDetails: async (event) => {
-    try {
-      const validatedData = validate(createCourseSchema, JSON.parse(event.body));
-      const course = await facultyCourseRepository.updateCourseDetails(validatedData, event.pathParameters.courseId, event.user.id);
-      return course;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  publishCourse: async (event) => {
-    try {
-      const course = await facultyCourseRepository.publishCourse(event.pathParameters.courseId, event.user.id);
-      return course;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  createFolderInCourse: async (event) => {
-    try {
-      const validatedData = validate(createFolderSchema, JSON.parse(event.body));
-      const folder = await facultyCourseRepository.createFolder(validatedData, event.pathParameters.courseId, event.user.id);
-      return folder;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  updateFolder: async (event) => {
-    try {
-      const validatedData = validate(createFolderSchema, JSON.parse(event.body));
-      const folder = await facultyCourseRepository.updateFolder(validatedData, event.pathParameters.folderId);
-      return folder;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  deleteFolder: async (event) => {
-    try {
-      const folder = await facultyCourseRepository.deleteFolder(event.pathParameters.folderId);
-      return folder;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  addMaterialToFolder: async (event) => {
-    try {
-      const material = await facultyCourseRepository.addMaterialToFolder(JSON.parse(event.body), event.pathParameters.courseId, event.user.id);
-      return material;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  updateMaterial: async (event) => {
-    try {
-      const material = await facultyCourseRepository.updateMaterial(JSON.parse(event.body), event.pathParameters.materialId);
-      return material;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  getAllProcessingMaterial: async (event) => {
-    try {
-      const material = await facultyCourseRepository.getAllProcessingMaterial(event.user.id);
-      return material;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  deleteMaterial: async (event) => {
-    try {
-      const material = await facultyCourseRepository.deleteMaterial(event.pathParameters.materialId);
-      return material;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  getCourseContent: async (event) => {
-    try {
-      console.log("event}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}", event);
-      const courseId = event.pathParameters.courseId;
-      const parentId = event.queryStringParameters?.parentId || null;
-      const content = await facultyCourseRepository.getCourseContent(courseId, parentId);
-      return content;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  getCourseReviews: async (event) => {
-    try {
-      const courseId = event.pathParameters.courseId;
-      const { page, limit } = event.queryStringParameters;
-      const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit);
-      return reviews;
-    } catch (error) {
-      throw new Error(error);
-    }
-  },
-  addReviewReply: async (event) => {
-    try {
-      const { reply } = JSON.parse(event.body);
-      const result = await facultyCourseRepository.addReviewReply(event.pathParameters.reviewId, reply, event.user.id);
-      return result;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
-  },
-  getFullFoldersInCourse: async (event) => {
-    try {
-      const folders = await facultyCourseRepository.getFullFoldersInCourse(event.pathParameters.courseId, event.user.id);
-      return folders;
+      const bundleId = event.pathParameters.bundleId;
+      const bundle = await bundleRepository.deleteBundle(bundleId, event.user.id);
+      return bundle;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
@@ -4624,13 +4037,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/course/getFullFoldersIncourse.ts
+// src/functions/bundle/deleteBundle.ts
 var handlerFun = async (event) => {
   try {
-    const course = await facultyCourseService.getFullFoldersInCourse(event);
-    return handleResponse.success(course, "Full folders in course fetched successfully", 200);
+    const bundle = await bundleService.deleteBundle(event);
+    return handleResponse.success(bundle, "Bundle deleted successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error fetching full folders in course", 400);
+    return handleResponse.error(err, "Error deleting bundle", 400);
   }
 };
 var handler = compose(
@@ -4643,4 +4056,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=getFullFoldersIncourse.js.map
+//# sourceMappingURL=deleteBundle.js.map

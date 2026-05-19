@@ -594,6 +594,22 @@ functions:
           method: get
           cors:   true
 
+  updateBundle:
+    handler: src/functions/bundle/updateBundle.handler
+    events:
+      - http:
+          path:   faculty/bundle/{bundleId}
+          method: patch
+          cors:   true
+
+  deleteBundle:
+    handler: src/functions/bundle/deleteBundle.handler
+    events:
+      - http:
+          path:   faculty/bundle/{bundleId}
+          method: delete
+          cors:   true
+
   # ── Students ─────────────────────────────────────────────────
   getAllStudents:
     handler: src/functions/students/getAllStudents.handler

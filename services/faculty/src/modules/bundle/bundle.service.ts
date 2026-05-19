@@ -64,4 +64,27 @@ export const bundleService = {
         }
     },
 
+    updateBundle: async (event: any) => {
+        try {
+            const bundleId = event.pathParameters.bundleId;
+            const validatedData = validate(createCourseBundleSchema, JSON.parse(event.body));
+            const bundle = await bundleRepository.updateBundle(bundleId, validatedData, event.user.id);
+            return bundle;
+        } catch (error: any) {
+            console.log("error", error);
+            throw new Error(error)
+        }
+    },
+
+    deleteBundle: async (event: any) => {
+        try {
+            const bundleId = event.pathParameters.bundleId;
+            const bundle = await bundleRepository.deleteBundle(bundleId, event.user.id);
+            return bundle;
+        } catch (error: any) {
+            console.log("error", error);
+            throw new Error(error)
+        }
+    },
+
 }

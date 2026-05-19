@@ -45,13 +45,13 @@ export const createCourseBundleSchema = z.object({
     title: z.string(),
     description: z.string(),
     price: z.number(),
-    discount_type: z.string(),
-    discount_price: z.number(),
-    discount: z.number(),
-    course_ids: z.array(z.string()),
-    img_url: z.string(),
-    is_new: z.boolean(),
-    is_draft: z.boolean(),
+    finalPrice: z.number(),
+    discount: z.string(),
+    courses: z.array(z.string()),
+    coverImage: z.string(),
+    enableCoupons: z.boolean().optional(),
+    isDraft: z.boolean().optional(),
+
 });
 
 

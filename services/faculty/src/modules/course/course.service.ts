@@ -71,12 +71,14 @@ export const facultyCourseService = {
 
         try {
 
+            console.log("hasfhasf??????????????????????????????", event.queryStringParameters)
 
             const filter = event.queryStringParameters.filter === "true"
+            const search = event.queryStringParameters.search || ""
 
             console.log("filter>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", filter);
 
-            const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter);
+            const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, search);
 
             return courses;
 

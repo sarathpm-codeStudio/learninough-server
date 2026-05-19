@@ -12,86 +12,47 @@ export const bundleRepository = {
         try {
 
             // create new bundle
-            if (data.is_new) {
-
-                const { data: bundle, error } = await supabase.from("course_bundles").insert({
-
-                    faculty_id: facultyId,
-                    title: data.title,
-                    description: data.description,
-                    price: data.price,
-                    discount_type: data?.discount_type ?? null,
-                    discount_price: data?.discount_price ?? null,
-                    discount: data?.discount ?? null,
-                    img_url: data.img_url ?? null,
-                    is_draft: data.is_draft,
-                })
-                    .select()
-                    .single();
-
-                if (error) {
-                    throw new Error(error.message)
-                }
-
-                const bundleId = bundle?.id;
-
-                const courseBundleMapping = data.course_ids.map((courseId) => ({
-                    bundle_id: bundleId,
-                    course_id: courseId,
-                }));
-
-                const { data: courseBundleMappingData, error: courseBundleMappingError } = await supabase.from("course_bundle_courses").insert(courseBundleMapping);
-
-                if (courseBundleMappingError) {
-                    throw new Error(courseBundleMappingError.message)
-                }
-
-                return { bundle, is_draft: data.is_draft };
 
 
+            const { data: bundle, error } = await supabase.from("course_bundle").insert({
 
-            } else {
+                faculty_id: facultyId,
+                title: data.title,
+                description: data.description,
+                price: data.price,
+                final_price: data.finalPrice,
+                discount: Number(data?.discount) ?? null,
+                discount_type: "percentage",
+                image_url: data.coverImage ?? null,
+                enable_coupons: data.enableCoupons ?? false,
+                total_courses_count: data.courses.length,
+                is_draft: data.isDraft ?? false,
+            })
+                .select()
+                .single();
 
-                // update drafted bundle
-
-                const { data: bundle, error } = await supabase.from("course_bundles").update({
-
-                    title: data.title,
-                    description: data.description,
-                    price: data.price,
-                    discount_type: data?.discount_type ?? null,
-                    discount_price: data?.discount_price ?? null,
-                    discount: data?.discount ?? null,
-                    img_url: data.img_url ?? null,
-                    is_draft: data.is_draft,
-                })
-                    .eq("id", data.bundle_id)
-                    .select()
-                    .single();
-
-                if (error) {
-                    throw new Error(error.message)
-                }
-
-                const bundleId = bundle?.id;
-
-                const courseBundleMapping = data.course_ids.map((courseId) => ({
-                    bundle_id: bundleId,
-                    course_id: courseId,
-                }));
-
-                const { data: courseBundleMappingData, error: courseBundleMappingError } = await supabase.from("course_bundle_courses").update(courseBundleMapping);
-
-                if (courseBundleMappingError) {
-
-                    throw new Error(courseBundleMappingError.message)
-                }
-
-                return { bundle, is_draft: data.is_draft };
-
-
-
+            if (error) {
+                throw new Error(error.message)
             }
+
+            const bundleId = bundle?.id;
+
+            const courseBundleMapping = data.courses.map((courseId) => ({
+                bundle_id: bundleId,
+                course_id: courseId,
+            }));
+
+            const { data: courseBundleMappingData, error: courseBundleMappingError } = await supabase.from("course_bundle_courses").insert(courseBundleMapping);
+
+            if (courseBundleMappingError) {
+                throw new Error(courseBundleMappingError.message)
+            }
+
+            return { bundle };
+
+
+
+
 
         } catch (error: any) {
 
@@ -115,6 +76,8 @@ export const bundleRepository = {
         is_active,
         is_draft,
         created_at,
+        final_price,
+        total_courses_count,
 
             course_bundle_courses(count)
 
@@ -135,6 +98,7 @@ export const bundleRepository = {
 
     getbundleById: async (bundleId: string, facultyId: string) => {
         try {
+            console.log("bundleId", bundleId);
             const { data: bundle, error } = await supabase
                 .from("course_bundle")
                 .select(`
@@ -142,27 +106,25 @@ export const bundleRepository = {
         title,
         description,
         price,
-        discount_price,
+        discount,
         image_url,
         is_active,
         is_draft,
         created_at,
-
+        final_price,
+        enable_coupons,
+        total_courses_count,
         course_bundle_courses (
-      courses (
-        id,
-        title,
-        thumbnail_url
-      )
-    ),
-
-            course_bundle_courses(count)
-
-      `)
+            courses (
+                id,
+                title
+            )
+        ),
+        course_bundle_courses_count:course_bundle_courses(count)
+    `)
                 .eq("id", bundleId)
                 .eq("faculty_id", facultyId)
                 .single();
-
             if (error) {
                 throw new Error(error.message);
             }
@@ -170,6 +132,82 @@ export const bundleRepository = {
             return bundle;
 
         } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
+    updateBundle: async (bundleId: string, data: CourseBundleData, facultyId: string) => {
+        try {
+            // Fix: proper discount handling
+            const discount = data.discount != null ? Number(data.discount) : null;
+
+            const [{ data: bundle, error: bundleError }] = await Promise.all([
+                supabase
+                    .from("course_bundle")
+                    .update({
+                        title: data.title,
+                        description: data.description,
+                        price: data.price,
+                        final_price: data.finalPrice,
+                        discount: Number(data.discount),
+                        discount_type: "percentage",
+                        image_url: data.coverImage ?? null,
+                        enable_coupons: data.enableCoupons ?? false,
+                        total_courses_count: data.courses.length,
+                        is_draft: data.isDraft,
+                    })
+                    .eq("id", bundleId)
+                    .eq("faculty_id", facultyId)
+                    .select()
+                    .single(),
+            ]);
+
+            // Fix: check bundle update error
+            if (bundleError) throw new Error(bundleError.message);
+
+            // Fix: delete + insert is cleaner than delete + upsert
+            const { error: deleteError } = await supabase
+                .from("course_bundle_courses")
+                .delete()
+                .eq("bundle_id", bundleId);
+
+            if (deleteError) throw new Error(deleteError.message);
+
+            // Only insert if courses exist
+            if (data.courses.length > 0) {
+                const courseBundleMapping = data.courses.map((courseId) => ({
+                    bundle_id: bundleId,
+                    course_id: courseId,
+                }));
+
+                const { error: insertError } = await supabase
+                    .from("course_bundle_courses")
+                    .insert(courseBundleMapping);
+
+                if (insertError) throw new Error(insertError.message);
+            }
+
+            return { bundle };
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
+    deleteBundle: async (bundleId: string, facultyId: string) => {
+        try {
+            const { error } = await supabase
+                .from("course_bundle")
+                .delete()
+                .eq("id", bundleId)
+                .eq("faculty_id", facultyId);
+
+            if (error) {
+                throw new Error(error.message);
+            }
+            return { success: true };
+
+        } catch (error: any) {
+
             throw new Error(error.message);
         }
     },

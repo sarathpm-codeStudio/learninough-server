@@ -8,17 +8,14 @@ export const handlerFun = async (event: any) => {
 
     try {
 
-        const bundle = await bundleService.createCourseBundle(event);
+        const bundles = await bundleService.updateBundle(event);
 
+        return handleResponse.success(bundles, "Bundle updated successfully", 200);
 
-
-        return handleResponse.success(bundle, "Bundle published successfully", 200);
-
-        ``
 
     } catch (err: any) {
 
-        return handleResponse.error(err, "Error creating bundle", 400);
+        return handleResponse.error(err, "Error updating bundle", 400);
     }
 };
 

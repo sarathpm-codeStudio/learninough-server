@@ -115,7 +115,7 @@ export const facultyCourseRepository = {
         }
     },
 
-    getMyCourses: async (facultyId: string, filter: boolean) => {
+    getMyCourses: async (facultyId: string, filter: boolean, search: string) => {
         console.log("data", typeof filter);
         console.log("facultyId", facultyId);
         try {
@@ -124,6 +124,7 @@ export const facultyCourseRepository = {
                 .select(`*`)
                 .eq("faculty_id", facultyId)
                 .eq("is_draft", filter)
+                .ilike("title", `%${search}%`)
                 .order("created_at", { ascending: false });
 
             if (error) throw new Error(error.message);
