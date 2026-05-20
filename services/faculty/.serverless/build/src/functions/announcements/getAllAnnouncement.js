@@ -2190,16 +2190,16 @@ var require_extension = __commonJS({
         throw new SyntaxError("Unexpected end of input");
       }
       if (end === -1) end = i;
-      const token2 = header.slice(start, end);
+      const token = header.slice(start, end);
       if (extensionName === void 0) {
-        push(offers, token2, params);
+        push(offers, token, params);
       } else {
         if (paramName === void 0) {
-          push(params, token2, true);
+          push(params, token, true);
         } else if (mustUnescape) {
-          push(params, paramName, token2.replace(/\\/g, ""));
+          push(params, paramName, token.replace(/\\/g, ""));
         } else {
-          push(params, paramName, token2);
+          push(params, paramName, token);
         }
         push(offers, extensionName, params);
       }
@@ -3706,8 +3706,8 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
 var announcementRepository = {
   createAnnouncement: async (data, facultyId) => {
     try {
-      if (data.course_id) {
-        const { data: course, error: error2 } = await supabase.from("courses").select("*").eq("id", data.course_id).eq("faculty_id", facultyId).single();
+      if (data?.audience !== "all") {
+        const { data: course, error: error2 } = await supabase.from("courses").select("*").eq("id", data.audience).eq("faculty_id", facultyId).single();
         if (error2) {
           throw new Error(error2.message);
         }
@@ -3719,8 +3719,11 @@ var announcementRepository = {
         faculty_id: facultyId,
         title: data.title,
         content: data.content,
-        course_id: data.course_id ?? null,
-        image_url: data.image_url ?? null
+        course_id: data.audience === "all" ? null : data.audience,
+        image_url: data.image_url ?? null,
+        time_period: data.timePeriod ?? null,
+        is_draft: data.isDraft ?? true,
+        published: !data.isDraft ? /* @__PURE__ */ new Date() : null
       }).select().single();
       if (error) {
         throw new Error(error.message);
@@ -3730,13 +3733,32 @@ var announcementRepository = {
       throw new Error(error.message);
     }
   },
-  getAllAnnouncements: async (facultyId) => {
+  getAllAnnouncements: async (facultyId, filter, page, limit, search) => {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    console.log("filter", filter);
+    console.log("page", page);
+    console.log("limit", limit);
+    console.log("search", search);
+    let query = supabase.from("announcements").select("*, courses(id, title)", { count: "exact" }).eq("faculty_id", facultyId).eq("is_deleted", false);
+    if (filter !== "all") {
+      query = query.eq("is_draft", filter);
+    }
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
+    }
+    const { data, error, count } = await query.range(from, to).order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { data, total: count ?? 0 };
+  },
+  getAnnouncementById: async (announcementId) => {
     try {
-      const { data: announcements, error } = await supabase.from("announcements").select("*").eq("faculty_id", facultyId).order("created_at", { ascending: false });
+      console.log("announcementId", announcementId);
+      const { data, error } = await supabase.from("announcements").select("*, courses(id, title)").eq("id", announcementId).single();
       if (error) {
         throw new Error(error.message);
       }
-      return announcements;
+      return data;
     } catch (error) {
       throw new Error(error.message);
     }
@@ -3757,9 +3779,11 @@ var announcementRepository = {
       const { data: announcement, error } = await supabase.from("announcements").update({
         title: data.title,
         content: data.content,
-        course_id: data.course_id ?? null,
+        course_id: data.audience === "all" ? null : data.audience,
         image_url: data.image_url ?? null,
-        time_period: data?.time_period ?? null
+        time_period: data.timePeriod ?? null,
+        is_draft: data.isDraft ?? true,
+        published: !data.isDraft ? /* @__PURE__ */ new Date() : null
       }).eq("id", announcementId).select().single();
       if (error) {
         throw new Error(error.message);
@@ -3776,8 +3800,10 @@ var import_zod = require("zod");
 var createAnnouncementSchema = import_zod.z.object({
   title: import_zod.z.string().min(1, "Title is required"),
   content: import_zod.z.string().min(1, "Content is required"),
-  course_id: import_zod.z.string().optional(),
-  image_url: import_zod.z.string().optional()
+  audience: import_zod.z.string().optional(),
+  image_url: import_zod.z.string().optional(),
+  timePeriod: import_zod.z.string().optional(),
+  isDraft: import_zod.z.boolean().optional()
 });
 
 // ../../shared/utils/validate.ts
@@ -3794,54 +3820,12 @@ var validate = (schema, data) => {
   return result.data;
 };
 
-// ../../shared/config/redis.ts
-var import_redis = require("@upstash/redis");
-var dotenv2 = __toESM(require("dotenv"));
-var import_path2 = __toESM(require("path"));
-var import_fs2 = __toESM(require("fs"));
-var envPath2 = import_path2.default.resolve(__dirname, "../../.env");
-if (import_fs2.default.existsSync(envPath2)) {
-  dotenv2.config({ path: envPath2 });
-}
-var url = process.env.UPSTASH_REDIS_URL;
-var token = process.env.UPSTASH_REDIS_TOKEN;
-if (!url || !token) {
-  throw new Error(
-    "Missing Redis configuration: UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN must be set"
-  );
-}
-var redis = new import_redis.Redis({ url, token });
-
-// ../../shared/cache/cache.service.ts
-var cacheService = {
-  // Store any data with expiry (seconds)
-  set: async (key, value, expirySeconds = 3600) => {
-    await redis.set(key, JSON.stringify(value), { ex: expirySeconds });
-  },
-  // Get data
-  get: async (key) => {
-    const data = await redis.get(key);
-    if (!data) return null;
-    return JSON.parse(data);
-  },
-  // Delete a key
-  delete: async (key) => {
-    await redis.del(key);
-  },
-  // Check if key exists
-  exists: async (key) => {
-    const result = await redis.exists(key);
-    return result === 1;
-  }
-};
-
 // src/modules/announcements/announcements.service.ts
 var announcementService = {
   createAnnouncement: async (event) => {
     try {
       const validatedData = validate(createAnnouncementSchema, JSON.parse(event.body));
       const announcement = await announcementRepository.createAnnouncement(validatedData, event.user.id);
-      await cacheService.delete(`announcements:faculty:${event.user.id}`);
       return announcement;
     } catch (error) {
       console.log("error", error);
@@ -3851,11 +3835,23 @@ var announcementService = {
   getAllAnnouncements: async (event) => {
     try {
       const cacheKey = `announcements:faculty:${event.user.id}`;
-      const cached = await cacheService.get(cacheKey);
-      if (cached) return cached;
-      const announcements = await announcementRepository.getAllAnnouncements(event.user.id);
-      await cacheService.set(cacheKey, announcements, 3600);
+      const { filter, page, limit, search } = event.queryStringParameters;
+      const announcements = await announcementRepository.getAllAnnouncements(event.user.id, filter, page, limit, search);
       return announcements;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getAnnouncementById: async (event) => {
+    try {
+      const announcementId = event.pathParameters?.announcementId;
+      console.log("announcementId", announcementId);
+      if (!announcementId) {
+        throw new Error("Announcement ID is required");
+      }
+      const announcement = await announcementRepository.getAnnouncementById(announcementId);
+      return announcement;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
@@ -3863,12 +3859,11 @@ var announcementService = {
   },
   deleteAnnouncement: async (event) => {
     try {
-      const announcementId = event.pathParameters?.id;
+      const announcementId = event.pathParameters?.announcementId;
       if (!announcementId) {
         throw new Error("Announcement ID is required");
       }
       const result = await announcementRepository.deleteAnnouncement(announcementId, event.user.id);
-      await cacheService.delete(`announcements:faculty:${event.user.id}`);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -3877,13 +3872,12 @@ var announcementService = {
   },
   updateAnnouncement: async (event) => {
     try {
-      const announcementId = event.pathParameters?.id;
+      const announcementId = event.pathParameters?.announcementId;
       if (!announcementId) {
         throw new Error("Announcement ID is required");
       }
       const validatedData = validate(createAnnouncementSchema, JSON.parse(event.body));
       const announcement = await announcementRepository.updateAnnouncement(validatedData, announcementId);
-      await cacheService.delete(`announcements:faculty:${event.user.id}`);
       return announcement;
     } catch (error) {
       console.log("error", error);
@@ -3927,9 +3921,9 @@ var handleResponse = {
 // ../../shared/utils/verifyAuth.ts
 var verifyAuth = (handler2) => async (event) => {
   const authHeader = event.headers?.Authorization || event.headers?.authorization;
-  const token2 = authHeader?.split(" ")[1];
-  if (!token2) return handleResponse.error(null, "Unauthorized", 401);
-  const { data, error } = await supabase.auth.getUser(token2);
+  const token = authHeader?.split(" ")[1];
+  if (!token) return handleResponse.error(null, "Unauthorized", 401);
+  const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return handleResponse.error(error, "User not found", 401);
   const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
   if (profileError) return handleResponse.error(profileError, "User not found", 401);

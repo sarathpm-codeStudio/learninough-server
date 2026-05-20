@@ -2,7 +2,7 @@
 import { announcementRepository } from "./announcements.repository";
 import { createAnnouncementSchema } from "../../../../../shared/validators/announcement.validator"
 import { validate } from "../../../../../shared/utils/validate";
-import { cacheService } from "../../../../../shared/cache/cache.service"
+// import { cacheService } from "../../../../../shared/cache/cache.service"
 
 
 
@@ -16,7 +16,7 @@ export const announcementService = {
 
             const announcement = await announcementRepository.createAnnouncement(validatedData, event.user.id);
 
-            await cacheService.delete(`announcements:faculty:${event.user.id}`);
+            // await cacheService.delete(`announcements:faculty:${event.user.id}`);
 
             return announcement;
 
@@ -34,12 +34,14 @@ export const announcementService = {
 
             const cacheKey = `announcements:faculty:${event.user.id}`;
 
-            const cached = await cacheService.get(cacheKey);
-            if (cached) return cached;
+            // const cached = await cacheService.get(cacheKey);
+            // if (cached) return cached;
+            const { filter, page, limit, search } = event.queryStringParameters;
 
-            const announcements = await announcementRepository.getAllAnnouncements(event.user.id);
 
-            await cacheService.set(cacheKey, announcements, 3600);
+            const announcements = await announcementRepository.getAllAnnouncements(event.user.id, filter, page, limit, search);
+
+            // await cacheService.set(cacheKey, announcements, 3600);
 
             return announcements;
 
@@ -52,10 +54,32 @@ export const announcementService = {
         }
     },
 
+    getAnnouncementById: async (event: any) => {
+        try {
+
+            const announcementId = event.pathParameters?.announcementId;
+            console.log("announcementId", announcementId);
+
+            if (!announcementId) {
+                throw new Error("Announcement ID is required")
+            }
+
+            const announcement = await announcementRepository.getAnnouncementById(announcementId);
+
+            return announcement;
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
+
     deleteAnnouncement: async (event: any) => {
         try {
 
-            const announcementId = event.pathParameters?.id;
+            const announcementId = event.pathParameters?.announcementId;
 
             if (!announcementId) {
                 throw new Error("Announcement ID is required")
@@ -63,7 +87,7 @@ export const announcementService = {
 
             const result = await announcementRepository.deleteAnnouncement(announcementId, event.user.id);
 
-            await cacheService.delete(`announcements:faculty:${event.user.id}`);
+            // await cacheService.delete(`announcements:faculty:${event.user.id}`);
 
             return result;
 
@@ -78,7 +102,7 @@ export const announcementService = {
     updateAnnouncement: async (event: any) => {
         try {
 
-            const announcementId = event.pathParameters?.id;
+            const announcementId = event.pathParameters?.announcementId;
 
             if (!announcementId) {
                 throw new Error("Announcement ID is required")
@@ -88,7 +112,7 @@ export const announcementService = {
 
             const announcement = await announcementRepository.updateAnnouncement(validatedData, announcementId);
 
-            await cacheService.delete(`announcements:faculty:${event.user.id}`);
+            // await cacheService.delete(`announcements:faculty:${event.user.id}`);
 
             return announcement;
 

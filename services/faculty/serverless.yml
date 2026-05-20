@@ -636,21 +636,31 @@ functions:
           method: get
           cors:   true
 
+  getAnnouncementById:
+    handler: src/functions/announcements/getAnnouncementById.handler
+    events:
+      - http:
+          path:   faculty/announcements/{announcementId}
+          method: get
+          cors:   true
+
   updateAnnouncement:
     handler: src/functions/announcements/updateAnnouncement.handler
     events:
       - http:
-          path:   faculty/announcements/{id}
-          method: put
+          path:   faculty/announcements/{announcementId}
+          method: patch
           cors:   true
 
   deleteAnnouncement:
     handler: src/functions/announcements/deleteAnnouncement.handler
     events:
       - http:
-          path:   faculty/announcements/{id}
+          path:   faculty/announcements/{announcementId}
           method: delete
           cors:   true
+  
+
 
   # ── Dashboard ────────────────────────────────────────────────
   getCounterData:

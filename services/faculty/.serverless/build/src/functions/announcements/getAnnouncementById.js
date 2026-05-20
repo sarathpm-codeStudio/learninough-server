@@ -3646,13 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/announcements/createAnnouncement.ts
-var createAnnouncement_exports = {};
-__export(createAnnouncement_exports, {
+// src/functions/announcements/getAnnouncementById.ts
+var getAnnouncementById_exports = {};
+__export(getAnnouncementById_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(createAnnouncement_exports);
+module.exports = __toCommonJS(getAnnouncementById_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -3954,13 +3954,14 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/announcements/createAnnouncement.ts
+// src/functions/announcements/getAnnouncementById.ts
 var handlerFun = async (event) => {
   try {
-    const announcement = await announcementService.createAnnouncement(event);
-    return handleResponse.success(announcement, "Announcement created successfully", 200);
+    const announcement = await announcementService.getAnnouncementById(event);
+    return handleResponse.success(announcement, "Announcement fetched successfully", 200);
   } catch (error) {
-    return handleResponse.error(error, "Error creating announcement", 400);
+    console.log("error", error);
+    return handleResponse.error(error, "Error fetching announcement", 400);
   }
 };
 var handler = compose(
@@ -3973,4 +3974,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=createAnnouncement.js.map
+//# sourceMappingURL=getAnnouncementById.js.map

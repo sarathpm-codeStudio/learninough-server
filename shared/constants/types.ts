@@ -42,8 +42,9 @@ export type AnnouncementData = {
     title: string,
     content: string,
     image_url?: string,
-    time_period?: string,
-    course_id?: string,
+    timePeriod?: string,
+    audience?: string,
+    isDraft?: boolean,
 
 }
 
