@@ -3704,55 +3704,168 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
 
 // src/modules/students/students.repository.ts
 var studentsRepository = {
-  getAllMyStudents: async ({ facultyId, courseId, filter, page, limit, search }) => {
+  // getAllMyStudents: async ({ facultyId, filter, page, limit, search }: Arggu) => {
+  //     try {
+  //         const from = (page - 1) * limit;
+  //         const to = from + limit - 1;
+  //         let query = supabase
+  //             .from("enrollments")
+  //             .select(`
+  //     id,
+  //     created_at,
+  //     student:profiles!enrollments_student_id_fkey (
+  //       id,
+  //       full_name
+  //     ),
+  //     course:courses!enrollments_course_id_fkey (
+  //       id,
+  //       title,
+  //       faculty_id
+  //     )
+  //   `, { count: "exact" })
+  //             .eq("course.faculty_id", facultyId)
+  //             .order("created_at", { ascending: false })
+  //             .range(from, to);
+  //         if (filter.selectedCourse !== "all") {
+  //             query = query.eq("course_id", filter.selectedCourse);
+  //         }
+  //         if (search) {
+  //             query = query.ilike(
+  //                 "profiles.full_name",
+  //                 `%${search}%`
+  //             );
+  //         }
+  //         const { data, error, count } = await query;
+  //         if (error) throw new Error(error.message);
+  //         const studentMap: Record<string, any> = {};
+  //         data?.forEach((item: any) => {
+  //             const student = item.student;
+  //             const course = item.course;
+  //             if (!studentMap[student.id]) {
+  //                 studentMap[student.id] = {
+  //                     ...student,
+  //                     courses: [],
+  //                     enrolled_at: item.created_at
+  //                 };
+  //             }
+  //             studentMap[student.id].courses.push(course);
+  //         });
+  //         const final = Object.values(studentMap);
+  //         return {
+  //             data: final,
+  //             pagination: {
+  //                 page,
+  //                 limit,
+  //                 total: count,
+  //                 totalPages: Math.ceil((count || 0) / limit)
+  //             }
+  //         };
+  //     } catch (error: any) {
+  //         throw new Error(error.message)
+  //     }
+  // },
+  getAllMyStudents: async ({ facultyId, filter, page, limit, search }) => {
     try {
+      console.log("filter", filter);
       const from = (page - 1) * limit;
       const to = from + limit - 1;
+      const { data: facultyCourses, error: courseError } = await supabase.from("courses").select("id").eq("faculty_id", facultyId);
+      if (courseError) throw new Error(courseError.message);
+      const courseIds = facultyCourses?.map((c) => c.id) ?? [];
+      if (courseIds.length === 0) {
+        return {
+          data: [],
+          pagination: { page, limit, total: 0, totalPages: 0 }
+        };
+      }
+      const targetCourseIds = filter.selectedCourse !== "all" ? [filter.selectedCourse] : courseIds;
+      let studentIdsQuery = supabase.from("enrollments").select("student_id", { count: "exact" }).in("course_id", targetCourseIds);
+      if (filter.selectedDate) {
+        const startOfDay = new Date(filter.selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(filter.selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        studentIdsQuery = studentIdsQuery.gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString());
+      }
+      const { data: allStudentRows, error: countError, count } = await studentIdsQuery;
+      if (countError) throw new Error(countError.message);
+      const uniqueStudentIds = [
+        ...new Set(allStudentRows?.map((r) => r.student_id) ?? [])
+      ];
+      const paginatedStudentIds = uniqueStudentIds.slice(from, to + 1);
+      if (paginatedStudentIds.length === 0) {
+        return {
+          data: [],
+          pagination: {
+            page,
+            limit,
+            total: uniqueStudentIds.length,
+            totalPages: Math.ceil(uniqueStudentIds.length / limit)
+          }
+        };
+      }
       let query = supabase.from("enrollments").select(`
-        id,
-        created_at,
-        student:profiles!enrollments_student_id_fkey (
-          id,
-          full_name
-        ),
-        course:courses!enrollments_course_id_fkey (
-          id,
-          title,
-          faculty_id
-        )
-      `, { count: "exact" }).eq("course.faculty_id", facultyId).order("created_at", { ascending: false }).range(from, to);
-      if (filter !== "all") {
-        query = query.eq("course_id", filter);
+                id,
+                created_at,
+                course_id,
+                student:profiles!enrollments_student_id_fkey (
+                    id,
+                    full_name,
+                    email
+                ),
+                course:courses!enrollments_course_id_fkey (
+                    id,
+                    title,
+                    faculty_id
+                )
+            `).in("course_id", targetCourseIds).in("student_id", paginatedStudentIds).order("created_at", { ascending: false });
+      if (filter.selectedDate) {
+        const startOfDay = new Date(filter.selectedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(filter.selectedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString());
       }
       if (search) {
-        query = query.ilike(
-          "profiles.full_name",
-          `%${search}%`
-        );
+        paginatedStudentIds.filter((id) => id);
       }
-      const { data, error, count } = await query;
+      const { data, error } = await query;
       if (error) throw new Error(error.message);
       const studentMap = {};
       data?.forEach((item) => {
         const student = item.student;
         const course = item.course;
+        if (!student) return;
         if (!studentMap[student.id]) {
           studentMap[student.id] = {
             ...student,
-            courses: [],
-            enrolled_at: item.created_at
+            courses: [course],
+            latest_enrolled_at: item.created_at
           };
+        } else {
+          const alreadyAdded = studentMap[student.id].courses.some(
+            (c) => c.id === course.id
+          );
+          if (!alreadyAdded) {
+            studentMap[student.id].courses.push(course);
+          }
         }
-        studentMap[student.id].courses.push(course);
       });
-      const final = Object.values(studentMap);
+      let students = Object.values(studentMap);
+      if (search) {
+        const lowerSearch = search.toLowerCase();
+        students = students.filter(
+          (s) => s.full_name?.toLowerCase().includes(lowerSearch)
+        );
+      }
+      const totalUniqueStudents = uniqueStudentIds.length;
       return {
-        data: final,
+        data: students,
         pagination: {
           page,
           limit,
-          total: count,
-          totalPages: Math.ceil((count || 0) / limit)
+          total: totalUniqueStudents,
+          totalPages: Math.ceil(totalUniqueStudents / limit)
         }
       };
     } catch (error) {
@@ -3831,10 +3944,13 @@ var studentsRepository = {
 var studentsService = {
   getAllMyStudents: async (event) => {
     try {
-      const { courseId, filter, page, limit, search } = event.queryStringParameters;
+      const { page, limit, search } = event.queryStringParameters;
+      const filter = {
+        selectedCourse: event.queryStringParameters["filter[selectedCourse]"] || "all",
+        selectedDate: event.queryStringParameters["filter[selectedDate]"] || ""
+      };
       const students = await studentsRepository.getAllMyStudents({
         facultyId: event.user.id,
-        courseId,
         filter,
         page,
         limit,

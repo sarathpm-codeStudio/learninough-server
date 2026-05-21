@@ -10,11 +10,15 @@ export const studentsService = {
     getAllMyStudents: async (event: any) => {
         try {
 
-            const { courseId, filter, page, limit, search } = event.queryStringParameters;
+            const { page, limit, search } = event.queryStringParameters;
+
+            const filter = {
+                selectedCourse: event.queryStringParameters["filter[selectedCourse]"] || "all",
+                selectedDate: event.queryStringParameters["filter[selectedDate]"] || "",
+            };
 
             const students = await studentsRepository.getAllMyStudents({
                 facultyId: event.user.id,
-                courseId,
                 filter,
                 page,
                 limit,
