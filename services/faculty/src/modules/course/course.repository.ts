@@ -134,7 +134,7 @@ export const facultyCourseRepository = {
                 // .ilike("title", `%${search}%`)
                 .order("created_at", { ascending: false });
 
-                console.log("courses %%%%%%", courses);
+                // console.log("courses %%%%%%", courses);
 
             if (error) throw new Error(error.message);
             return courses;

@@ -3778,7 +3778,6 @@ var facultyCourseRepository = {
     try {
       const supabase2 = client ?? supabase;
       const { data: courses, error } = await supabase2.from("courses").select(`*`).eq("faculty_id", facultyId).eq("is_draft", filter).order("created_at", { ascending: false });
-      console.log("courses %%%%%%", courses);
       if (error) throw new Error(error.message);
       return courses;
     } catch (error) {
@@ -4410,11 +4409,9 @@ var facultyCourseService = {
   },
   getMyCourses: async (event) => {
     try {
-      console.log("hasfhasf??????????????????????????????", event.queryStringParameters);
+      console.log("event.queryStringParameters", event.queryStringParameters);
       const filter = event.queryStringParameters.filter === "true";
-      const search = event.queryStringParameters.search || "";
-      console.log("filter>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", filter);
-      const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, search, event.supabase);
+      const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, event.queryStringParameters.search, event.supabase);
       return courses;
     } catch (error) {
       console.log("error", error);
