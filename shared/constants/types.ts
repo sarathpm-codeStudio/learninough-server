@@ -88,14 +88,13 @@ export type QuestionData = {
 
 export type CouponData = {
 
-    title: string,
-    description?: string,
-    discount_type: string,
-    discount: number,
-    is_new: boolean,
-    is_draft: boolean,
+    code: string,
+    discountType: string,
+    discountValue: number,
     courses: string[],
-    coupon_id?: string,
+    expiryDate: string,
+    maxUsage: number,
+    usagePerPerson: number,
 
 
 }

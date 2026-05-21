@@ -5,15 +5,14 @@ import { z } from "zod";
 
 export const couponValidator = z.object({
 
-    title: z.string().min(3, "Coupon title must be at least 3 characters long"),
-    description: z.string().optional(),
-    discount_type: z.string().min(1, "Discount type is required"),
-    discount: z.number().min(1, "Discount is required"),
-    is_new: z.boolean(),
-    is_draft: z.boolean(),
+    code: z.string().min(3, "Coupon title must be at least 3 characters long"),
+    discountType: z.string().min(1, "Discount type is required"),
+    discountValue: z.number().min(1, "Discount is required"),
     courses: z.array(z.string()),
-    coupon_id: z.string().optional(),
-
+    expiryDate: z.string().min(1, "Expiry date is required"),
+    maxUsage: z.number().min(1, "Max usage is required"),
+    usagePerPerson: z.number().min(1, "Usage per person is required"),
+    
 });
 
 

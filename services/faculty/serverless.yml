@@ -768,6 +768,14 @@ functions:
           path:   faculty/coupon
           method: post
           cors:   true
+          
+  getMyAllCourses:
+    handler: src/functions/coupon/getAllMyCourses.handler
+    events:
+      - http:
+          path:   faculty/coupons/enabled-courses
+          method: get
+          cors:   true
 
   getMyAllCoupons:
     handler: src/functions/coupon/getAllCoupon.handler

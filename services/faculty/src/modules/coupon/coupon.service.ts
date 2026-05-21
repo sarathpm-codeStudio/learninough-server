@@ -13,10 +13,21 @@ export const couponService = {
 
             const validatedData = validate(couponValidator, JSON.parse(event.body)) as CouponData;
 
-            return await couponRepository.createCoupon(validatedData, event.user.id);
+             const coupon = await couponRepository.createCoupon(validatedData, event.user.id);
+
+            return coupon;
 
         } catch (error: any) {
 
+            throw new Error(error.message);
+        }
+    },
+
+    getMyCourses: async (event: any) => {
+        try {
+            const courses = await couponRepository.getMyCourses(event.user.id);
+            return courses;
+        } catch (error: any) {
             throw new Error(error.message);
         }
     },

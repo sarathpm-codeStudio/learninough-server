@@ -3671,14 +3671,13 @@ var validate = (schema, data) => {
 // ../../shared/validators/coupon.validator.ts
 var import_zod = require("zod");
 var couponValidator = import_zod.z.object({
-  title: import_zod.z.string().min(3, "Coupon title must be at least 3 characters long"),
-  description: import_zod.z.string().optional(),
-  discount_type: import_zod.z.string().min(1, "Discount type is required"),
-  discount: import_zod.z.number().min(1, "Discount is required"),
-  is_new: import_zod.z.boolean(),
-  is_draft: import_zod.z.boolean(),
+  code: import_zod.z.string().min(3, "Coupon title must be at least 3 characters long"),
+  discountType: import_zod.z.string().min(1, "Discount type is required"),
+  discountValue: import_zod.z.number().min(1, "Discount is required"),
   courses: import_zod.z.array(import_zod.z.string()),
-  coupon_id: import_zod.z.string().optional()
+  expiryDate: import_zod.z.string().min(1, "Expiry date is required"),
+  maxUsage: import_zod.z.number().min(1, "Max usage is required"),
+  usagePerPerson: import_zod.z.number().min(1, "Usage per person is required")
 });
 
 // ../../shared/config/supabase.ts
@@ -3733,22 +3732,27 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
 var couponRepository = {
   createCoupon: async (couponData, facultyId) => {
     try {
-      const { data: courses, error } = await supabase.from("courses").select("id").in("id", couponData.courses).eq("faculty_id", facultyId).eq("is_deleted", false);
-      if (error) throw new Error(error.message);
-      if (!courses || courses.length !== couponData.courses.length) {
-        throw new Error("One or more courses not found or not yours");
+      if (!couponData.courses.includes("all")) {
+        const { data: courses, error } = await supabase.from("courses").select("id").in("id", couponData.courses).eq("faculty_id", facultyId).eq("is_deleted", false).eq("enableCoupons", true);
+        if (error) throw new Error(error.message);
+        if (!courses || courses.length !== couponData.courses.length) {
+          throw new Error(" You selected one or more courses not found or not yours");
+        }
       }
-      if (couponData?.is_new) {
-        const { data: coupon, error: couponError } = await supabase.from("coupons").insert({
-          title: couponData.title,
-          description: couponData.description || "",
-          discount_type: couponData.discount_type,
-          discount: couponData.discount,
-          is_draft: couponData.is_draft,
-          faculty_id: facultyId,
-          is_active: couponData.is_draft ? false : true
-        }).select().single();
-        if (couponError) throw new Error(couponError.message);
+      const { data: coupon, error: couponError } = await supabase.from("coupons").insert({
+        code: couponData.code,
+        discount_type: couponData.discountType,
+        discount: couponData.discountValue,
+        expire_date: couponData.expiryDate,
+        max_usage: couponData.maxUsage,
+        usage_per_person: couponData.usagePerPerson,
+        faculty_id: facultyId,
+        is_active: true,
+        is_all_courses: couponData.courses.includes("all")
+      }).select().single();
+      if (couponError) throw new Error(couponError.message);
+      if (!couponData.courses.includes("all")) {
+        console.log("couponData.courses", couponData.courses);
         const couponCourseRows = couponData.courses.map((courseId) => ({
           coupon_id: coupon.id,
           course_id: courseId
@@ -3756,32 +3760,19 @@ var couponRepository = {
         }));
         const { data: couponCourses, error: couponCoursesError } = await supabase.from("coupon_courses").insert(couponCourseRows).select();
         if (couponCoursesError) throw new Error(couponCoursesError.message);
-        return coupon;
-      } else {
-        if (couponData?.coupon_id) {
-          const { data: coupon, error: couponError } = await supabase.from("coupons").update({
-            title: couponData.title,
-            description: couponData.description || "",
-            discount_type: couponData.discount_type,
-            discount: couponData.discount,
-            is_draft: couponData.is_draft,
-            faculty_id: facultyId,
-            is_active: couponData.is_draft ? false : true
-          }).eq("id", couponData.coupon_id).select().single();
-          if (couponError) throw new Error(couponError.message);
-          const { error: deleteError } = await supabase.from("coupon_courses").delete().eq("coupon_id", couponData.coupon_id);
-          if (deleteError) throw new Error(deleteError.message);
-          const couponCourseRows = couponData.courses.map((courseId) => ({
-            coupon_id: coupon.id,
-            course_id: courseId
-          }));
-          const { data: couponCourses, error: couponCoursesError } = await supabase.from("coupon_courses").insert(couponCourseRows).select();
-          if (couponCoursesError) throw new Error(couponCoursesError.message);
-          return coupon;
-        } else {
-          throw new Error("Coupon ID is required");
-        }
       }
+      return coupon;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  // get my all coupon enabled courses
+  getMyCourses: async (facultyId) => {
+    console.log("facultyId", facultyId);
+    try {
+      const { data: courses, error } = await supabase.from("courses").select("id, title").eq("faculty_id", facultyId).eq("is_draft", false).eq("enableCoupons", true).order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return courses;
     } catch (error) {
       throw new Error(error.message);
     }
@@ -3864,7 +3855,16 @@ var couponService = {
   createCoupon: async (event) => {
     try {
       const validatedData = validate(couponValidator, JSON.parse(event.body));
-      return await couponRepository.createCoupon(validatedData, event.user.id);
+      const coupon = await couponRepository.createCoupon(validatedData, event.user.id);
+      return coupon;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  getMyCourses: async (event) => {
+    try {
+      const courses = await couponRepository.getMyCourses(event.user.id);
+      return courses;
     } catch (error) {
       throw new Error(error.message);
     }
