@@ -119,8 +119,11 @@ export const facultyCourseRepository = {
     },
 
     getMyCourses: async (facultyId: string, filter: boolean, search: string, client?: SupabaseClient) => {
-        console.log("data", typeof filter);
-        console.log("facultyId", facultyId);
+      
+        console.log("search", search);
+        console.log("filter", filter);
+        console.log("facultyId**********************************************************************", facultyId);
+
         try {
             const supabase = client ?? anonSupabase;
             const { data: courses, error } = await supabase
@@ -128,8 +131,10 @@ export const facultyCourseRepository = {
                 .select(`*`)
                 .eq("faculty_id", facultyId)
                 .eq("is_draft", filter)
-                .ilike("title", `%${search}%`)
+                // .ilike("title", `%${search}%`)
                 .order("created_at", { ascending: false });
+
+                console.log("courses %%%%%%", courses);
 
             if (error) throw new Error(error.message);
             return courses;
@@ -139,15 +144,47 @@ export const facultyCourseRepository = {
         }
     },
 
+    // addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
+    //     try {
+
+    //         const supabase = client ?? anonSupabase;
+
+    //         console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data)
+
+
+
+    //         const { data: course, error } = await supabase
+    //             .from("courses")
+    //             .update({
+    //                 validity: data.validity,
+    //                 price: data.price,
+    //                 discount: data.discount,
+    //                 discount_type: data.discount_type,
+    //                 final_price: data.final_price,
+    //                 enableCoupons: data.enableCoupons,
+
+    //             })
+    //             .eq("id", courseId)
+    //             .select()
+    //             .single();
+                
+
+    //         if (error) throw new Error(error.message);
+    //         return course;
+
+    //     } catch (error: any) {
+    //         throw new Error(error.message);
+    //     }
+    // },
+
+
     addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
-
             const supabase = client ?? anonSupabase;
-
-            console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data)
-
-
-
+    
+            // ← add this to debug
+            console.log("pricing data",data)
+    
             const { data: course, error } = await supabase
                 .from("courses")
                 .update({
@@ -157,84 +194,21 @@ export const facultyCourseRepository = {
                     discount_type: data.discount_type,
                     final_price: data.final_price,
                     enableCoupons: data.enableCoupons,
-
                 })
                 .eq("id", courseId)
                 .select()
-                .single();
                 
-
+    
             if (error) throw new Error(error.message);
+            if (!course) throw new Error(`Course not found for id: ${courseId}`);
+    
             return course;
-
+    
         } catch (error: any) {
             throw new Error(error.message);
         }
     },
-
-    // getPreviewCourse: async (courseId: string) => {
-    //     try {
-    //         const { data: course, error: courseError } = await supabase
-    //             .from("courses")
-    //             .select("*")
-    //             .eq("id", courseId)
-    //             .single();
-
-    //         if (courseError) throw new Error(courseError.message);
-    //         if (!course) throw new Error("Course not found");
-
-    //         // Fetch materials to compute groupBy client-side
-    //         const { data: materials, error: matError } = await supabase
-    //             .from("course_materials")
-    //             .select("type, duration_sec")
-    //             .eq("course_id", courseId)
-    //             .eq("is_deleted", false);
-
-    //         if (matError) throw new Error(matError.message);
-
-    //         // Count tests
-    //         const { count: testCount, error: testError } = await supabase
-    //             .from("tests")
-    //             .select("*", { count: "exact", head: true })
-    //             .eq("course_id", courseId);
-
-    //         if (testError) throw new Error(testError.message);
-
-    //         // Compute groupBy in JS
-    //         let videoCount = 0;
-    //         let pdfCount = 0;
-    //         let imageCount = 0;
-    //         let totalDuration = 0;
-
-    //         materials?.forEach((item: any) => {
-    //             if (item.type === "VIDEO") { videoCount++; totalDuration += item.duration_sec || 0; }
-    //             if (item.type === "PDF") pdfCount++;
-    //             if (item.type === "IMAGE") imageCount++;
-    //         });
-
-    //         const hours = Math.floor(totalDuration / 3600);
-    //         const minutes = Math.floor((totalDuration % 3600) / 60);
-
-    //         return {
-    //             ...course,
-    //             content_inventory: {
-    //                 video_lessons: videoCount,
-    //                 pdf_resources: pdfCount,
-    //                 images: imageCount,
-    //                 tests: testCount ?? 0,
-    //                 total_contents: videoCount + pdfCount + imageCount + (testCount ?? 0),
-    //             },
-    //             video_duration: {
-    //                 total_seconds: totalDuration,
-    //                 formatted: `${hours} Hours ${minutes} Minutes`,
-    //             },
-    //         };
-
-    //     } catch (error: any) {
-    //         throw new Error(error.message);
-    //     }
-    // },
-
+   
 
     getPreviewCourse: async (courseId: string, client?: SupabaseClient) => {
         try {
