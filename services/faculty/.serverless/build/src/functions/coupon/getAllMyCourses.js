@@ -3727,19 +3727,37 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
     transport: wrapper_default
   }
 });
+var getSupabaseClient = (accessToken) => {
+  return (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    realtime: {
+      transport: wrapper_default
+    }
+  });
+};
 
 // src/modules/coupon/coupon.repository.ts
 var couponRepository = {
-  createCoupon: async (couponData, facultyId) => {
+  createCoupon: async (couponData, facultyId, client) => {
     try {
+      console.log("couponData", client);
+      const db = client ?? supabase;
       if (!couponData.courses.includes("all")) {
-        const { data: courses, error } = await supabase.from("courses").select("id").in("id", couponData.courses).eq("faculty_id", facultyId).eq("is_deleted", false).eq("enableCoupons", true);
+        const { data: courses, error } = await db.from("courses").select("id").in("id", couponData.courses).eq("faculty_id", facultyId).eq("is_deleted", false).eq("enableCoupons", true);
         if (error) throw new Error(error.message);
         if (!courses || courses.length !== couponData.courses.length) {
           throw new Error(" You selected one or more courses not found or not yours");
         }
       }
-      const { data: coupon, error: couponError } = await supabase.from("coupons").insert({
+      const { data: coupon, error: couponError } = await db.from("coupons").insert({
         code: couponData.code,
         discount_type: couponData.discountType,
         discount: couponData.discountValue,
@@ -3748,7 +3766,8 @@ var couponRepository = {
         usage_per_person: couponData.usagePerPerson,
         faculty_id: facultyId,
         is_active: true,
-        is_all_courses: couponData.courses.includes("all")
+        is_all_courses: couponData.courses.includes("all"),
+        is_draft: false
       }).select().single();
       if (couponError) throw new Error(couponError.message);
       if (!couponData.courses.includes("all")) {
@@ -3758,7 +3777,7 @@ var couponRepository = {
           course_id: courseId
           // ← one course per row ✅
         }));
-        const { data: couponCourses, error: couponCoursesError } = await supabase.from("coupon_courses").insert(couponCourseRows).select();
+        const { data: couponCourses, error: couponCoursesError } = await db.from("coupon_courses").insert(couponCourseRows).select();
         if (couponCoursesError) throw new Error(couponCoursesError.message);
       }
       return coupon;
@@ -3767,21 +3786,23 @@ var couponRepository = {
     }
   },
   // get my all coupon enabled courses
-  getMyCourses: async (facultyId) => {
+  getMyCourses: async (facultyId, client) => {
     console.log("facultyId", facultyId);
     try {
-      const { data: courses, error } = await supabase.from("courses").select("id, title").eq("faculty_id", facultyId).eq("is_draft", false).eq("enableCoupons", true).order("created_at", { ascending: false });
+      const db = client ?? supabase;
+      const { data: courses, error } = await db.from("courses").select("id, title").eq("faculty_id", facultyId).eq("is_draft", false).eq("enableCoupons", true).order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
       return courses;
     } catch (error) {
       throw new Error(error.message);
     }
   },
-  getMyCoupons: async (facultyId, filter, page = 1, limit = 10) => {
+  getMyCoupons: async (facultyId, filter, page = 1, limit = 10, client) => {
     try {
+      const db = client ?? supabase;
       const from = (page - 1) * limit;
       const to = from + limit - 1;
-      let query = supabase.from("coupons").select(`
+      let query = db.from("coupons").select(`
                 *,
                 coupon_courses (
                     course_id,
@@ -3826,9 +3847,10 @@ var couponRepository = {
       throw new Error(error.message);
     }
   },
-  updateCouponStatus: async (facultyId, couponId, status) => {
+  updateCouponStatus: async (facultyId, couponId, status, client) => {
     try {
-      const { data: coupon, error } = await supabase.from("coupons").update({
+      const db = client ?? supabase;
+      const { data: coupon, error } = await db.from("coupons").update({
         is_active: status
       }).eq("id", couponId).eq("faculty_id", facultyId).select().single();
       if (error) throw new Error(error.message);
@@ -3837,9 +3859,10 @@ var couponRepository = {
       throw new Error(error.message);
     }
   },
-  deleteCoupon: async (facultyId, couponId) => {
+  deleteCoupon: async (facultyId, couponId, client) => {
     try {
-      const { data: coupon, error } = await supabase.from("coupons").update({
+      const db = client ?? supabase;
+      const { data: coupon, error } = await db.from("coupons").update({
         is_deleted: true
       }).eq("id", couponId).eq("faculty_id", facultyId).select().single();
       if (error) throw new Error(error.message);
@@ -3855,7 +3878,7 @@ var couponService = {
   createCoupon: async (event) => {
     try {
       const validatedData = validate(couponValidator, JSON.parse(event.body));
-      const coupon = await couponRepository.createCoupon(validatedData, event.user.id);
+      const coupon = await couponRepository.createCoupon(validatedData, event.user.id, event.supabase);
       return coupon;
     } catch (error) {
       throw new Error(error.message);
@@ -3863,7 +3886,7 @@ var couponService = {
   },
   getMyCourses: async (event) => {
     try {
-      const courses = await couponRepository.getMyCourses(event.user.id);
+      const courses = await couponRepository.getMyCourses(event.user.id, event.supabase);
       return courses;
     } catch (error) {
       throw new Error(error.message);
@@ -3874,7 +3897,7 @@ var couponService = {
       const filter = event.queryStringParameters?.filter || "all";
       const page = event.queryStringParameters?.page || 1;
       const limit = event.queryStringParameters?.limit || 10;
-      const coupons = await couponRepository.getMyCoupons(event.user.id, filter, page, limit);
+      const coupons = await couponRepository.getMyCoupons(event.user.id, filter, page, limit, event.supabase);
       return coupons;
     } catch (error) {
       throw new Error(error.message);
@@ -3884,7 +3907,7 @@ var couponService = {
     try {
       const couponId = event.pathParameters?.couponId;
       const status = event.body.status;
-      const coupon = await couponRepository.updateCouponStatus(event.user.id, couponId, status);
+      const coupon = await couponRepository.updateCouponStatus(event.user.id, couponId, status, event.supabase);
       return coupon;
     } catch (error) {
       throw new Error(error.message);
@@ -3893,7 +3916,7 @@ var couponService = {
   deleteCoupon: async (event) => {
     try {
       const couponId = event.pathParameters?.couponId;
-      const coupon = await couponRepository.deleteCoupon(event.user.id, couponId);
+      const coupon = await couponRepository.deleteCoupon(event.user.id, couponId, event.supabase);
       return coupon;
     } catch (error) {
       throw new Error(error.message);
@@ -3940,10 +3963,13 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return handleResponse.error(error, "User not found", 401);
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  const authedSupabase = getSupabaseClient(token);
+  const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
   if (profileError) return handleResponse.error(profileError, "User not found", 401);
   console.log("profile", profile);
   event.user = { ...data.user, profile };
+  event.token = token;
+  event.supabase = authedSupabase;
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
@@ -3956,7 +3982,8 @@ var verifyRole = (role) => (handler2) => async (event) => {
 };
 var verifyAccountStatus = (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  const userDetails = await supabase.from("profiles").select("*").eq("id", event.user.id).single();
+  const client = event.supabase ?? supabase;
+  const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
   if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
   if (userDetails.data.account_verified !== "APPROVED" /* APPROVED */) {
     return handleResponse.error(null, "Your account is not approved", 401);

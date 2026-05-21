@@ -25745,6 +25745,22 @@ var supabase = createClient(supabaseUrl, supabaseKey, {
     transport: wrapper_default
   }
 });
+var getSupabaseClient = (accessToken) => {
+  return createClient(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    realtime: {
+      transport: wrapper_default
+    }
+  });
+};
 
 // ../../shared/utils/verifyAuth.ts
 var verifyAuth = (handler2) => async (event) => {
@@ -25753,10 +25769,13 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return handleResponse.error(error, "User not found", 401);
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  const authedSupabase = getSupabaseClient(token);
+  const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
   if (profileError) return handleResponse.error(profileError, "User not found", 401);
   console.log("profile", profile);
   event.user = { ...data.user, profile };
+  event.token = token;
+  event.supabase = authedSupabase;
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
@@ -25769,7 +25788,8 @@ var verifyRole = (role) => (handler2) => async (event) => {
 };
 var verifyAccountStatus = (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  const userDetails = await supabase.from("profiles").select("*").eq("id", event.user.id).single();
+  const client = event.supabase ?? supabase;
+  const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
   if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
   if (userDetails.data.account_verified !== "APPROVED" /* APPROVED */) {
     return handleResponse.error(null, "Your account is not approved", 401);

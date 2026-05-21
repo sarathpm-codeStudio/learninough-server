@@ -19,7 +19,7 @@ export const facultyCourseService = {
 
             console.log("validatedData>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", validatedData);
 
-            const course = await facultyCourseRepository.createCourseWithBasicDetails(validatedData, event.user.id);
+            const course = await facultyCourseRepository.createCourseWithBasicDetails(validatedData, event.user.id, event.supabase);
 
             return course;
 
@@ -36,7 +36,7 @@ export const facultyCourseService = {
     uploadCourseIntroVideo: async (event: any) => {
         try {
 
-            const result = await facultyCourseRepository.uploadCourseIntroVideo(event.body, event.pathParameters.courseId, event.user.id);
+            const result = await facultyCourseRepository.uploadCourseIntroVideo(event.body, event.pathParameters.courseId, event.user.id, event.supabase);
 
             return result;
 
@@ -54,7 +54,7 @@ export const facultyCourseService = {
 
             const validatedData = validate(addCoursePricingSchema, JSON.parse(event.body));
 
-            const result = await facultyCourseRepository.addCoursePricing(validatedData, event.pathParameters.courseId, event.user.id);
+            const result = await facultyCourseRepository.addCoursePricing(validatedData, event.pathParameters.courseId, event.user.id, event.supabase);
 
             return result;
 
@@ -78,7 +78,7 @@ export const facultyCourseService = {
 
             console.log("filter>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", filter);
 
-            const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, search);
+            const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, search, event.supabase);
 
             return courses;
 
@@ -96,7 +96,7 @@ export const facultyCourseService = {
 
         try {
 
-            const course = await facultyCourseRepository.getPreviewCourse(event.pathParameters.courseId);
+            const course = await facultyCourseRepository.getPreviewCourse(event.pathParameters.courseId, event.supabase);
 
             return course;
 
@@ -114,7 +114,7 @@ export const facultyCourseService = {
 
         try {
 
-            const course = await facultyCourseRepository.getCourseById(event.pathParameters.courseId);
+            const course = await facultyCourseRepository.getCourseById(event.pathParameters.courseId, event.supabase);
 
             return course;
 
@@ -136,7 +136,7 @@ export const facultyCourseService = {
             const validatedData = validate(createCourseSchema, JSON.parse(event.body));
 
 
-            const course = await facultyCourseRepository.updateCourseDetails(validatedData, event.pathParameters.courseId, event.user.id);
+            const course = await facultyCourseRepository.updateCourseDetails(validatedData, event.pathParameters.courseId, event.user.id, event.supabase);
 
             return course;
 
@@ -154,7 +154,7 @@ export const facultyCourseService = {
 
         try {
 
-            const course = await facultyCourseRepository.publishCourse(event.pathParameters.courseId, event.user.id);
+            const course = await facultyCourseRepository.publishCourse(event.pathParameters.courseId, event.user.id, event.supabase);
 
             return course;
 
@@ -174,7 +174,7 @@ export const facultyCourseService = {
 
             const validatedData = validate(createFolderSchema, JSON.parse(event.body));
 
-            const folder = await facultyCourseRepository.createFolder(validatedData, event.pathParameters.courseId, event.user.id);
+            const folder = await facultyCourseRepository.createFolder(validatedData, event.pathParameters.courseId, event.user.id, event.supabase);
 
             return folder;
 
@@ -192,7 +192,7 @@ export const facultyCourseService = {
 
             const validatedData = validate(createFolderSchema, JSON.parse(event.body));
 
-            const folder = await facultyCourseRepository.updateFolder(validatedData, event.pathParameters.folderId);
+            const folder = await facultyCourseRepository.updateFolder(validatedData, event.pathParameters.folderId, event.supabase);
 
             return folder;
 
@@ -208,7 +208,7 @@ export const facultyCourseService = {
     deleteFolder: async (event: any) => {
         try {
 
-            const folder = await facultyCourseRepository.deleteFolder(event.pathParameters.folderId);
+            const folder = await facultyCourseRepository.deleteFolder(event.pathParameters.folderId, event.supabase);
 
             return folder;
 
@@ -226,7 +226,7 @@ export const facultyCourseService = {
 
             // const validatedData: MaterialData = validate(uploadMaterialSchema, JSON.parse(event.body));
 
-            const material = await facultyCourseRepository.addMaterialToFolder(JSON.parse(event.body), event.pathParameters.courseId, event.user.id);
+            const material = await facultyCourseRepository.addMaterialToFolder(JSON.parse(event.body), event.pathParameters.courseId, event.user.id, event.supabase);
 
             return material;
 
@@ -244,7 +244,7 @@ export const facultyCourseService = {
 
             // const validatedData = validate(uploadMaterialSchema, JSON.parse(event.body));
 
-            const material = await facultyCourseRepository.updateMaterial(JSON.parse(event.body), event.pathParameters.materialId);
+            const material = await facultyCourseRepository.updateMaterial(JSON.parse(event.body), event.pathParameters.materialId, event.supabase);
 
             return material;
 
@@ -260,7 +260,7 @@ export const facultyCourseService = {
     getAllProcessingMaterial: async (event: any) => {
         try {
 
-            const material = await facultyCourseRepository.getAllProcessingMaterial(event.user.id);
+            const material = await facultyCourseRepository.getAllProcessingMaterial(event.user.id, event.supabase);
 
             return material;
 
@@ -276,7 +276,7 @@ export const facultyCourseService = {
     deleteMaterial: async (event: any) => {
         try {
 
-            const material = await facultyCourseRepository.deleteMaterial(event.pathParameters.materialId);
+            const material = await facultyCourseRepository.deleteMaterial(event.pathParameters.materialId, event.supabase);
 
             return material;
 
@@ -296,7 +296,7 @@ export const facultyCourseService = {
             const courseId = event.pathParameters.courseId;
             const parentId = event.queryStringParameters?.parentId || null;
 
-            const content = await facultyCourseRepository.getCourseContent(courseId, parentId);
+            const content = await facultyCourseRepository.getCourseContent(courseId, parentId, event.supabase);
 
             return content;
 
@@ -316,7 +316,7 @@ export const facultyCourseService = {
             const courseId = event.pathParameters.courseId;
             const { page, limit } = event.queryStringParameters;
 
-            const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit);
+            const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit, event.supabase);
 
             return reviews;
 
@@ -331,7 +331,7 @@ export const facultyCourseService = {
 
             const { reply } = JSON.parse(event.body);
 
-            const result = await facultyCourseRepository.addReviewReply(event.pathParameters.reviewId, reply, event.user.id);
+            const result = await facultyCourseRepository.addReviewReply(event.pathParameters.reviewId, reply, event.user.id, event.supabase);
 
             return result;
 
@@ -347,7 +347,7 @@ export const facultyCourseService = {
     getFullFoldersInCourse: async (event: any) => {
         try {
 
-            const folders = await facultyCourseRepository.getFullFoldersInCourse(event.pathParameters.courseId, event.user.id);
+            const folders = await facultyCourseRepository.getFullFoldersInCourse(event.pathParameters.courseId, event.user.id, event.supabase);
 
             return folders;
 

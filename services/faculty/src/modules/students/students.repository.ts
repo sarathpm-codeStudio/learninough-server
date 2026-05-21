@@ -1,5 +1,6 @@
 
-import { supabase } from "../../../../../shared/config/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { supabase as anonSupabase } from "../../../../../shared/config/supabase";
 
 
 type Arggu = {
@@ -11,6 +12,7 @@ type Arggu = {
     page: number,
     limit: number,
     search: string,
+    client?: SupabaseClient,
 }
 
 
@@ -99,8 +101,9 @@ export const studentsRepository = {
     // },
 
 
-    getAllMyStudents: async ({ facultyId, filter, page, limit, search }: Arggu) => {
+    getAllMyStudents: async ({ facultyId, filter, page, limit, search, client }: Arggu) => {
         try {
+            const supabase = client ?? anonSupabase;
             console.log("filter", filter);
             const from = (page - 1) * limit;
             const to = from + limit - 1;
@@ -262,12 +265,15 @@ export const studentsRepository = {
 
     getStudentDetails: async ({
         facultyId,
-        studentId
+        studentId,
+        client,
     }: {
         facultyId: string;
         studentId: string;
+        client?: SupabaseClient;
     }) => {
         try {
+            const supabase = client ?? anonSupabase;
             const { data: enrollments, error } = await supabase
                 .from("enrollments")
                 .select(`

@@ -3701,6 +3701,22 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
     transport: wrapper_default
   }
 });
+var getSupabaseClient = (accessToken) => {
+  return (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    realtime: {
+      transport: wrapper_default
+    }
+  });
+};
 
 // src/modules/students/students.repository.ts
 var studentsRepository = {
@@ -3764,12 +3780,13 @@ var studentsRepository = {
   //         throw new Error(error.message)
   //     }
   // },
-  getAllMyStudents: async ({ facultyId, filter, page, limit, search }) => {
+  getAllMyStudents: async ({ facultyId, filter, page, limit, search, client }) => {
     try {
+      const supabase2 = client ?? supabase;
       console.log("filter", filter);
       const from = (page - 1) * limit;
       const to = from + limit - 1;
-      const { data: facultyCourses, error: courseError } = await supabase.from("courses").select("id").eq("faculty_id", facultyId);
+      const { data: facultyCourses, error: courseError } = await supabase2.from("courses").select("id").eq("faculty_id", facultyId);
       if (courseError) throw new Error(courseError.message);
       const courseIds = facultyCourses?.map((c) => c.id) ?? [];
       if (courseIds.length === 0) {
@@ -3779,7 +3796,7 @@ var studentsRepository = {
         };
       }
       const targetCourseIds = filter.selectedCourse !== "all" ? [filter.selectedCourse] : courseIds;
-      let studentIdsQuery = supabase.from("enrollments").select("student_id", { count: "exact" }).in("course_id", targetCourseIds);
+      let studentIdsQuery = supabase2.from("enrollments").select("student_id", { count: "exact" }).in("course_id", targetCourseIds);
       if (filter.selectedDate) {
         const startOfDay = new Date(filter.selectedDate);
         startOfDay.setHours(0, 0, 0, 0);
@@ -3804,7 +3821,7 @@ var studentsRepository = {
           }
         };
       }
-      let query = supabase.from("enrollments").select(`
+      let query = supabase2.from("enrollments").select(`
                 id,
                 created_at,
                 course_id,
@@ -3874,10 +3891,12 @@ var studentsRepository = {
   },
   getStudentDetails: async ({
     facultyId,
-    studentId
+    studentId,
+    client
   }) => {
     try {
-      const { data: enrollments, error } = await supabase.from("enrollments").select(`
+      const supabase2 = client ?? supabase;
+      const { data: enrollments, error } = await supabase2.from("enrollments").select(`
         student:profiles!enrollments_student_id_fkey (
           id,
           full_name
@@ -3892,9 +3911,9 @@ var studentsRepository = {
       if (!enrollments || enrollments.length === 0) return null;
       const student = enrollments[0]?.student;
       const courseIds = enrollments.map((e) => e.course.id);
-      const { data: materials, error: matError } = await supabase.from("course_materials").select("id, course_id").in("course_id", courseIds).eq("type", "VIDEO");
+      const { data: materials, error: matError } = await supabase2.from("course_materials").select("id, course_id").in("course_id", courseIds).eq("type", "VIDEO");
       if (matError) throw new Error(matError.message);
-      const { data: progressData, error: progError } = await supabase.from("video_progress").select("material_id, course_id, completed").eq("student_id", studentId).in("course_id", courseIds);
+      const { data: progressData, error: progError } = await supabase2.from("video_progress").select("material_id, course_id, completed").eq("student_id", studentId).in("course_id", courseIds);
       if (progError) throw new Error(progError.message);
       const courseStats = {};
       materials?.forEach((m) => {
@@ -3954,7 +3973,8 @@ var studentsService = {
         filter,
         page,
         limit,
-        search
+        search,
+        client: event.supabase
       });
       return students;
     } catch (error) {
@@ -4003,10 +4023,13 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return handleResponse.error(error, "User not found", 401);
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  const authedSupabase = getSupabaseClient(token);
+  const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
   if (profileError) return handleResponse.error(profileError, "User not found", 401);
   console.log("profile", profile);
   event.user = { ...data.user, profile };
+  event.token = token;
+  event.supabase = authedSupabase;
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
@@ -4019,7 +4042,8 @@ var verifyRole = (role) => (handler2) => async (event) => {
 };
 var verifyAccountStatus = (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  const userDetails = await supabase.from("profiles").select("*").eq("id", event.user.id).single();
+  const client = event.supabase ?? supabase;
+  const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
   if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
   if (userDetails.data.account_verified !== "APPROVED" /* APPROVED */) {
     return handleResponse.error(null, "Your account is not approved", 401);

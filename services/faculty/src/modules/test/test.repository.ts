@@ -1,5 +1,6 @@
 
-import { supabase } from "../../../../../shared/config/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { supabase as anonSupabase } from "../../../../../shared/config/supabase";
 import { TestBaseDetailsData, QuestionData } from "../../../../../shared/constants/types"
 
 
@@ -8,10 +9,10 @@ import { TestBaseDetailsData, QuestionData } from "../../../../../shared/constan
 export const facultyTestRepository = {
 
 
-    createTestBaseDetails: async (data: TestBaseDetailsData, facultyId: string) => {
+    createTestBaseDetails: async (data: TestBaseDetailsData, facultyId: string, client?: SupabaseClient) => {
         try {
 
-
+            const supabase = client ?? anonSupabase;
 
             // check if course is valid
             const { data: course, error } = await supabase.from("courses")
@@ -42,7 +43,7 @@ export const facultyTestRepository = {
 
             // add  this test in course metirial 
 
-            const nextSortOrder = await getNextSortOrder(data?.course, data?.module && data.module.trim() !== '' ? data.module : null);
+            const nextSortOrder = await getNextSortOrder(data?.course, data?.module && data.module.trim() !== '' ? data.module : null, supabase);
             console.log("nextSortOrder", nextSortOrder);
             const { data: material, error: materialError } = await supabase
                 .from("course_materials")
@@ -106,7 +107,8 @@ export const facultyTestRepository = {
     //     }
     // },
 
-    getMyAllTests: async (faculty_id: string, filter: string, page: number, limit: number, search: string) => {
+    getMyAllTests: async (faculty_id: string, filter: string, page: number, limit: number, search: string, client?: SupabaseClient) => {
+        const supabase = client ?? anonSupabase;
         const from = (page - 1) * limit;
         const to = from + limit - 1;
 
@@ -135,9 +137,10 @@ export const facultyTestRepository = {
     },
 
 
-    getTestById: async (test_id: string) => {
+    getTestById: async (test_id: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             const { data: result, error } = await supabase.from("tests")
                 .select("*")
                 .eq("id", test_id)
@@ -153,9 +156,10 @@ export const facultyTestRepository = {
         }
     },
 
-    updateTest: async (test_id: string, data: TestBaseDetailsData, facultyId: string) => {
+    updateTest: async (test_id: string, data: TestBaseDetailsData, facultyId: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             console.log("data", data);
 
             // check if course is valid
@@ -212,9 +216,10 @@ export const facultyTestRepository = {
         }
     },
 
-    deleteTest: async (test_id: string) => {
+    deleteTest: async (test_id: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             const { data: result, error } = await supabase.from("tests")
                 .update({ is_deleted: true })
                 .eq("id", test_id)
@@ -242,9 +247,10 @@ export const facultyTestRepository = {
     },
 
 
-    createTestQuestion: async (data: QuestionData, test_id: string) => {
+    createTestQuestion: async (data: QuestionData, test_id: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             // Step 1: get the current max question_number for this test
             const { data: lastQuestion, error: countError } = await supabase
                 .from("questions")
@@ -347,8 +353,9 @@ export const facultyTestRepository = {
     //     }
     // },
 
-    getTestQuestionByTestId: async (test_id: string) => {
+    getTestQuestionByTestId: async (test_id: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             // ✅ Validate input
             if (!test_id || test_id.trim() === '') {
                 throw new Error("test_id is required");
@@ -401,9 +408,10 @@ export const facultyTestRepository = {
     },
 
 
-    updateTestQuestion: async (data: QuestionData, question_id: string) => {
+    updateTestQuestion: async (data: QuestionData, question_id: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             const { data: result, error } = await supabase.from("questions")
                 .update({
                     question: data.question,
@@ -447,9 +455,10 @@ export const facultyTestRepository = {
         }
     },
 
-    deleteTestQuestion: async (question_id: string) => {
+    deleteTestQuestion: async (question_id: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             const { data: result, error } = await supabase.from("questions")
                 .delete()
                 .eq("id", question_id)
@@ -483,9 +492,10 @@ export const facultyTestRepository = {
         }
     },
 
-    publishTest: async (test_id: string) => {
+    publishTest: async (test_id: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             const { data: result, error } = await supabase.from("tests")
                 .update({
                     is_draft: false
@@ -497,7 +507,7 @@ export const facultyTestRepository = {
             // update test material status
             const { data: materialResult, error: materialError } = await supabase.from("course_materials")
                 .update({
-                    material_status: "READY"
+                    material_status: "COMPLETED"
                 })
                 .eq("unique_id", result.unique_id)
                 .select()
@@ -522,7 +532,8 @@ export const facultyTestRepository = {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-async function getNextSortOrder(courseId: string, parentId: string | null): Promise<number> {
+async function getNextSortOrder(courseId: string, parentId: string | null, client?: SupabaseClient): Promise<number> {
+    const supabase = client ?? anonSupabase;
     let folderQuery = supabase
         .from("course_folders")
         .select("sort_order")

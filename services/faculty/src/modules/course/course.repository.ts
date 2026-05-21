@@ -1,14 +1,16 @@
 
-import { supabase } from "../../../../../shared/config/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { supabase as anonSupabase } from "../../../../../shared/config/supabase";
 import { MaterialData, MaterialType, MaterialStatus } from "../../../../../shared/constants/types";
 import { pushToQueue } from "../../../../../shared/utils/queue";
 
 
 export const facultyCourseRepository = {
 
-    createCourseWithBasicDetails: async (data: any, facultyId: string) => {
+    createCourseWithBasicDetails: async (data: any, facultyId: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
 
             console.log("data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>####", data);
 
@@ -52,9 +54,10 @@ export const facultyCourseRepository = {
         }
     },
 
-    uploadCourseIntroVideo: async (data: any, courseId: string, facultyId: string) => {
+    uploadCourseIntroVideo: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             // Check course ownership
             // const { data: course, error: courseError } = await supabase
             //     .from("courses")
@@ -115,10 +118,11 @@ export const facultyCourseRepository = {
         }
     },
 
-    getMyCourses: async (facultyId: string, filter: boolean, search: string) => {
+    getMyCourses: async (facultyId: string, filter: boolean, search: string, client?: SupabaseClient) => {
         console.log("data", typeof filter);
         console.log("facultyId", facultyId);
         try {
+            const supabase = client ?? anonSupabase;
             const { data: courses, error } = await supabase
                 .from("courses")
                 .select(`*`)
@@ -135,9 +139,10 @@ export const facultyCourseRepository = {
         }
     },
 
-    addCoursePricing: async (data: any, courseId: string, facultyId: string) => {
+    addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
 
             console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data)
 
@@ -146,7 +151,7 @@ export const facultyCourseRepository = {
             const { data: course, error } = await supabase
                 .from("courses")
                 .update({
-                    duration: data.duration,
+                    validity: data.validity,
                     price: data.price,
                     discount: data.discount,
                     discount_type: data.discount_type,
@@ -157,6 +162,7 @@ export const facultyCourseRepository = {
                 .eq("id", courseId)
                 .select()
                 .single();
+                
 
             if (error) throw new Error(error.message);
             return course;
@@ -230,9 +236,10 @@ export const facultyCourseRepository = {
     // },
 
 
-    getPreviewCourse: async (courseId: string) => {
+    getPreviewCourse: async (courseId: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             // ─── Parallel fetch ───────────────────────────────────
             const [
                 { data: course, error: courseError },
@@ -320,8 +327,9 @@ export const facultyCourseRepository = {
     },
 
 
-    getCourseById: async (courseId: string) => {
+    getCourseById: async (courseId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             const { data: course, error } = await supabase
                 .from("courses")
                 .select("*")
@@ -337,9 +345,10 @@ export const facultyCourseRepository = {
         }
     },
 
-    updateCourseDetails: async (data: any, courseId: string, facultyId: string) => {
+    updateCourseDetails: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             // check this course have intro video
             const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase
                 .from("video_upload_progress")
@@ -468,9 +477,10 @@ export const facultyCourseRepository = {
     // },
 
 
-    publishCourse: async (courseId: string, facultyId: string) => {
+    publishCourse: async (courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             // 1. Check course ownership
             const { data: course, error: courseError } = await supabase
                 .from("courses")
@@ -582,8 +592,9 @@ export const facultyCourseRepository = {
         }
     },
 
-    createFolder: async (data: any, courseId: string, facultyId: string) => {
+    createFolder: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             // Check course is owned by this faculty
             console.log("folder data #######################################################################", data);
             const { data: course, error: courseError } = await supabase
@@ -596,7 +607,7 @@ export const facultyCourseRepository = {
             if (courseError) throw new Error(courseError.message);
             if (!course) throw new Error("Course not found");
 
-            const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null);
+            const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null, supabase);
 
             const { data: folder, error } = await supabase
                 .from("course_folders")
@@ -618,8 +629,9 @@ export const facultyCourseRepository = {
         }
     },
 
-    updateFolder: async (data: any, folderId: string) => {
+    updateFolder: async (data: any, folderId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             const { data: folder, error } = await supabase
                 .from("course_folders")
                 .update({ title: data.title })
@@ -636,8 +648,9 @@ export const facultyCourseRepository = {
         }
     },
 
-    deleteFolder: async (folderId: string) => {
+    deleteFolder: async (folderId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             const { data: folder, error } = await supabase
                 .from("course_folders")
                 .update({ is_deleted: true })
@@ -654,8 +667,9 @@ export const facultyCourseRepository = {
         }
     },
 
-    addMaterialToFolder: async (data: MaterialData, courseId: string, facultyId: string) => {
+    addMaterialToFolder: async (data: MaterialData, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             // Check course ownership
             const { data: course, error: courseError } = await supabase
                 .from("courses")
@@ -680,7 +694,7 @@ export const facultyCourseRepository = {
                 if (!folder) throw new Error("Folder not found");
             }
 
-            const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null);
+            const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null, supabase);
 
             // check this material have video upload progress or not
             const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase
@@ -731,10 +745,10 @@ export const facultyCourseRepository = {
         }
     },
 
-    updateMaterial: async (data: MaterialData, materialId: string) => {
+    updateMaterial: async (data: MaterialData, materialId: string, client?: SupabaseClient) => {
         try {
 
-
+            const supabase = client ?? anonSupabase;
             // check this material have video upload progress or not
             const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase
                 .from("video_upload_progress")
@@ -778,8 +792,9 @@ export const facultyCourseRepository = {
     },
 
 
-    getAllProcessingMaterial: async (facultyId: string) => {
+    getAllProcessingMaterial: async (facultyId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             const { data: materials, error } = await supabase
                 .from("course_materials")
                 .select(`
@@ -802,8 +817,9 @@ export const facultyCourseRepository = {
         }
     },
 
-    deleteMaterial: async (materialId: string) => {
+    deleteMaterial: async (materialId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             const { data: material, error } = await supabase
                 .from("course_materials")
                 .update({ is_deleted: true })
@@ -833,10 +849,11 @@ export const facultyCourseRepository = {
         }
     },
 
-    getCourseContent: async (courseId: string, parentId: string | null) => {
+    getCourseContent: async (courseId: string, parentId: string | null, client?: SupabaseClient) => {
 
         console.log("content data $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
         try {
+            const supabase = client ?? anonSupabase;
             let folderQuery = supabase
                 .from("course_folders")
                 .select("*")
@@ -875,9 +892,10 @@ export const facultyCourseRepository = {
         }
     },
 
-    getCourseReviews: async (courseId: string, page: number = 1, limit: number = 10) => {
+    getCourseReviews: async (courseId: string, page: number = 1, limit: number = 10, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             const from = (page - 1) * limit;
             const to = from + limit - 1;
 
@@ -957,10 +975,11 @@ export const facultyCourseRepository = {
         }
     },
 
-    addReviewReply: async (reviewId: string, reply: string, facultyId: string) => {
+    addReviewReply: async (reviewId: string, reply: string, facultyId: string, client?: SupabaseClient) => {
 
         try {
 
+            const supabase = client ?? anonSupabase;
             // Verify review exists and belongs to faculty's course
             const { data: review } = await supabase
                 .from('reviews')
@@ -1003,9 +1022,10 @@ export const facultyCourseRepository = {
         }
     },
 
-    getFullFoldersInCourse: async (courseId: string, facultyId: string) => {
+    getFullFoldersInCourse: async (courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
 
+            const supabase = client ?? anonSupabase;
             const { data: course } = await supabase
                 .from('courses')
                 .select("*")
@@ -1035,7 +1055,8 @@ export const facultyCourseRepository = {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-async function getNextSortOrder(courseId: string, parentId: string | null): Promise<number> {
+async function getNextSortOrder(courseId: string, parentId: string | null, client?: SupabaseClient): Promise<number> {
+    const supabase = client ?? anonSupabase;
     let folderQuery = supabase
         .from("course_folders")
         .select("sort_order")

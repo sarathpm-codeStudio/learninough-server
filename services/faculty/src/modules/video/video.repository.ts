@@ -1,4 +1,5 @@
-import { supabase } from "../../../../../shared/config/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { supabase as anonSupabase } from "../../../../../shared/config/supabase";
 
 
 
@@ -36,8 +37,9 @@ export const videoRepository = {
 
     // },
 
-    createVideoUploadProgress: async (uniqueId: string, facultyId: string, assetId: string, type: string) => {
+    createVideoUploadProgress: async (uniqueId: string, facultyId: string, assetId: string, type: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             console.log(">>>>>>>>>>>>>>>>>>", uniqueId, facultyId, assetId, type)
 
             // upsert = insert if not exists, update if exists ✅

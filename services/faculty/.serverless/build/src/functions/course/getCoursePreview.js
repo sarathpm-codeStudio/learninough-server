@@ -3701,6 +3701,22 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
     transport: wrapper_default
   }
 });
+var getSupabaseClient = (accessToken) => {
+  return (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    realtime: {
+      transport: wrapper_default
+    }
+  });
+};
 
 // ../../shared/constants/types.ts
 var MaterialType = /* @__PURE__ */ ((MaterialType3) => {
@@ -3715,11 +3731,12 @@ var MaterialType = /* @__PURE__ */ ((MaterialType3) => {
 
 // src/modules/course/course.repository.ts
 var facultyCourseRepository = {
-  createCourseWithBasicDetails: async (data, facultyId) => {
+  createCourseWithBasicDetails: async (data, facultyId, client) => {
     try {
+      const supabase2 = client ?? supabase;
       console.log("data>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>####", data);
-      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").single();
-      const { data: course, error } = await supabase.from("courses").insert({
+      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase2.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").single();
+      const { data: course, error } = await supabase2.from("courses").insert({
         title: data.title,
         unique_id: data.unique_id,
         description: data.description,
@@ -3739,9 +3756,10 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  uploadCourseIntroVideo: async (data, courseId, facultyId) => {
+  uploadCourseIntroVideo: async (data, courseId, facultyId, client) => {
     try {
-      await supabase.from("video_upload_progress").insert({
+      const supabase2 = client ?? supabase;
+      await supabase2.from("video_upload_progress").insert({
         faculty_id: facultyId,
         // asset_id: tpData.asset_id,
         uploading_status: "uploading",
@@ -3753,22 +3771,24 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  getMyCourses: async (facultyId, filter, search) => {
+  getMyCourses: async (facultyId, filter, search, client) => {
     console.log("data", typeof filter);
     console.log("facultyId", facultyId);
     try {
-      const { data: courses, error } = await supabase.from("courses").select(`*`).eq("faculty_id", facultyId).eq("is_draft", filter).ilike("title", `%${search}%`).order("created_at", { ascending: false });
+      const supabase2 = client ?? supabase;
+      const { data: courses, error } = await supabase2.from("courses").select(`*`).eq("faculty_id", facultyId).eq("is_draft", filter).ilike("title", `%${search}%`).order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
       return courses;
     } catch (error) {
       throw new Error(error.message);
     }
   },
-  addCoursePricing: async (data, courseId, facultyId) => {
+  addCoursePricing: async (data, courseId, facultyId, client) => {
     try {
+      const supabase2 = client ?? supabase;
       console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data);
-      const { data: course, error } = await supabase.from("courses").update({
-        duration: data.duration,
+      const { data: course, error } = await supabase2.from("courses").update({
+        validity: data.validity,
         price: data.price,
         discount: data.discount,
         discount_type: data.discount_type,
@@ -3833,17 +3853,18 @@ var facultyCourseRepository = {
   //         throw new Error(error.message);
   //     }
   // },
-  getPreviewCourse: async (courseId) => {
+  getPreviewCourse: async (courseId, client) => {
     try {
+      const supabase2 = client ?? supabase;
       const [
         { data: course, error: courseError },
         { data: materials, error: matError },
         { count: testCount, error: testError }
       ] = await Promise.all([
-        supabase.from("courses").select("*").eq("id", courseId).single(),
-        supabase.from("course_materials").select("type, duration_sec, material_status").eq("course_id", courseId).eq("is_deleted", false).or("type.neq.VIDEO,material_status.neq.FAILED"),
+        supabase2.from("courses").select("*").eq("id", courseId).single(),
+        supabase2.from("course_materials").select("type, duration_sec, material_status").eq("course_id", courseId).eq("is_deleted", false).or("type.neq.VIDEO,material_status.neq.FAILED"),
         // ✅ exclude FAILED videos
-        supabase.from("tests").select("*", { count: "exact", head: true }).eq("course_id", courseId).eq("is_deleted", false)
+        supabase2.from("tests").select("*", { count: "exact", head: true }).eq("course_id", courseId).eq("is_deleted", false)
       ]);
       if (courseError) throw new Error(courseError.message);
       if (!course) throw new Error("Course not found");
@@ -3889,9 +3910,10 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  getCourseById: async (courseId) => {
+  getCourseById: async (courseId, client) => {
     try {
-      const { data: course, error } = await supabase.from("courses").select("*").eq("id", courseId).single();
+      const supabase2 = client ?? supabase;
+      const { data: course, error } = await supabase2.from("courses").select("*").eq("id", courseId).single();
       if (error) throw new Error(error.message);
       if (!course) throw new Error("Course not found");
       return course;
@@ -3899,10 +3921,11 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  updateCourseDetails: async (data, courseId, facultyId) => {
+  updateCourseDetails: async (data, courseId, facultyId, client) => {
     try {
-      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").single();
-      const { data: course, error } = await supabase.from("courses").update({
+      const supabase2 = client ?? supabase;
+      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase2.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").single();
+      const { data: course, error } = await supabase2.from("courses").update({
         title: data.title,
         description: data.description,
         category: data.category,
@@ -3993,12 +4016,13 @@ var facultyCourseRepository = {
   //         throw new Error(error.message)
   //     }
   // },
-  publishCourse: async (courseId, facultyId) => {
+  publishCourse: async (courseId, facultyId, client) => {
     try {
-      const { data: course, error: courseError } = await supabase.from("courses").select("id, faculty_id, title, video_uploading_status").eq("id", courseId).eq("faculty_id", facultyId).single();
+      const supabase2 = client ?? supabase;
+      const { data: course, error: courseError } = await supabase2.from("courses").select("id, faculty_id, title, video_uploading_status").eq("id", courseId).eq("faculty_id", facultyId).single();
       if (courseError) throw new Error(courseError.message);
       if (!course) throw new Error("Course not found");
-      const { data: materials, error: matError } = await supabase.from("course_materials").select("id, title, video_uploading_status").eq("course_id", courseId).eq("is_deleted", false).eq("type", "VIDEO");
+      const { data: materials, error: matError } = await supabase2.from("course_materials").select("id, title, video_uploading_status").eq("course_id", courseId).eq("is_deleted", false).eq("type", "VIDEO");
       if (matError) throw new Error(matError.message);
       const introFailed = course.video_uploading_status === "FAILED" /* FAILED */;
       const introProcessing = course.video_uploading_status !== "COMPLETED" /* COMPLETED */ && course.video_uploading_status !== "FAILED" /* FAILED */ && course.video_uploading_status !== null;
@@ -4033,7 +4057,7 @@ var facultyCourseRepository = {
       }
       console.log("processingVideos", processingVideos);
       if (processingVideos.length > 0) {
-        const { data: updated2, error: updateError2 } = await supabase.from("courses").update({ pending_publish: true }).eq("id", courseId).select().single();
+        const { data: updated2, error: updateError2 } = await supabase2.from("courses").update({ pending_publish: true }).eq("id", courseId).select().single();
         if (updateError2) throw new Error(updateError2.message);
         return {
           // course: updated,
@@ -4041,7 +4065,7 @@ var facultyCourseRepository = {
           message: "Course will publish automatically when all videos are ready."
         };
       }
-      const { data: updated, error: updateError } = await supabase.from("courses").update({
+      const { data: updated, error: updateError } = await supabase2.from("courses").update({
         is_draft: false,
         pending_publish: false
       }).eq("id", courseId).select().single();
@@ -4055,14 +4079,15 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  createFolder: async (data, courseId, facultyId) => {
+  createFolder: async (data, courseId, facultyId, client) => {
     try {
+      const supabase2 = client ?? supabase;
       console.log("folder data #######################################################################", data);
-      const { data: course, error: courseError } = await supabase.from("courses").select("id").eq("id", courseId).eq("faculty_id", facultyId).single();
+      const { data: course, error: courseError } = await supabase2.from("courses").select("id").eq("id", courseId).eq("faculty_id", facultyId).single();
       if (courseError) throw new Error(courseError.message);
       if (!course) throw new Error("Course not found");
-      const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null);
-      const { data: folder, error } = await supabase.from("course_folders").insert({
+      const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null, supabase2);
+      const { data: folder, error } = await supabase2.from("course_folders").insert({
         course_id: courseId,
         parent_id: data.parent_id ?? null,
         sort_order: nextSortOrder,
@@ -4075,9 +4100,10 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  updateFolder: async (data, folderId) => {
+  updateFolder: async (data, folderId, client) => {
     try {
-      const { data: folder, error } = await supabase.from("course_folders").update({ title: data.title }).eq("id", folderId).select().single();
+      const supabase2 = client ?? supabase;
+      const { data: folder, error } = await supabase2.from("course_folders").update({ title: data.title }).eq("id", folderId).select().single();
       if (error) throw new Error(error.message);
       if (!folder) throw new Error("Folder not found");
       return folder;
@@ -4085,9 +4111,10 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  deleteFolder: async (folderId) => {
+  deleteFolder: async (folderId, client) => {
     try {
-      const { data: folder, error } = await supabase.from("course_folders").update({ is_deleted: true }).eq("id", folderId).select().single();
+      const supabase2 = client ?? supabase;
+      const { data: folder, error } = await supabase2.from("course_folders").update({ is_deleted: true }).eq("id", folderId).select().single();
       if (error) throw new Error(error.message);
       if (!folder) throw new Error("Folder not found");
       return folder;
@@ -4095,25 +4122,26 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  addMaterialToFolder: async (data, courseId, facultyId) => {
+  addMaterialToFolder: async (data, courseId, facultyId, client) => {
     try {
-      const { data: course, error: courseError } = await supabase.from("courses").select("id").eq("id", courseId).eq("faculty_id", facultyId).single();
+      const supabase2 = client ?? supabase;
+      const { data: course, error: courseError } = await supabase2.from("courses").select("id").eq("id", courseId).eq("faculty_id", facultyId).single();
       if (courseError) throw new Error(courseError.message);
       if (!course) throw new Error("Course not found");
       if (data.parent_id) {
-        const { data: folder, error: folderError } = await supabase.from("course_folders").select("id").eq("id", data.parent_id).eq("course_id", courseId).single();
+        const { data: folder, error: folderError } = await supabase2.from("course_folders").select("id").eq("id", data.parent_id).eq("course_id", courseId).single();
         if (folderError) throw new Error(folderError.message);
         if (!folder) throw new Error("Folder not found");
       }
-      const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null);
-      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "module").single();
+      const nextSortOrder = await getNextSortOrder(courseId, data.parent_id ?? null, supabase2);
+      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase2.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "module").single();
       let materialStatus = "";
       if (data?.type === "VIDEO" || data?.type === "TEST") {
         materialStatus = "PENDING" /* PENDING */;
       } else {
         materialStatus = "COMPLETED" /* COMPLETED */;
       }
-      const { data: material, error } = await supabase.from("course_materials").insert({
+      const { data: material, error } = await supabase2.from("course_materials").insert({
         unique_id: data.unique_id,
         course_id: courseId,
         folder_id: data.parent_id ?? null,
@@ -4136,10 +4164,11 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  updateMaterial: async (data, materialId) => {
+  updateMaterial: async (data, materialId, client) => {
     try {
-      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "module").single();
-      const { data: material, error } = await supabase.from("course_materials").update({
+      const supabase2 = client ?? supabase;
+      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase2.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "module").single();
+      const { data: material, error } = await supabase2.from("course_materials").update({
         title: data.title,
         type: data.type,
         file_url: data.file_url ?? null,
@@ -4157,9 +4186,10 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  getAllProcessingMaterial: async (facultyId) => {
+  getAllProcessingMaterial: async (facultyId, client) => {
     try {
-      const { data: materials, error } = await supabase.from("course_materials").select(`
+      const supabase2 = client ?? supabase;
+      const { data: materials, error } = await supabase2.from("course_materials").select(`
                     id, title, material_status, transcoding_progress, created_at,
                     courses ( id, title ),
                     course_folders ( id, name )
@@ -4171,13 +4201,14 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  deleteMaterial: async (materialId) => {
+  deleteMaterial: async (materialId, client) => {
     try {
-      const { data: material, error } = await supabase.from("course_materials").update({ is_deleted: true }).eq("id", materialId).select().single();
+      const supabase2 = client ?? supabase;
+      const { data: material, error } = await supabase2.from("course_materials").update({ is_deleted: true }).eq("id", materialId).select().single();
       if (error) throw new Error(error.message);
       if (!material) throw new Error("Material not found");
       if (material?.type === "TEST") {
-        const { error: testError } = await supabase.from("tests").update({ is_deleted: true }).eq("unique_id", material.unique_id).select().single();
+        const { error: testError } = await supabase2.from("tests").update({ is_deleted: true }).eq("unique_id", material.unique_id).select().single();
         if (testError) throw new Error(testError.message);
       }
       return material;
@@ -4185,11 +4216,12 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  getCourseContent: async (courseId, parentId) => {
+  getCourseContent: async (courseId, parentId, client) => {
     console.log("content data $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
     try {
-      let folderQuery = supabase.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false).order("sort_order", { ascending: true });
-      let materialQuery = supabase.from("course_materials").select("*").eq("is_deleted", false).eq("course_id", courseId).order("sort_order", { ascending: true });
+      const supabase2 = client ?? supabase;
+      let folderQuery = supabase2.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false).order("sort_order", { ascending: true });
+      let materialQuery = supabase2.from("course_materials").select("*").eq("is_deleted", false).eq("course_id", courseId).order("sort_order", { ascending: true });
       if (parentId === null) {
         folderQuery = folderQuery.is("parent_id", null);
         materialQuery = materialQuery.is("folder_id", null);
@@ -4207,11 +4239,12 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  getCourseReviews: async (courseId, page = 1, limit = 10) => {
+  getCourseReviews: async (courseId, page = 1, limit = 10, client) => {
     try {
+      const supabase2 = client ?? supabase;
       const from = (page - 1) * limit;
       const to = from + limit - 1;
-      const { data: reviews, error, count } = await supabase.from("reviews").select(`
+      const { data: reviews, error, count } = await supabase2.from("reviews").select(`
                 *,
                 student:profiles!reviews_student_id_fkey (
                     id, name, avatar_url
@@ -4229,7 +4262,7 @@ var facultyCourseRepository = {
             `, { count: "exact" }).eq("course_id", courseId).eq("is_approved", true).eq("review_replies.is_deleted", false).order("created_at", { ascending: false }).range(from, to);
       if (error) throw new Error(error.message);
       if (!reviews) throw new Error("Reviews not found");
-      const { data: allRatings, error: ratingError } = await supabase.from("reviews").select("rating").eq("course_id", courseId).eq("is_approved", true);
+      const { data: allRatings, error: ratingError } = await supabase2.from("reviews").select("rating").eq("course_id", courseId).eq("is_approved", true);
       if (ratingError) throw new Error(ratingError.message);
       const averageRating = allRatings && allRatings.length > 0 ? Math.round(
         allRatings.reduce((sum, r) => sum + (r.rating ?? 0), 0) / allRatings.length * 10
@@ -4259,13 +4292,14 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  addReviewReply: async (reviewId, reply, facultyId) => {
+  addReviewReply: async (reviewId, reply, facultyId, client) => {
     try {
-      const { data: review } = await supabase.from("reviews").select("*").eq("id", reviewId).eq("is_approved", true).single();
+      const supabase2 = client ?? supabase;
+      const { data: review } = await supabase2.from("reviews").select("*").eq("id", reviewId).eq("is_approved", true).single();
       if (!review) throw new Error("Review not found");
-      const { data: course } = await supabase.from("courses").select("*").eq("id", review.course_id).eq("faculty_id", facultyId).single();
+      const { data: course } = await supabase2.from("courses").select("*").eq("id", review.course_id).eq("faculty_id", facultyId).single();
       if (!course) throw new Error("Not your course review");
-      const { data: result } = await supabase.from("review_replies").insert({
+      const { data: result } = await supabase2.from("review_replies").insert({
         review_id: reviewId,
         reply,
         faculty_id: facultyId
@@ -4276,11 +4310,12 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  getFullFoldersInCourse: async (courseId, facultyId) => {
+  getFullFoldersInCourse: async (courseId, facultyId, client) => {
     try {
-      const { data: course } = await supabase.from("courses").select("*").eq("id", courseId).eq("faculty_id", facultyId).single();
+      const supabase2 = client ?? supabase;
+      const { data: course } = await supabase2.from("courses").select("*").eq("id", courseId).eq("faculty_id", facultyId).single();
       if (!course) throw new Error("Not your course");
-      const { data: folders } = await supabase.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false);
+      const { data: folders } = await supabase2.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false);
       if (!folders) throw new Error("No folders found");
       return folders;
     } catch (error) {
@@ -4288,9 +4323,10 @@ var facultyCourseRepository = {
     }
   }
 };
-async function getNextSortOrder(courseId, parentId) {
-  let folderQuery = supabase.from("course_folders").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
-  let materialQuery = supabase.from("course_materials").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
+async function getNextSortOrder(courseId, parentId, client) {
+  const supabase2 = client ?? supabase;
+  let folderQuery = supabase2.from("course_folders").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
+  let materialQuery = supabase2.from("course_materials").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
   if (parentId === null) {
     folderQuery = folderQuery.is("parent_id", null);
     materialQuery = materialQuery.is("folder_id", null);
@@ -4357,7 +4393,7 @@ var createCourseBundleSchema = import_zod.z.object({
   isDraft: import_zod.z.boolean().optional()
 });
 var addCoursePricingSchema = import_zod.z.object({
-  duration: import_zod.z.string().min(1, "Duration is required"),
+  validity: import_zod.z.string().min(1, "Validity is required"),
   price: import_zod.z.number(),
   discount_type: import_zod.z.string().optional(),
   discount: import_zod.z.number().optional(),
@@ -4372,7 +4408,7 @@ var facultyCourseService = {
       console.log("validatedData>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", JSON.parse(event.body));
       const validatedData = validate(createCourseSchema, JSON.parse(event.body));
       console.log("validatedData>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", validatedData);
-      const course = await facultyCourseRepository.createCourseWithBasicDetails(validatedData, event.user.id);
+      const course = await facultyCourseRepository.createCourseWithBasicDetails(validatedData, event.user.id, event.supabase);
       return course;
     } catch (error) {
       console.log("error", error);
@@ -4381,7 +4417,7 @@ var facultyCourseService = {
   },
   uploadCourseIntroVideo: async (event) => {
     try {
-      const result = await facultyCourseRepository.uploadCourseIntroVideo(event.body, event.pathParameters.courseId, event.user.id);
+      const result = await facultyCourseRepository.uploadCourseIntroVideo(event.body, event.pathParameters.courseId, event.user.id, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4391,7 +4427,7 @@ var facultyCourseService = {
   addCoursePricing: async (event) => {
     try {
       const validatedData = validate(addCoursePricingSchema, JSON.parse(event.body));
-      const result = await facultyCourseRepository.addCoursePricing(validatedData, event.pathParameters.courseId, event.user.id);
+      const result = await facultyCourseRepository.addCoursePricing(validatedData, event.pathParameters.courseId, event.user.id, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4404,7 +4440,7 @@ var facultyCourseService = {
       const filter = event.queryStringParameters.filter === "true";
       const search = event.queryStringParameters.search || "";
       console.log("filter>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", filter);
-      const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, search);
+      const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, search, event.supabase);
       return courses;
     } catch (error) {
       console.log("error", error);
@@ -4413,7 +4449,7 @@ var facultyCourseService = {
   },
   getPreviewCourse: async (event) => {
     try {
-      const course = await facultyCourseRepository.getPreviewCourse(event.pathParameters.courseId);
+      const course = await facultyCourseRepository.getPreviewCourse(event.pathParameters.courseId, event.supabase);
       return course;
     } catch (error) {
       console.log("error", error);
@@ -4422,7 +4458,7 @@ var facultyCourseService = {
   },
   getCourseById: async (event) => {
     try {
-      const course = await facultyCourseRepository.getCourseById(event.pathParameters.courseId);
+      const course = await facultyCourseRepository.getCourseById(event.pathParameters.courseId, event.supabase);
       return course;
     } catch (error) {
       console.log("error", error);
@@ -4432,7 +4468,7 @@ var facultyCourseService = {
   updateCourseDetails: async (event) => {
     try {
       const validatedData = validate(createCourseSchema, JSON.parse(event.body));
-      const course = await facultyCourseRepository.updateCourseDetails(validatedData, event.pathParameters.courseId, event.user.id);
+      const course = await facultyCourseRepository.updateCourseDetails(validatedData, event.pathParameters.courseId, event.user.id, event.supabase);
       return course;
     } catch (error) {
       console.log("error", error);
@@ -4441,7 +4477,7 @@ var facultyCourseService = {
   },
   publishCourse: async (event) => {
     try {
-      const course = await facultyCourseRepository.publishCourse(event.pathParameters.courseId, event.user.id);
+      const course = await facultyCourseRepository.publishCourse(event.pathParameters.courseId, event.user.id, event.supabase);
       return course;
     } catch (error) {
       console.log("error", error);
@@ -4451,7 +4487,7 @@ var facultyCourseService = {
   createFolderInCourse: async (event) => {
     try {
       const validatedData = validate(createFolderSchema, JSON.parse(event.body));
-      const folder = await facultyCourseRepository.createFolder(validatedData, event.pathParameters.courseId, event.user.id);
+      const folder = await facultyCourseRepository.createFolder(validatedData, event.pathParameters.courseId, event.user.id, event.supabase);
       return folder;
     } catch (error) {
       console.log("error", error);
@@ -4461,7 +4497,7 @@ var facultyCourseService = {
   updateFolder: async (event) => {
     try {
       const validatedData = validate(createFolderSchema, JSON.parse(event.body));
-      const folder = await facultyCourseRepository.updateFolder(validatedData, event.pathParameters.folderId);
+      const folder = await facultyCourseRepository.updateFolder(validatedData, event.pathParameters.folderId, event.supabase);
       return folder;
     } catch (error) {
       console.log("error", error);
@@ -4470,7 +4506,7 @@ var facultyCourseService = {
   },
   deleteFolder: async (event) => {
     try {
-      const folder = await facultyCourseRepository.deleteFolder(event.pathParameters.folderId);
+      const folder = await facultyCourseRepository.deleteFolder(event.pathParameters.folderId, event.supabase);
       return folder;
     } catch (error) {
       console.log("error", error);
@@ -4479,7 +4515,7 @@ var facultyCourseService = {
   },
   addMaterialToFolder: async (event) => {
     try {
-      const material = await facultyCourseRepository.addMaterialToFolder(JSON.parse(event.body), event.pathParameters.courseId, event.user.id);
+      const material = await facultyCourseRepository.addMaterialToFolder(JSON.parse(event.body), event.pathParameters.courseId, event.user.id, event.supabase);
       return material;
     } catch (error) {
       console.log("error", error);
@@ -4488,7 +4524,7 @@ var facultyCourseService = {
   },
   updateMaterial: async (event) => {
     try {
-      const material = await facultyCourseRepository.updateMaterial(JSON.parse(event.body), event.pathParameters.materialId);
+      const material = await facultyCourseRepository.updateMaterial(JSON.parse(event.body), event.pathParameters.materialId, event.supabase);
       return material;
     } catch (error) {
       console.log("error", error);
@@ -4497,7 +4533,7 @@ var facultyCourseService = {
   },
   getAllProcessingMaterial: async (event) => {
     try {
-      const material = await facultyCourseRepository.getAllProcessingMaterial(event.user.id);
+      const material = await facultyCourseRepository.getAllProcessingMaterial(event.user.id, event.supabase);
       return material;
     } catch (error) {
       console.log("error", error);
@@ -4506,7 +4542,7 @@ var facultyCourseService = {
   },
   deleteMaterial: async (event) => {
     try {
-      const material = await facultyCourseRepository.deleteMaterial(event.pathParameters.materialId);
+      const material = await facultyCourseRepository.deleteMaterial(event.pathParameters.materialId, event.supabase);
       return material;
     } catch (error) {
       console.log("error", error);
@@ -4518,7 +4554,7 @@ var facultyCourseService = {
       console.log("event}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}", event);
       const courseId = event.pathParameters.courseId;
       const parentId = event.queryStringParameters?.parentId || null;
-      const content = await facultyCourseRepository.getCourseContent(courseId, parentId);
+      const content = await facultyCourseRepository.getCourseContent(courseId, parentId, event.supabase);
       return content;
     } catch (error) {
       console.log("error", error);
@@ -4529,7 +4565,7 @@ var facultyCourseService = {
     try {
       const courseId = event.pathParameters.courseId;
       const { page, limit } = event.queryStringParameters;
-      const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit);
+      const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit, event.supabase);
       return reviews;
     } catch (error) {
       throw new Error(error);
@@ -4538,7 +4574,7 @@ var facultyCourseService = {
   addReviewReply: async (event) => {
     try {
       const { reply } = JSON.parse(event.body);
-      const result = await facultyCourseRepository.addReviewReply(event.pathParameters.reviewId, reply, event.user.id);
+      const result = await facultyCourseRepository.addReviewReply(event.pathParameters.reviewId, reply, event.user.id, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4547,7 +4583,7 @@ var facultyCourseService = {
   },
   getFullFoldersInCourse: async (event) => {
     try {
-      const folders = await facultyCourseRepository.getFullFoldersInCourse(event.pathParameters.courseId, event.user.id);
+      const folders = await facultyCourseRepository.getFullFoldersInCourse(event.pathParameters.courseId, event.user.id, event.supabase);
       return folders;
     } catch (error) {
       console.log("error", error);
@@ -4595,10 +4631,13 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return handleResponse.error(error, "User not found", 401);
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  const authedSupabase = getSupabaseClient(token);
+  const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
   if (profileError) return handleResponse.error(profileError, "User not found", 401);
   console.log("profile", profile);
   event.user = { ...data.user, profile };
+  event.token = token;
+  event.supabase = authedSupabase;
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
@@ -4611,7 +4650,8 @@ var verifyRole = (role) => (handler2) => async (event) => {
 };
 var verifyAccountStatus = (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  const userDetails = await supabase.from("profiles").select("*").eq("id", event.user.id).single();
+  const client = event.supabase ?? supabase;
+  const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
   if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
   if (userDetails.data.account_verified !== "APPROVED" /* APPROVED */) {
     return handleResponse.error(null, "Your account is not approved", 401);

@@ -1,5 +1,6 @@
 
-import { supabase } from "../../../../../shared/config/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { supabase as anonSupabase } from "../../../../../shared/config/supabase";
 import { CouponData } from "../../../../../shared/constants/types";
 
 
@@ -7,14 +8,21 @@ import { CouponData } from "../../../../../shared/constants/types";
 export const couponRepository = {
 
 
-  createCoupon: async (couponData: CouponData, facultyId: string) => {
+  createCoupon: async (couponData: CouponData, facultyId: string, client?: SupabaseClient) => {
 
         try {
+
+            console.log("couponData", client);
+
+            // Use the per-request authenticated client (set by verifyAuth) so
+            // RLS policies see the caller's auth.uid(). Fall back to the
+            // anonymous client only if one was not attached.
+            const db = client ?? anonSupabase;
 
             // check select course is exist or not
 
            if(!couponData.courses.includes("all")){
-            const { data: courses, error } = await supabase
+            const { data: courses, error } = await db
             .from("courses")
             .select("id")
             .in("id", couponData.courses)        // ← check ALL course IDs at once
@@ -31,7 +39,7 @@ export const couponRepository = {
            }
             
             // create coupon
-              const { data: coupon, error: couponError } = await supabase
+              const { data: coupon, error: couponError } = await db
                     .from("coupons")
                     .insert({
                         code: couponData.code,
@@ -43,6 +51,7 @@ export const couponRepository = {
                         faculty_id: facultyId,
                         is_active: true,
                         is_all_courses:couponData.courses.includes("all"),
+                        is_draft: false,
                     })
                     .select()
                     .single();
@@ -58,7 +67,7 @@ export const couponRepository = {
                 }));
 
                 // Insert ALL rows at once
-                const { data: couponCourses, error: couponCoursesError } = await supabase
+                const { data: couponCourses, error: couponCoursesError } = await db
                     .from("coupon_courses")
                     .insert(couponCourseRows)  // ← array of rows ✅
                     .select();
@@ -77,10 +86,11 @@ export const couponRepository = {
     },
 
     // get my all coupon enabled courses
-   getMyCourses: async (facultyId: string,) => {
+   getMyCourses: async (facultyId: string, client?: SupabaseClient) => {
         console.log("facultyId", facultyId);
         try {
-            const { data: courses, error } = await supabase
+            const db = client ?? anonSupabase;
+            const { data: courses, error } = await db
                 .from("courses")
                 .select("id, title")
                 .eq("faculty_id", facultyId)
@@ -97,15 +107,17 @@ export const couponRepository = {
     },
 
 
-    getMyCoupons: async (facultyId: string, filter: "all" | "draft" | "active" | "expired", page: number = 1, limit: number = 10) => {
+    getMyCoupons: async (facultyId: string, filter: "all" | "draft" | "active" | "expired", page: number = 1, limit: number = 10, client?: SupabaseClient) => {
         try {
+
+            const db = client ?? anonSupabase;
 
             // Calculate offset
             const from = (page - 1) * limit;
             const to = from + limit - 1;
 
             // Base query
-            let query = supabase
+            let query = db
                 .from("coupons")
                 .select(`
                 *,
@@ -172,10 +184,11 @@ export const couponRepository = {
         }
     },
 
-    updateCouponStatus: async (facultyId: string, couponId: string, status: boolean) => {
+    updateCouponStatus: async (facultyId: string, couponId: string, status: boolean, client?: SupabaseClient) => {
         try {
 
-            const { data: coupon, error } = await supabase
+            const db = client ?? anonSupabase;
+            const { data: coupon, error } = await db
                 .from("coupons")
                 .update({
                     is_active: status,
@@ -193,10 +206,11 @@ export const couponRepository = {
         }
     },
 
-    deleteCoupon: async (facultyId: string, couponId: string) => {
+    deleteCoupon: async (facultyId: string, couponId: string, client?: SupabaseClient) => {
         try {
 
-            const { data: coupon, error } = await supabase
+            const db = client ?? anonSupabase;
+            const { data: coupon, error } = await db
                 .from("coupons")
                 .update({
                     is_deleted: true,

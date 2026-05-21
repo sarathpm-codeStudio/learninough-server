@@ -3733,6 +3733,22 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
     transport: wrapper_default
   }
 });
+var getSupabaseClient = (accessToken) => {
+  return (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    realtime: {
+      transport: wrapper_default
+    }
+  });
+};
 
 // ../../shared/utils/verifyAuth.ts
 var verifyAuth = (handler2) => async (event) => {
@@ -3741,10 +3757,13 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return handleResponse.error(error, "User not found", 401);
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  const authedSupabase = getSupabaseClient(token);
+  const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
   if (profileError) return handleResponse.error(profileError, "User not found", 401);
   console.log("profile", profile);
   event.user = { ...data.user, profile };
+  event.token = token;
+  event.supabase = authedSupabase;
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
@@ -3757,7 +3776,8 @@ var verifyRole = (role) => (handler2) => async (event) => {
 };
 var verifyAccountStatus = (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  const userDetails = await supabase.from("profiles").select("*").eq("id", event.user.id).single();
+  const client = event.supabase ?? supabase;
+  const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
   if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
   if (userDetails.data.account_verified !== "APPROVED" /* APPROVED */) {
     return handleResponse.error(null, "Your account is not approved", 401);
@@ -3793,10 +3813,11 @@ var videoRepository = {
   //         throw new Error(error);
   //     }
   // },
-  createVideoUploadProgress: async (uniqueId, facultyId, assetId, type) => {
+  createVideoUploadProgress: async (uniqueId, facultyId, assetId, type, client) => {
     try {
+      const supabase2 = client ?? supabase;
       console.log(">>>>>>>>>>>>>>>>>>", uniqueId, facultyId, assetId, type);
-      const { error } = await supabase.from("video_upload_progress").upsert({
+      const { error } = await supabase2.from("video_upload_progress").upsert({
         faculty_id: facultyId,
         unique_id: uniqueId,
         type,
@@ -3809,9 +3830,9 @@ var videoRepository = {
         // ← if unique_id exists → update ✅
       });
       if (type === "intro") {
-        const { data: course } = await supabase.from("courses").select("*").eq("unique_id", uniqueId).single();
+        const { data: course } = await supabase2.from("courses").select("*").eq("unique_id", uniqueId).single();
         if (course) {
-          await supabase.from("courses").update({
+          await supabase2.from("courses").update({
             video_asset_id: assetId,
             video_uploading_status: "uploaded",
             video_upload_progress: 0,
@@ -3820,9 +3841,9 @@ var videoRepository = {
         }
         if (error) throw new Error(error.message);
       } else {
-        const { data: course } = await supabase.from("course_materials").select("*").eq("unique_id", uniqueId).single();
+        const { data: course } = await supabase2.from("course_materials").select("*").eq("unique_id", uniqueId).single();
         if (course) {
-          await supabase.from("course_materials").update({
+          await supabase2.from("course_materials").update({
             video_asset_id: assetId,
             video_uploading_status: "uploaded",
             video_upload_progress: 0,
@@ -3845,7 +3866,7 @@ var videoService = {
     try {
       const data = JSON.parse(event.body);
       console.log("event####################################", data);
-      await videoRepository.createVideoUploadProgress(data.unique_id, event.user.id, data.asset_id, data.type);
+      await videoRepository.createVideoUploadProgress(data.unique_id, event.user.id, data.asset_id, data.type, event.supabase);
       return true;
     } catch (error) {
       throw new Error(error.message);

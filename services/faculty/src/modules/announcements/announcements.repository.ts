@@ -1,5 +1,6 @@
 
-import { supabase } from "../../../../../shared/config/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { supabase as anonSupabase } from "../../../../../shared/config/supabase";
 import { AnnouncementData } from "../../../../../shared/constants/types";
 
 
@@ -8,10 +9,11 @@ import { AnnouncementData } from "../../../../../shared/constants/types";
 export const announcementRepository = {
 
 
-    createAnnouncement: async (data: AnnouncementData, facultyId: string) => {
+    createAnnouncement: async (data: AnnouncementData, facultyId: string, client?: SupabaseClient) => {
 
         try {
 
+            const supabase = client ?? anonSupabase;
             if (data?.audience !== "all") {
                 const { data: course, error } = await supabase.from("courses")
                     .select("*")
@@ -55,7 +57,8 @@ export const announcementRepository = {
 
     },
 
-    getAllAnnouncements: async (facultyId: string, filter: string, page: number, limit: number, search: string) => {
+    getAllAnnouncements: async (facultyId: string, filter: string, page: number, limit: number, search: string, client?: SupabaseClient) => {
+        const supabase = client ?? anonSupabase;
         const from = (page - 1) * limit;
         const to = from + limit - 1;
 
@@ -87,10 +90,11 @@ export const announcementRepository = {
 
         return { data, total: count ?? 0 };
     },
-    getAnnouncementById: async (announcementId: string) => {
+    getAnnouncementById: async (announcementId: string, client?: SupabaseClient) => {
 
         try {
 
+            const supabase = client ?? anonSupabase;
             console.log("announcementId", announcementId);
             const { data, error } = await supabase.from("announcements")
                 .select("*, courses(id, title)")
@@ -110,10 +114,11 @@ export const announcementRepository = {
 
     },
 
-    deleteAnnouncement: async (announcementId: string, facultyId: string) => {
+    deleteAnnouncement: async (announcementId: string, facultyId: string, client?: SupabaseClient) => {
 
         try {
 
+            const supabase = client ?? anonSupabase;
             const { error } = await supabase.from("announcements")
                 .delete()
                 .eq("id", announcementId)
@@ -132,10 +137,11 @@ export const announcementRepository = {
 
     },
 
-    updateAnnouncement: async (data: AnnouncementData, announcementId: string) => {
+    updateAnnouncement: async (data: AnnouncementData, announcementId: string, client?: SupabaseClient) => {
 
         try {
 
+            const supabase = client ?? anonSupabase;
             const { data: announcement, error } = await supabase.from("announcements")
                 .update({
 

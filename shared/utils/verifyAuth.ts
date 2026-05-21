@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabase";
+import { supabase, getSupabaseClient } from "../config/supabase";
 import { Role, AccountStatus } from "../constants/types";
 import { handleResponse } from "./response";
 
@@ -13,12 +13,17 @@ export const verifyAuth = (handler: any) => async (event: any) => {
 
     if (error || !data.user) return handleResponse.error(error, "User not found", 401);
 
-    // ✅ Attach user to event — no need to fetch again in next middleware
+    // Build a per-request Supabase client that carries the caller's JWT so
+    // PostgREST evaluates RLS policies against the real user (auth.uid()).
+    const authedSupabase = getSupabaseClient(token);
+
     // get user profile from profiles table
-    const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+    const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
     if (profileError) return handleResponse.error(profileError, "User not found", 401);
     console.log("profile", profile)
     event.user = { ...data.user, profile };
+    event.token = token;
+    event.supabase = authedSupabase;
 
     return handler(event);
 };
@@ -41,7 +46,8 @@ export const verifyAccountStatus = (handler: any) => async (event: any) => {
     // ✅ Reuse user already attached by verifyAuth
     if (!event.user) return handleResponse.error(null, "User not found", 401);
 
-    const userDetails = await supabase.from("profiles").select("*").eq("id", event.user.id).single();
+    const client = event.supabase ?? supabase;
+    const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
 
     if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
 

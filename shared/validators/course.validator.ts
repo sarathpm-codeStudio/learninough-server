@@ -56,7 +56,7 @@ export const createCourseBundleSchema = z.object({
 
 
 export const addCoursePricingSchema = z.object({
-    duration: z.string().min(1, "Duration is required"),
+    validity: z.string().min(1, "Validity is required"),
     price: z.number(),
     discount_type: z.string().optional(),
     discount: z.number().optional(),

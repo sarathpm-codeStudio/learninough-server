@@ -22,7 +22,8 @@ export const studentsService = {
                 filter,
                 page,
                 limit,
-                search
+                search,
+                client: event.supabase,
             });
 
             return students;

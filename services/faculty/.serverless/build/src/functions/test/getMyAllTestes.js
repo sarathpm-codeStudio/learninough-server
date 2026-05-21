@@ -3701,15 +3701,32 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
     transport: wrapper_default
   }
 });
+var getSupabaseClient = (accessToken) => {
+  return (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    realtime: {
+      transport: wrapper_default
+    }
+  });
+};
 
 // src/modules/test/test.repository.ts
 var facultyTestRepository = {
-  createTestBaseDetails: async (data, facultyId) => {
+  createTestBaseDetails: async (data, facultyId, client) => {
     try {
-      const { data: course, error } = await supabase.from("courses").select("*").eq("id", data?.course).eq("faculty_id", facultyId).single();
+      const supabase2 = client ?? supabase;
+      const { data: course, error } = await supabase2.from("courses").select("*").eq("id", data?.course).eq("faculty_id", facultyId).single();
       if (error) throw error;
       if (!course) throw new Error("Course not found");
-      const { data: test, error: testError } = await supabase.from("tests").insert({
+      const { data: test, error: testError } = await supabase2.from("tests").insert({
         faculty_id: facultyId,
         unique_id: data.unique_id,
         title: data.title,
@@ -3721,9 +3738,9 @@ var facultyTestRepository = {
         type: data.testType
       }).select().single();
       if (testError) throw testError;
-      const nextSortOrder = await getNextSortOrder(data?.course, data?.module && data.module.trim() !== "" ? data.module : null);
+      const nextSortOrder = await getNextSortOrder(data?.course, data?.module && data.module.trim() !== "" ? data.module : null, supabase2);
       console.log("nextSortOrder", nextSortOrder);
-      const { data: material, error: materialError } = await supabase.from("course_materials").insert({
+      const { data: material, error: materialError } = await supabase2.from("course_materials").insert({
         unique_id: data.unique_id,
         course_id: data?.course,
         folder_id: data?.module && data.module.trim() !== "" ? data.module : null,
@@ -3765,10 +3782,11 @@ var facultyTestRepository = {
   //         throw new Error(error?.message || JSON.stringify(error)); // ✅ also fix error serialization
   //     }
   // },
-  getMyAllTests: async (faculty_id, filter, page, limit, search) => {
+  getMyAllTests: async (faculty_id, filter, page, limit, search, client) => {
+    const supabase2 = client ?? supabase;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
-    let query = supabase.from("tests").select("*, courses(*)", { count: "exact" }).eq("faculty_id", faculty_id).eq("is_deleted", false);
+    let query = supabase2.from("tests").select("*, courses(*)", { count: "exact" }).eq("faculty_id", faculty_id).eq("is_deleted", false);
     if (filter !== "all") {
       query = query.eq("is_draft", filter);
     }
@@ -3779,9 +3797,10 @@ var facultyTestRepository = {
     if (error) throw new Error(error.message);
     return { data, total: count ?? 0 };
   },
-  getTestById: async (test_id) => {
+  getTestById: async (test_id, client) => {
     try {
-      const { data: result, error } = await supabase.from("tests").select("*").eq("id", test_id).single();
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("tests").select("*").eq("id", test_id).single();
       if (error) throw error;
       return result;
     } catch (error) {
@@ -3789,16 +3808,17 @@ var facultyTestRepository = {
       throw new Error(error);
     }
   },
-  updateTest: async (test_id, data, facultyId) => {
+  updateTest: async (test_id, data, facultyId, client) => {
     try {
+      const supabase2 = client ?? supabase;
       console.log("data", data);
       if (data.course) {
-        const { data: course, error: error2 } = await supabase.from("courses").select("*").eq("id", data.course).eq("faculty_id", facultyId).single();
+        const { data: course, error: error2 } = await supabase2.from("courses").select("*").eq("id", data.course).eq("faculty_id", facultyId).single();
         if (error2) throw error2;
         if (!course) throw new Error("Course not found");
       }
       console.log("test_id", test_id);
-      const { data: result, error } = await supabase.from("tests").update({
+      const { data: result, error } = await supabase2.from("tests").update({
         course_id: data.course,
         module_id: data.module,
         title: data.title,
@@ -3809,7 +3829,7 @@ var facultyTestRepository = {
       }).eq("id", test_id).select().single();
       if (error) throw error;
       console.log("result", result);
-      const { data: material, error: materialError } = await supabase.from("course_materials").update({
+      const { data: material, error: materialError } = await supabase2.from("course_materials").update({
         title: data.title
       }).eq("unique_id", result.unique_id).select().single();
       if (materialError) throw materialError;
@@ -3819,11 +3839,12 @@ var facultyTestRepository = {
       throw new Error(error);
     }
   },
-  deleteTest: async (test_id) => {
+  deleteTest: async (test_id, client) => {
     try {
-      const { data: result, error } = await supabase.from("tests").update({ is_deleted: true }).eq("id", test_id).select().single();
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("tests").update({ is_deleted: true }).eq("id", test_id).select().single();
       if (error) throw error;
-      const { data: module2, error: moduleError } = await supabase.from("course_materials").update({ is_deleted: true }).eq("unique_id", result.unique_id).select().single();
+      const { data: module2, error: moduleError } = await supabase2.from("course_materials").update({ is_deleted: true }).eq("unique_id", result.unique_id).select().single();
       if (moduleError) throw moduleError;
       return result;
     } catch (error) {
@@ -3831,12 +3852,13 @@ var facultyTestRepository = {
       throw new Error(error);
     }
   },
-  createTestQuestion: async (data, test_id) => {
+  createTestQuestion: async (data, test_id, client) => {
     try {
-      const { data: lastQuestion, error: countError } = await supabase.from("questions").select("question_number").eq("test_id", test_id).order("question_number", { ascending: false }).limit(1).maybeSingle();
+      const supabase2 = client ?? supabase;
+      const { data: lastQuestion, error: countError } = await supabase2.from("questions").select("question_number").eq("test_id", test_id).order("question_number", { ascending: false }).limit(1).maybeSingle();
       if (countError) throw countError;
       const nextQuestionNumber = (lastQuestion?.question_number ?? 0) + 1;
-      const { data: result, error } = await supabase.from("questions").insert({
+      const { data: result, error } = await supabase2.from("questions").insert({
         test_id,
         question: data.question,
         type: data.type,
@@ -3844,14 +3866,14 @@ var facultyTestRepository = {
         question_number: nextQuestionNumber
         // ✅
       }).select().single();
-      const { data: testResult, error: testError } = await supabase.from("tests").update({
+      const { data: testResult, error: testError } = await supabase2.from("tests").update({
         question_count: nextQuestionNumber
       }).eq("id", test_id).select().single();
       if (testError) throw testError;
       if (error) throw error;
       if (data.options && data.options.length > 0) {
         data.options.forEach(async (option) => {
-          const { data: optionResult, error: optionError } = await supabase.from("options").insert({
+          const { data: optionResult, error: optionError } = await supabase2.from("options").insert({
             question_id: result.id,
             option_text: option.text,
             is_correct: option.is_correct,
@@ -3893,12 +3915,13 @@ var facultyTestRepository = {
   //         throw new Error(error?.message ?? JSON.stringify(error));
   //     }
   // },
-  getTestQuestionByTestId: async (test_id) => {
+  getTestQuestionByTestId: async (test_id, client) => {
     try {
+      const supabase2 = client ?? supabase;
       if (!test_id || test_id.trim() === "") {
         throw new Error("test_id is required");
       }
-      const { data: result, error } = await supabase.from("questions").select(`
+      const { data: result, error } = await supabase2.from("questions").select(`
                 *,
                 options (
                     id,
@@ -3930,9 +3953,10 @@ var facultyTestRepository = {
       };
     }
   },
-  updateTestQuestion: async (data, question_id) => {
+  updateTestQuestion: async (data, question_id, client) => {
     try {
-      const { data: result, error } = await supabase.from("questions").update({
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("questions").update({
         question: data.question,
         type: data.type,
         marks: data.marks
@@ -3940,7 +3964,7 @@ var facultyTestRepository = {
       if (error) throw error;
       if (data.options && data.options.length > 0) {
         data.options.forEach(async (option) => {
-          const { data: optionResult, error: optionError } = await supabase.from("options").upsert({
+          const { data: optionResult, error: optionError } = await supabase2.from("options").upsert({
             question_id: result.id,
             option_text: option.text,
             is_correct: option.is_correct,
@@ -3955,13 +3979,14 @@ var facultyTestRepository = {
       throw new Error(error);
     }
   },
-  deleteTestQuestion: async (question_id) => {
+  deleteTestQuestion: async (question_id, client) => {
     try {
-      const { data: result, error } = await supabase.from("questions").delete().eq("id", question_id).select().single();
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("questions").delete().eq("id", question_id).select().single();
       if (error) throw error;
-      const { data: deleteResult, error: deleteError } = await supabase.from("options").delete().eq("question_id", question_id);
+      const { data: deleteResult, error: deleteError } = await supabase2.from("options").delete().eq("question_id", question_id);
       if (deleteError) throw deleteError;
-      const { error: testError } = await supabase.rpc(
+      const { error: testError } = await supabase2.rpc(
         "decrement_question_count",
         {
           test_id: result.test_id
@@ -3974,13 +3999,14 @@ var facultyTestRepository = {
       throw new Error(error);
     }
   },
-  publishTest: async (test_id) => {
+  publishTest: async (test_id, client) => {
     try {
-      const { data: result, error } = await supabase.from("tests").update({
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("tests").update({
         is_draft: false
       }).eq("id", test_id).select().single();
-      const { data: materialResult, error: materialError } = await supabase.from("course_materials").update({
-        material_status: "READY"
+      const { data: materialResult, error: materialError } = await supabase2.from("course_materials").update({
+        material_status: "COMPLETED"
       }).eq("unique_id", result.unique_id).select().single();
       if (materialError) throw materialError;
       if (error) throw error;
@@ -3991,9 +4017,10 @@ var facultyTestRepository = {
     }
   }
 };
-async function getNextSortOrder(courseId, parentId) {
-  let folderQuery = supabase.from("course_folders").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
-  let materialQuery = supabase.from("course_materials").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
+async function getNextSortOrder(courseId, parentId, client) {
+  const supabase2 = client ?? supabase;
+  let folderQuery = supabase2.from("course_folders").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
+  let materialQuery = supabase2.from("course_materials").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
   if (parentId === null) {
     folderQuery = folderQuery.is("parent_id", null);
     materialQuery = materialQuery.is("folder_id", null);
@@ -4046,7 +4073,7 @@ var facultyTestService = {
     try {
       console.log("event%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%", JSON.parse(event.body));
       const validatedData = validate(createTestBaseDetailsSchema, JSON.parse(event.body));
-      const result = await facultyTestRepository.createTestBaseDetails(validatedData, event.user.id);
+      const result = await facultyTestRepository.createTestBaseDetails(validatedData, event.user.id, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4061,7 +4088,8 @@ var facultyTestService = {
         filter,
         page,
         limit,
-        search
+        search,
+        event.supabase
       );
       return result;
     } catch (error) {
@@ -4071,7 +4099,7 @@ var facultyTestService = {
   },
   getTestById: async (event) => {
     try {
-      const result = await facultyTestRepository.getTestById(event.pathParameters.testId);
+      const result = await facultyTestRepository.getTestById(event.pathParameters.testId, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4080,7 +4108,7 @@ var facultyTestService = {
   },
   updateTest: async (event) => {
     try {
-      const result = await facultyTestRepository.updateTest(event.pathParameters.testId, JSON.parse(event.body), event.user.id);
+      const result = await facultyTestRepository.updateTest(event.pathParameters.testId, JSON.parse(event.body), event.user.id, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4089,7 +4117,7 @@ var facultyTestService = {
   },
   deleteTest: async (event) => {
     try {
-      const result = await facultyTestRepository.deleteTest(event.pathParameters.testId);
+      const result = await facultyTestRepository.deleteTest(event.pathParameters.testId, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4098,7 +4126,7 @@ var facultyTestService = {
   },
   createTestQuestion: async (event) => {
     try {
-      const result = await facultyTestRepository.createTestQuestion(JSON.parse(event.body), event.pathParameters.testId);
+      const result = await facultyTestRepository.createTestQuestion(JSON.parse(event.body), event.pathParameters.testId, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4107,7 +4135,7 @@ var facultyTestService = {
   },
   getTestQuestionByTestId: async (event) => {
     try {
-      const result = await facultyTestRepository.getTestQuestionByTestId(event.pathParameters.testId);
+      const result = await facultyTestRepository.getTestQuestionByTestId(event.pathParameters.testId, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4116,7 +4144,7 @@ var facultyTestService = {
   },
   updateTestQuestion: async (event) => {
     try {
-      const result = await facultyTestRepository.updateTestQuestion(JSON.parse(event.body), event.pathParameters.questionId);
+      const result = await facultyTestRepository.updateTestQuestion(JSON.parse(event.body), event.pathParameters.questionId, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4125,7 +4153,7 @@ var facultyTestService = {
   },
   deleteTestQuestion: async (event) => {
     try {
-      const result = await facultyTestRepository.deleteTestQuestion(event.pathParameters.questionId);
+      const result = await facultyTestRepository.deleteTestQuestion(event.pathParameters.questionId, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4134,7 +4162,7 @@ var facultyTestService = {
   },
   publishTest: async (event) => {
     try {
-      const result = await facultyTestRepository.publishTest(event.pathParameters.testId);
+      const result = await facultyTestRepository.publishTest(event.pathParameters.testId, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -4182,10 +4210,13 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return handleResponse.error(error, "User not found", 401);
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  const authedSupabase = getSupabaseClient(token);
+  const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
   if (profileError) return handleResponse.error(profileError, "User not found", 401);
   console.log("profile", profile);
   event.user = { ...data.user, profile };
+  event.token = token;
+  event.supabase = authedSupabase;
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
@@ -4198,7 +4229,8 @@ var verifyRole = (role) => (handler2) => async (event) => {
 };
 var verifyAccountStatus = (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  const userDetails = await supabase.from("profiles").select("*").eq("id", event.user.id).single();
+  const client = event.supabase ?? supabase;
+  const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
   if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
   if (userDetails.data.account_verified !== "APPROVED" /* APPROVED */) {
     return handleResponse.error(null, "Your account is not approved", 401);

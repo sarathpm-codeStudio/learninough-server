@@ -15,7 +15,7 @@ export const bundleService = {
 
             const validatedData = validate(createCourseBundleSchema, JSON.parse(event.body));
 
-            const bundle = await bundleRepository.createCourseBundle(validatedData, event.user.id);
+            const bundle = await bundleRepository.createCourseBundle(validatedData, event.user.id, event.supabase);
 
             return bundle;
 
@@ -33,7 +33,7 @@ export const bundleService = {
 
             const filter = event.queryStringParameters.filter;
 
-            const bundles = await bundleRepository.getMyBundles(event.user.id, filter);
+            const bundles = await bundleRepository.getMyBundles(event.user.id, filter, event.supabase);
 
             return bundles;
 
@@ -51,7 +51,7 @@ export const bundleService = {
 
             const bundleId = event.pathParameters.bundleId;
 
-            const bundle = await bundleRepository.getbundleById(bundleId, event.user.id);
+            const bundle = await bundleRepository.getbundleById(bundleId, event.user.id, event.supabase);
 
             return bundle;
 
@@ -68,7 +68,7 @@ export const bundleService = {
         try {
             const bundleId = event.pathParameters.bundleId;
             const validatedData = validate(createCourseBundleSchema, JSON.parse(event.body));
-            const bundle = await bundleRepository.updateBundle(bundleId, validatedData, event.user.id);
+            const bundle = await bundleRepository.updateBundle(bundleId, validatedData, event.user.id, event.supabase);
             return bundle;
         } catch (error: any) {
             console.log("error", error);
@@ -79,7 +79,7 @@ export const bundleService = {
     deleteBundle: async (event: any) => {
         try {
             const bundleId = event.pathParameters.bundleId;
-            const bundle = await bundleRepository.deleteBundle(bundleId, event.user.id);
+            const bundle = await bundleRepository.deleteBundle(bundleId, event.user.id, event.supabase);
             return bundle;
         } catch (error: any) {
             console.log("error", error);

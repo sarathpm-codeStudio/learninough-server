@@ -3701,13 +3701,30 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
     transport: wrapper_default
   }
 });
+var getSupabaseClient = (accessToken) => {
+  return (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    realtime: {
+      transport: wrapper_default
+    }
+  });
+};
 
 // src/modules/announcements/announcements.repository.ts
 var announcementRepository = {
-  createAnnouncement: async (data, facultyId) => {
+  createAnnouncement: async (data, facultyId, client) => {
     try {
+      const supabase2 = client ?? supabase;
       if (data?.audience !== "all") {
-        const { data: course, error: error2 } = await supabase.from("courses").select("*").eq("id", data.audience).eq("faculty_id", facultyId).single();
+        const { data: course, error: error2 } = await supabase2.from("courses").select("*").eq("id", data.audience).eq("faculty_id", facultyId).single();
         if (error2) {
           throw new Error(error2.message);
         }
@@ -3715,7 +3732,7 @@ var announcementRepository = {
           throw new Error("Course not found");
         }
       }
-      const { data: announcement, error } = await supabase.from("announcements").insert({
+      const { data: announcement, error } = await supabase2.from("announcements").insert({
         faculty_id: facultyId,
         title: data.title,
         content: data.content,
@@ -3733,14 +3750,15 @@ var announcementRepository = {
       throw new Error(error.message);
     }
   },
-  getAllAnnouncements: async (facultyId, filter, page, limit, search) => {
+  getAllAnnouncements: async (facultyId, filter, page, limit, search, client) => {
+    const supabase2 = client ?? supabase;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
     console.log("filter", filter);
     console.log("page", page);
     console.log("limit", limit);
     console.log("search", search);
-    let query = supabase.from("announcements").select("*, courses(id, title)", { count: "exact" }).eq("faculty_id", facultyId).eq("is_deleted", false);
+    let query = supabase2.from("announcements").select("*, courses(id, title)", { count: "exact" }).eq("faculty_id", facultyId).eq("is_deleted", false);
     if (filter !== "all") {
       query = query.eq("is_draft", filter);
     }
@@ -3751,10 +3769,11 @@ var announcementRepository = {
     if (error) throw new Error(error.message);
     return { data, total: count ?? 0 };
   },
-  getAnnouncementById: async (announcementId) => {
+  getAnnouncementById: async (announcementId, client) => {
     try {
+      const supabase2 = client ?? supabase;
       console.log("announcementId", announcementId);
-      const { data, error } = await supabase.from("announcements").select("*, courses(id, title)").eq("id", announcementId).single();
+      const { data, error } = await supabase2.from("announcements").select("*, courses(id, title)").eq("id", announcementId).single();
       if (error) {
         throw new Error(error.message);
       }
@@ -3763,9 +3782,10 @@ var announcementRepository = {
       throw new Error(error.message);
     }
   },
-  deleteAnnouncement: async (announcementId, facultyId) => {
+  deleteAnnouncement: async (announcementId, facultyId, client) => {
     try {
-      const { error } = await supabase.from("announcements").delete().eq("id", announcementId).eq("faculty_id", facultyId);
+      const supabase2 = client ?? supabase;
+      const { error } = await supabase2.from("announcements").delete().eq("id", announcementId).eq("faculty_id", facultyId);
       if (error) {
         throw new Error(error.message);
       }
@@ -3774,9 +3794,10 @@ var announcementRepository = {
       throw new Error(error.message);
     }
   },
-  updateAnnouncement: async (data, announcementId) => {
+  updateAnnouncement: async (data, announcementId, client) => {
     try {
-      const { data: announcement, error } = await supabase.from("announcements").update({
+      const supabase2 = client ?? supabase;
+      const { data: announcement, error } = await supabase2.from("announcements").update({
         title: data.title,
         content: data.content,
         course_id: data.audience === "all" ? null : data.audience,
@@ -3825,7 +3846,7 @@ var announcementService = {
   createAnnouncement: async (event) => {
     try {
       const validatedData = validate(createAnnouncementSchema, JSON.parse(event.body));
-      const announcement = await announcementRepository.createAnnouncement(validatedData, event.user.id);
+      const announcement = await announcementRepository.createAnnouncement(validatedData, event.user.id, event.supabase);
       return announcement;
     } catch (error) {
       console.log("error", error);
@@ -3836,7 +3857,7 @@ var announcementService = {
     try {
       const cacheKey = `announcements:faculty:${event.user.id}`;
       const { filter, page, limit, search } = event.queryStringParameters;
-      const announcements = await announcementRepository.getAllAnnouncements(event.user.id, filter, page, limit, search);
+      const announcements = await announcementRepository.getAllAnnouncements(event.user.id, filter, page, limit, search, event.supabase);
       return announcements;
     } catch (error) {
       console.log("error", error);
@@ -3850,7 +3871,7 @@ var announcementService = {
       if (!announcementId) {
         throw new Error("Announcement ID is required");
       }
-      const announcement = await announcementRepository.getAnnouncementById(announcementId);
+      const announcement = await announcementRepository.getAnnouncementById(announcementId, event.supabase);
       return announcement;
     } catch (error) {
       console.log("error", error);
@@ -3863,7 +3884,7 @@ var announcementService = {
       if (!announcementId) {
         throw new Error("Announcement ID is required");
       }
-      const result = await announcementRepository.deleteAnnouncement(announcementId, event.user.id);
+      const result = await announcementRepository.deleteAnnouncement(announcementId, event.user.id, event.supabase);
       return result;
     } catch (error) {
       console.log("error", error);
@@ -3877,7 +3898,7 @@ var announcementService = {
         throw new Error("Announcement ID is required");
       }
       const validatedData = validate(createAnnouncementSchema, JSON.parse(event.body));
-      const announcement = await announcementRepository.updateAnnouncement(validatedData, announcementId);
+      const announcement = await announcementRepository.updateAnnouncement(validatedData, announcementId, event.supabase);
       return announcement;
     } catch (error) {
       console.log("error", error);
@@ -3925,10 +3946,13 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return handleResponse.error(error, "User not found", 401);
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  const authedSupabase = getSupabaseClient(token);
+  const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
   if (profileError) return handleResponse.error(profileError, "User not found", 401);
   console.log("profile", profile);
   event.user = { ...data.user, profile };
+  event.token = token;
+  event.supabase = authedSupabase;
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
@@ -3941,7 +3965,8 @@ var verifyRole = (role) => (handler2) => async (event) => {
 };
 var verifyAccountStatus = (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  const userDetails = await supabase.from("profiles").select("*").eq("id", event.user.id).single();
+  const client = event.supabase ?? supabase;
+  const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
   if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
   if (userDetails.data.account_verified !== "APPROVED" /* APPROVED */) {
     return handleResponse.error(null, "Your account is not approved", 401);

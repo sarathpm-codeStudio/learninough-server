@@ -1,5 +1,6 @@
 
-import { supabase } from "../../../../../shared/config/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { supabase as anonSupabase } from "../../../../../shared/config/supabase";
 import { CourseBundleData } from "../../../../../shared/constants/types";
 
 
@@ -7,10 +8,11 @@ import { CourseBundleData } from "../../../../../shared/constants/types";
 
 export const bundleRepository = {
 
-    createCourseBundle: async (data: CourseBundleData, facultyId: string) => {
+    createCourseBundle: async (data: CourseBundleData, facultyId: string, client?: SupabaseClient) => {
 
         try {
 
+            const supabase = client ?? anonSupabase;
             // create new bundle
 
 
@@ -62,8 +64,9 @@ export const bundleRepository = {
 
     },
 
-    getMyBundles: async (facultyId: string, filter: boolean) => {
+    getMyBundles: async (facultyId: string, filter: boolean, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             const { data: bundles, error } = await supabase
                 .from("course_bundle")
                 .select(`
@@ -96,8 +99,9 @@ export const bundleRepository = {
         }
     },
 
-    getbundleById: async (bundleId: string, facultyId: string) => {
+    getbundleById: async (bundleId: string, facultyId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             console.log("bundleId", bundleId);
             const { data: bundle, error } = await supabase
                 .from("course_bundle")
@@ -136,8 +140,9 @@ export const bundleRepository = {
         }
     },
 
-    updateBundle: async (bundleId: string, data: CourseBundleData, facultyId: string) => {
+    updateBundle: async (bundleId: string, data: CourseBundleData, facultyId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             // Fix: proper discount handling
             const discount = data.discount != null ? Number(data.discount) : null;
 
@@ -193,8 +198,9 @@ export const bundleRepository = {
         }
     },
 
-    deleteBundle: async (bundleId: string, facultyId: string) => {
+    deleteBundle: async (bundleId: string, facultyId: string, client?: SupabaseClient) => {
         try {
+            const supabase = client ?? anonSupabase;
             const { error } = await supabase
                 .from("course_bundle")
                 .delete()

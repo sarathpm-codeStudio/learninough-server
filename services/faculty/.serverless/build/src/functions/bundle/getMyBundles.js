@@ -3720,7 +3720,7 @@ var createCourseBundleSchema = import_zod.z.object({
   isDraft: import_zod.z.boolean().optional()
 });
 var addCoursePricingSchema = import_zod.z.object({
-  duration: import_zod.z.string().min(1, "Duration is required"),
+  validity: import_zod.z.string().min(1, "Validity is required"),
   price: import_zod.z.number(),
   discount_type: import_zod.z.string().optional(),
   discount: import_zod.z.number().optional(),
@@ -3775,12 +3775,29 @@ var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
     transport: wrapper_default
   }
 });
+var getSupabaseClient = (accessToken) => {
+  return (0, import_supabase_js.createClient)(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    realtime: {
+      transport: wrapper_default
+    }
+  });
+};
 
 // src/modules/bundle/bundle.repository.ts
 var bundleRepository = {
-  createCourseBundle: async (data, facultyId) => {
+  createCourseBundle: async (data, facultyId, client) => {
     try {
-      const { data: bundle, error } = await supabase.from("course_bundle").insert({
+      const supabase2 = client ?? supabase;
+      const { data: bundle, error } = await supabase2.from("course_bundle").insert({
         faculty_id: facultyId,
         title: data.title,
         description: data.description,
@@ -3801,7 +3818,7 @@ var bundleRepository = {
         bundle_id: bundleId,
         course_id: courseId
       }));
-      const { data: courseBundleMappingData, error: courseBundleMappingError } = await supabase.from("course_bundle_courses").insert(courseBundleMapping);
+      const { data: courseBundleMappingData, error: courseBundleMappingError } = await supabase2.from("course_bundle_courses").insert(courseBundleMapping);
       if (courseBundleMappingError) {
         throw new Error(courseBundleMappingError.message);
       }
@@ -3810,9 +3827,10 @@ var bundleRepository = {
       throw new Error(error.message);
     }
   },
-  getMyBundles: async (facultyId, filter) => {
+  getMyBundles: async (facultyId, filter, client) => {
     try {
-      const { data: bundles, error } = await supabase.from("course_bundle").select(`
+      const supabase2 = client ?? supabase;
+      const { data: bundles, error } = await supabase2.from("course_bundle").select(`
         id,
         title,
         description,
@@ -3836,10 +3854,11 @@ var bundleRepository = {
       throw new Error(error.message);
     }
   },
-  getbundleById: async (bundleId, facultyId) => {
+  getbundleById: async (bundleId, facultyId, client) => {
     try {
+      const supabase2 = client ?? supabase;
       console.log("bundleId", bundleId);
-      const { data: bundle, error } = await supabase.from("course_bundle").select(`
+      const { data: bundle, error } = await supabase2.from("course_bundle").select(`
         id,
         title,
         description,
@@ -3868,11 +3887,12 @@ var bundleRepository = {
       throw new Error(error.message);
     }
   },
-  updateBundle: async (bundleId, data, facultyId) => {
+  updateBundle: async (bundleId, data, facultyId, client) => {
     try {
+      const supabase2 = client ?? supabase;
       const discount = data.discount != null ? Number(data.discount) : null;
       const [{ data: bundle, error: bundleError }] = await Promise.all([
-        supabase.from("course_bundle").update({
+        supabase2.from("course_bundle").update({
           title: data.title,
           description: data.description,
           price: data.price,
@@ -3886,14 +3906,14 @@ var bundleRepository = {
         }).eq("id", bundleId).eq("faculty_id", facultyId).select().single()
       ]);
       if (bundleError) throw new Error(bundleError.message);
-      const { error: deleteError } = await supabase.from("course_bundle_courses").delete().eq("bundle_id", bundleId);
+      const { error: deleteError } = await supabase2.from("course_bundle_courses").delete().eq("bundle_id", bundleId);
       if (deleteError) throw new Error(deleteError.message);
       if (data.courses.length > 0) {
         const courseBundleMapping = data.courses.map((courseId) => ({
           bundle_id: bundleId,
           course_id: courseId
         }));
-        const { error: insertError } = await supabase.from("course_bundle_courses").insert(courseBundleMapping);
+        const { error: insertError } = await supabase2.from("course_bundle_courses").insert(courseBundleMapping);
         if (insertError) throw new Error(insertError.message);
       }
       return { bundle };
@@ -3901,9 +3921,10 @@ var bundleRepository = {
       throw new Error(error.message);
     }
   },
-  deleteBundle: async (bundleId, facultyId) => {
+  deleteBundle: async (bundleId, facultyId, client) => {
     try {
-      const { error } = await supabase.from("course_bundle").delete().eq("id", bundleId).eq("faculty_id", facultyId);
+      const supabase2 = client ?? supabase;
+      const { error } = await supabase2.from("course_bundle").delete().eq("id", bundleId).eq("faculty_id", facultyId);
       if (error) {
         throw new Error(error.message);
       }
@@ -3919,7 +3940,7 @@ var bundleService = {
   createCourseBundle: async (event) => {
     try {
       const validatedData = validate(createCourseBundleSchema, JSON.parse(event.body));
-      const bundle = await bundleRepository.createCourseBundle(validatedData, event.user.id);
+      const bundle = await bundleRepository.createCourseBundle(validatedData, event.user.id, event.supabase);
       return bundle;
     } catch (error) {
       console.log("error", error);
@@ -3929,7 +3950,7 @@ var bundleService = {
   getMyBundles: async (event) => {
     try {
       const filter = event.queryStringParameters.filter;
-      const bundles = await bundleRepository.getMyBundles(event.user.id, filter);
+      const bundles = await bundleRepository.getMyBundles(event.user.id, filter, event.supabase);
       return bundles;
     } catch (error) {
       console.log("error", error);
@@ -3939,7 +3960,7 @@ var bundleService = {
   getBundleById: async (event) => {
     try {
       const bundleId = event.pathParameters.bundleId;
-      const bundle = await bundleRepository.getbundleById(bundleId, event.user.id);
+      const bundle = await bundleRepository.getbundleById(bundleId, event.user.id, event.supabase);
       return bundle;
     } catch (error) {
       console.log("error", error);
@@ -3950,7 +3971,7 @@ var bundleService = {
     try {
       const bundleId = event.pathParameters.bundleId;
       const validatedData = validate(createCourseBundleSchema, JSON.parse(event.body));
-      const bundle = await bundleRepository.updateBundle(bundleId, validatedData, event.user.id);
+      const bundle = await bundleRepository.updateBundle(bundleId, validatedData, event.user.id, event.supabase);
       return bundle;
     } catch (error) {
       console.log("error", error);
@@ -3960,7 +3981,7 @@ var bundleService = {
   deleteBundle: async (event) => {
     try {
       const bundleId = event.pathParameters.bundleId;
-      const bundle = await bundleRepository.deleteBundle(bundleId, event.user.id);
+      const bundle = await bundleRepository.deleteBundle(bundleId, event.user.id, event.supabase);
       return bundle;
     } catch (error) {
       console.log("error", error);
@@ -4008,10 +4029,13 @@ var verifyAuth = (handler2) => async (event) => {
   if (!token) return handleResponse.error(null, "Unauthorized", 401);
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return handleResponse.error(error, "User not found", 401);
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
+  const authedSupabase = getSupabaseClient(token);
+  const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
   if (profileError) return handleResponse.error(profileError, "User not found", 401);
   console.log("profile", profile);
   event.user = { ...data.user, profile };
+  event.token = token;
+  event.supabase = authedSupabase;
   return handler2(event);
 };
 var verifyRole = (role) => (handler2) => async (event) => {
@@ -4024,7 +4048,8 @@ var verifyRole = (role) => (handler2) => async (event) => {
 };
 var verifyAccountStatus = (handler2) => async (event) => {
   if (!event.user) return handleResponse.error(null, "User not found", 401);
-  const userDetails = await supabase.from("profiles").select("*").eq("id", event.user.id).single();
+  const client = event.supabase ?? supabase;
+  const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
   if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
   if (userDetails.data.account_verified !== "APPROVED" /* APPROVED */) {
     return handleResponse.error(null, "Your account is not approved", 401);

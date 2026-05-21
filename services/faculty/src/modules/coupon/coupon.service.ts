@@ -13,7 +13,7 @@ export const couponService = {
 
             const validatedData = validate(couponValidator, JSON.parse(event.body)) as CouponData;
 
-             const coupon = await couponRepository.createCoupon(validatedData, event.user.id);
+             const coupon = await couponRepository.createCoupon(validatedData, event.user.id, event.supabase);
 
             return coupon;
 
@@ -25,7 +25,7 @@ export const couponService = {
 
     getMyCourses: async (event: any) => {
         try {
-            const courses = await couponRepository.getMyCourses(event.user.id);
+            const courses = await couponRepository.getMyCourses(event.user.id, event.supabase);
             return courses;
         } catch (error: any) {
             throw new Error(error.message);
@@ -38,7 +38,7 @@ export const couponService = {
             const filter = event.queryStringParameters?.filter || "all";
             const page = event.queryStringParameters?.page || 1;
             const limit = event.queryStringParameters?.limit || 10;
-            const coupons = await couponRepository.getMyCoupons(event.user.id, filter, page, limit);
+            const coupons = await couponRepository.getMyCoupons(event.user.id, filter, page, limit, event.supabase);
 
             return coupons
 
@@ -53,7 +53,7 @@ export const couponService = {
 
             const couponId = event.pathParameters?.couponId;
             const status = event.body.status;
-            const coupon = await couponRepository.updateCouponStatus(event.user.id, couponId, status);
+            const coupon = await couponRepository.updateCouponStatus(event.user.id, couponId, status, event.supabase);
 
             return coupon
 
@@ -67,7 +67,7 @@ export const couponService = {
         try {
 
             const couponId = event.pathParameters?.couponId;
-            const coupon = await couponRepository.deleteCoupon(event.user.id, couponId);
+            const coupon = await couponRepository.deleteCoupon(event.user.id, couponId, event.supabase);
 
             return coupon
 
