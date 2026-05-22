@@ -761,6 +761,15 @@ functions:
           cors:   true
 
   # ── Coupon ─────────────────────────────────────────────────────
+
+  getMyCouponAnalytics:
+    handler: src/functions/coupon/getMyCouponAnalytics.handler
+    events:
+      - http:
+          path:   faculty/coupons/analytics
+          method: get
+          cors:   true
+
   createCoupon:
     handler: src/functions/coupon/createCoupon.handler
     events:
@@ -781,7 +790,7 @@ functions:
     handler: src/functions/coupon/getAllCoupon.handler
     events:
       - http:
-          path:   faculty/coupon
+          path:   faculty/coupons
           method: get
           cors:   true
 
@@ -790,7 +799,15 @@ functions:
     events:
       - http:
           path:   faculty/coupon/{couponId}/status
-          method: put
+          method: patch
+          cors:   true
+
+  updateCoupon:
+    handler: src/functions/coupon/editCoupon.handler
+    events:
+      - http:
+          path:   faculty/coupon/{couponId}
+          method: patch
           cors:   true
 
   deleteCoupon:

@@ -3646,13 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/coupon/deleteCoupon.ts
-var deleteCoupon_exports = {};
-__export(deleteCoupon_exports, {
+// src/functions/coupon/getMyCouponAnalytics.ts
+var getMyCouponAnalytics_exports = {};
+__export(getMyCouponAnalytics_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(deleteCoupon_exports);
+module.exports = __toCommonJS(getMyCouponAnalytics_exports);
 
 // ../../shared/utils/validate.ts
 var validate = (schema, data) => {
@@ -4120,13 +4120,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/coupon/deleteCoupon.ts
+// src/functions/coupon/getMyCouponAnalytics.ts
 var handlerFun = async (event) => {
   try {
-    const coupons = await couponService.deleteCoupon(event);
-    return handleResponse.success(coupons, "Coupon deleted successfully", 200);
+    const coupon = await couponService.getMyCouponsAnalytics(event);
+    return handleResponse.success(coupon, "Coupon analytics fetched successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error deleting coupon", 400);
+    return handleResponse.error(err, err.message, 400);
   }
 };
 var handler = compose(
@@ -4139,4 +4139,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=deleteCoupon.js.map
+//# sourceMappingURL=getMyCouponAnalytics.js.map

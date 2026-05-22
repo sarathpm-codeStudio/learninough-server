@@ -1,5 +1,8 @@
 
 
+
+
+
 import { couponService } from "../../modules/coupon/coupon.service";
 import { verifyAuth, verifyRole, verifyAccountStatus } from "../../../../../shared/utils/verifyAuth";
 import { compose } from "../../../../../shared/utils/compose";
@@ -10,9 +13,9 @@ export const handlerFun = async (event: any) => {
 
     try {
 
-        const coupon = await couponService.createCoupon(event);
+        const coupon = await couponService.updateCoupon(event);
 
-        return handleResponse.success(coupon, "Coupon created successfully", 200);
+        return handleResponse.success(coupon, "Coupon updated successfully", 200);
 
 
     } catch (err: any) {
