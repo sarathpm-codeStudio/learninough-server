@@ -3753,7 +3753,6 @@ var facultyDashboardRepository = {
       const { data: courses, error: coursesError } = await db.from("courses").select("id").eq("faculty_id", facultyId).eq("is_deleted", false);
       if (coursesError) throw new Error(coursesError.message);
       const courseIds = courses.map((c) => c.id);
-      if (courseIds.length === 0) return [];
       const now = /* @__PURE__ */ new Date();
       let startDate;
       if (period === "week") {
@@ -3764,8 +3763,12 @@ var facultyDashboardRepository = {
       } else {
         startDate = new Date(now.getFullYear(), 0, 1);
       }
-      const { data: enrollments, error: enrollmentsError } = await db.from("enrollments").select("enrolled_at").in("course_id", courseIds).gte("enrolled_at", startDate.toISOString()).lte("enrolled_at", now.toISOString());
-      if (enrollmentsError) throw new Error(enrollmentsError.message);
+      let enrollments = [];
+      if (courseIds.length > 0) {
+        const { data, error: enrollmentsError } = await db.from("enrollments").select("enrolled_at").in("course_id", courseIds).gte("enrolled_at", startDate.toISOString()).lte("enrolled_at", now.toISOString());
+        if (enrollmentsError) throw new Error(enrollmentsError.message);
+        enrollments = data ?? [];
+      }
       if (period === "week") {
         const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
         const result = {};
@@ -3832,7 +3835,6 @@ var facultyDashboardRepository = {
       const { data: courses, error: coursesError } = await db.from("courses").select("id").eq("faculty_id", facultyId).eq("is_deleted", false);
       if (coursesError) throw new Error(coursesError.message);
       const courseIds = courses.map((c) => c.id);
-      if (courseIds.length === 0) return { data: [], trend: "0% no data available" };
       const now = /* @__PURE__ */ new Date();
       let currentStart;
       let previousStart;
@@ -3852,10 +3854,16 @@ var facultyDashboardRepository = {
         previousEnd = new Date(currentStart);
         previousStart = new Date(now.getFullYear() - 1, 0, 1);
       }
-      const { data: currentEnrollments, error: currentError } = await db.from("enrollments").select("enrolled_at, amount_paid").in("course_id", courseIds).gte("enrolled_at", currentStart.toISOString()).lte("enrolled_at", now.toISOString());
-      if (currentError) throw new Error(currentError.message);
-      const { data: previousEnrollments, error: previousError } = await db.from("enrollments").select("amount_paid").in("course_id", courseIds).gte("enrolled_at", previousStart.toISOString()).lte("enrolled_at", previousEnd.toISOString());
-      if (previousError) throw new Error(previousError.message);
+      let currentEnrollments = [];
+      let previousEnrollments = [];
+      if (courseIds.length > 0) {
+        const { data: current, error: currentError } = await db.from("enrollments").select("enrolled_at, amount_paid").in("course_id", courseIds).gte("enrolled_at", currentStart.toISOString()).lte("enrolled_at", now.toISOString());
+        if (currentError) throw new Error(currentError.message);
+        currentEnrollments = current ?? [];
+        const { data: previous, error: previousError } = await db.from("enrollments").select("amount_paid").in("course_id", courseIds).gte("enrolled_at", previousStart.toISOString()).lte("enrolled_at", previousEnd.toISOString());
+        if (previousError) throw new Error(previousError.message);
+        previousEnrollments = previous ?? [];
+      }
       const currentTotal = currentEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
       const previousTotal = previousEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
       let trendText = "0% no change";

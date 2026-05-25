@@ -80,7 +80,6 @@ export const facultyDashboardRepository = {
     
             if (coursesError) throw new Error(coursesError.message);
             const courseIds = courses.map((c) => c.id);
-            if (courseIds.length === 0) return [];
     
             // 2. Calculate date range
             const now = new Date();
@@ -95,15 +94,19 @@ export const facultyDashboardRepository = {
                 startDate = new Date(now.getFullYear(), 0, 1); // start of year
             }
     
-            // 3. Fetch enrollments within date range
-            const { data: enrollments, error: enrollmentsError } = await db
-                .from("enrollments")
-                .select("enrolled_at")
-                .in("course_id", courseIds)
-                .gte("enrolled_at", startDate.toISOString())
-                .lte("enrolled_at", now.toISOString());
+            // 3. Fetch enrollments within date range (skip query when no courses — .in([]) is invalid)
+            let enrollments: { enrolled_at?: string }[] = [];
+            if (courseIds.length > 0) {
+                const { data, error: enrollmentsError } = await db
+                    .from("enrollments")
+                    .select("enrolled_at")
+                    .in("course_id", courseIds)
+                    .gte("enrolled_at", startDate.toISOString())
+                    .lte("enrolled_at", now.toISOString());
     
-            if (enrollmentsError) throw new Error(enrollmentsError.message);
+                if (enrollmentsError) throw new Error(enrollmentsError.message);
+                enrollments = data ?? [];
+            }
     
             // 4. Group data based on period
             if (period === "week") {
@@ -181,7 +184,6 @@ export const facultyDashboardRepository = {
     
             if (coursesError) throw new Error(coursesError.message);
             const courseIds = courses.map((c) => c.id);
-            if (courseIds.length === 0) return { data: [], trend: "0% no data available" };
     
             // 2. Calculate current and previous date ranges
             const now = new Date();
@@ -205,25 +207,31 @@ export const facultyDashboardRepository = {
                 previousStart = new Date(now.getFullYear() - 1, 0, 1);
             }
     
-            // 3. Fetch current period enrollments
-            const { data: currentEnrollments, error: currentError } = await db
-                .from("enrollments")
-                .select("enrolled_at, amount_paid")
-                .in("course_id", courseIds)
-                .gte("enrolled_at", currentStart.toISOString())
-                .lte("enrolled_at", now.toISOString());
+            // 3. Fetch current period enrollments (skip when no courses — .in([]) is invalid)
+            let currentEnrollments: { enrolled_at?: string; amount_paid?: number }[] = [];
+            let previousEnrollments: { amount_paid?: number }[] = [];
+            if (courseIds.length > 0) {
+                const { data: current, error: currentError } = await db
+                    .from("enrollments")
+                    .select("enrolled_at, amount_paid")
+                    .in("course_id", courseIds)
+                    .gte("enrolled_at", currentStart.toISOString())
+                    .lte("enrolled_at", now.toISOString());
     
-            if (currentError) throw new Error(currentError.message);
+                if (currentError) throw new Error(currentError.message);
+                currentEnrollments = current ?? [];
     
-            // 4. Fetch previous period enrollments (for trend %)
-            const { data: previousEnrollments, error: previousError } = await db
-                .from("enrollments")
-                .select("amount_paid")
-                .in("course_id", courseIds)
-                .gte("enrolled_at", previousStart.toISOString())
-                .lte("enrolled_at", previousEnd.toISOString());
+                // 4. Fetch previous period enrollments (for trend %)
+                const { data: previous, error: previousError } = await db
+                    .from("enrollments")
+                    .select("amount_paid")
+                    .in("course_id", courseIds)
+                    .gte("enrolled_at", previousStart.toISOString())
+                    .lte("enrolled_at", previousEnd.toISOString());
     
-            if (previousError) throw new Error(previousError.message);
+                if (previousError) throw new Error(previousError.message);
+                previousEnrollments = previous ?? [];
+            }
     
             // 5. Calculate trend percentage
             const currentTotal = currentEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
