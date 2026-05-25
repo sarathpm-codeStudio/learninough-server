@@ -3646,13 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/dashboard/getCounterData.ts
-var getCounterData_exports = {};
-__export(getCounterData_exports, {
+// src/functions/dashboard/getTopCoursesPerformance.ts
+var getTopCoursesPerformance_exports = {};
+__export(getTopCoursesPerformance_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(getCounterData_exports);
+module.exports = __toCommonJS(getTopCoursesPerformance_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -4068,13 +4068,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/dashboard/getCounterData.ts
+// src/functions/dashboard/getTopCoursesPerformance.ts
 var handlerFun = async (event) => {
   try {
-    const counterData = await facultyDashboardService.getFacultyDashboardAnalytics(event);
-    return handleResponse.success(counterData, "Counter data fetched successfully", 200);
+    const performanceData = await facultyDashboardService.getTopCoursesPerformance(event);
+    return handleResponse.success(performanceData, "Performance data fetched successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error fetching counter data", 400);
+    return handleResponse.error(err, "Error fetching performance data", 400);
   }
 };
 var handler = compose(
@@ -4087,4 +4087,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=getCounterData.js.map
+//# sourceMappingURL=getTopCoursesPerformance.js.map

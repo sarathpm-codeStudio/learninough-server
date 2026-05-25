@@ -667,15 +667,31 @@ functions:
     handler: src/functions/dashboard/getCounterData.handler
     events:
       - http:
-          path:   faculty/dashboard/counter
+          path:   faculty/dashboard/counters
           method: get
           cors:   true
 
-  getGraphData:
-    handler: src/functions/dashboard/getGraphData.handler
+  getEnrollmentTrend:
+    handler: src/functions/dashboard/getEnrollmentTrend.handler
     events:
       - http:
-          path:   faculty/dashboard/graph
+          path:   faculty/dashboard/enrollment-trends
+          method: get
+          cors:   true
+
+  getRevenueTrend:
+    handler: src/functions/dashboard/getRevenueTrend.handler
+    events:
+      - http:
+          path:   faculty/dashboard/revenue-trends
+          method: get
+          cors:   true
+
+  getTopCoursesPerformance:
+    handler: src/functions/dashboard/getTopCoursesPerformance.handler
+    events:
+      - http:
+          path:   faculty/dashboard/top-courses-performances
           method: get
           cors:   true
 

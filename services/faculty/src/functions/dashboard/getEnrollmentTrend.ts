@@ -1,3 +1,5 @@
+
+
 import { facultyDashboardService } from "../../modules/dashboard/dashboard.service";
 import { verifyAuth, verifyRole, verifyAccountStatus } from "../../../../../shared/utils/verifyAuth";
 import { compose } from "../../../../../shared/utils/compose";
@@ -8,13 +10,13 @@ export const handlerFun = async (event: any) => {
 
     try {
 
-        const counterData = await facultyDashboardService.getFacultyDashboardAnalytics(event);
-        return handleResponse.success(counterData, "Counter data fetched successfully", 200);
+        const trendData = await facultyDashboardService.getEnrollmentTrend(event);
+        return handleResponse.success(trendData, "Enrollment trend data fetched successfully", 200);
 
 
     } catch (err: any) {
 
-        return handleResponse.error(err, "Error fetching counter data", 400);
+        return handleResponse.error(err, "Error fetching enrollment trend data", 400);
     }
 };
 

@@ -3646,13 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/dashboard/getCounterData.ts
-var getCounterData_exports = {};
-__export(getCounterData_exports, {
+// src/functions/dashboard/getEnrollmentTrend.ts
+var getEnrollmentTrend_exports = {};
+__export(getEnrollmentTrend_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(getCounterData_exports);
+module.exports = __toCommonJS(getEnrollmentTrend_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -4068,13 +4068,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/dashboard/getCounterData.ts
+// src/functions/dashboard/getEnrollmentTrend.ts
 var handlerFun = async (event) => {
   try {
-    const counterData = await facultyDashboardService.getFacultyDashboardAnalytics(event);
-    return handleResponse.success(counterData, "Counter data fetched successfully", 200);
+    const trendData = await facultyDashboardService.getEnrollmentTrend(event);
+    return handleResponse.success(trendData, "Enrollment trend data fetched successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error fetching counter data", 400);
+    return handleResponse.error(err, "Error fetching enrollment trend data", 400);
   }
 };
 var handler = compose(
@@ -4087,4 +4087,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=getCounterData.js.map
+//# sourceMappingURL=getEnrollmentTrend.js.map
