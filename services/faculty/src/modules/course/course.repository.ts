@@ -322,6 +322,10 @@ export const facultyCourseRepository = {
     updateCourseDetails: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
 
+            console.log("course id",courseId);
+            console.log("faculty id",facultyId);
+            console.log("data",data);
+
             const supabase = client ?? anonSupabase;
             // check this course have intro video
             const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase
@@ -329,8 +333,9 @@ export const facultyCourseRepository = {
                 .select("*")
                 .eq("unique_id", data.unique_id)
                 .eq("type", "intro")
-                .single();
+                .maybeSingle();
 
+console.log("videoUploadProgress",videoUploadProgress);
 
             const { data: course, error } = await supabase
                 .from("courses")

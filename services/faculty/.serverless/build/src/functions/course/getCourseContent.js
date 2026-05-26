@@ -3896,8 +3896,12 @@ var facultyCourseRepository = {
   },
   updateCourseDetails: async (data, courseId, facultyId, client) => {
     try {
+      console.log("course id", courseId);
+      console.log("faculty id", facultyId);
+      console.log("data", data);
       const supabase2 = client ?? supabase;
-      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase2.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").single();
+      const { data: videoUploadProgress, error: videoUploadProgressError } = await supabase2.from("video_upload_progress").select("*").eq("unique_id", data.unique_id).eq("type", "intro").maybeSingle();
+      console.log("videoUploadProgress", videoUploadProgress);
       const { data: course, error } = await supabase2.from("courses").update({
         title: data.title,
         description: data.description,
