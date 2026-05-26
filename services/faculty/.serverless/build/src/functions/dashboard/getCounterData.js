@@ -3727,9 +3727,11 @@ var facultyDashboardRepository = {
       const { data: courses, error: coursesError } = await db.from("courses").select("id").eq("faculty_id", facultyId).eq("is_deleted", false).eq("is_draft", false);
       if (coursesError) throw new Error(coursesError.message);
       const courseIds = courses.map((c) => c.id);
+      console.log("courseIds", courseIds);
       const activeCourses = courses.length;
       const { data: enrollments, error: enrollmentsError } = await db.from("enrollments").select("student_id, amount_paid").in("course_id", courseIds);
       if (enrollmentsError) throw new Error(enrollmentsError.message);
+      console.log("enrollments", enrollments);
       const totalStudents = new Set(enrollments.map((e) => e.student_id)).size;
       const totalRevenue = enrollments.reduce(
         (sum, e) => sum + Number(e.amount_paid),

@@ -23,6 +23,8 @@ export const facultyDashboardRepository = {
             if (coursesError) throw new Error(coursesError.message);
     
             const courseIds = courses.map((c) => c.id);
+
+            console.log("courseIds",courseIds);
     
             // 2. Active courses count
             const activeCourses = courses.length;
@@ -34,6 +36,8 @@ export const facultyDashboardRepository = {
                 .in("course_id", courseIds);
     
             if (enrollmentsError) throw new Error(enrollmentsError.message);
+
+            console.log("enrollments",enrollments);
     
             const totalStudents = new Set(enrollments.map((e) => e.student_id)).size;
     
