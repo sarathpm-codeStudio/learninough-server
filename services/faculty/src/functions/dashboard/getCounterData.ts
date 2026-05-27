@@ -8,7 +8,8 @@ export const handlerFun = async (event: any) => {
 
     try {
 
-        return handleResponse.success({}, "Counter data fetched successfully", 200);
+        const counterData = await facultyDashboardService.getFacultyDashboardAnalytics(event);
+        return handleResponse.success(counterData, "Counter data fetched successfully", 200);
 
 
     } catch (err: any) {

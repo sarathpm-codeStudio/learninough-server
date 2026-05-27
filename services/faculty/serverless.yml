@@ -1,363 +1,6 @@
 
 
 
-# service: faculty-service
-
-# useDotenv: true
-
-# provider:
-#   name:       aws
-#   runtime:    nodejs20.x
-#   region:     ap-south-1
-#   stage:      ${opt:stage, 'dev'}
-#   timeout:    29
-#   memorySize: 256
-#   environment:
-#     SUPABASE_URL:                ${env:SUPABASE_URL}
-#     SUPABASE_ANON_KEY:           ${env:SUPABASE_ANON_KEY}
-#     SUPABASE_SERVICE_ROLE_KEY:   ${env:SUPABASE_SERVICE_ROLE_KEY}
-#     UPSTASH_REDIS_URL:           ${env:UPSTASH_REDIS_URL}
-#     UPSTASH_REDIS_TOKEN:         ${env:UPSTASH_REDIS_TOKEN}
-#     TPSTREAMS_API_KEY:           ${env:TPSTREAMS_API_KEY}
-#     TPSTREAMS_ORG_ID:            ${env:TPSTREAMS_ORG_ID}
-#     CHAT_NOTIFICATION_QUEUE_URL: ${env:CHAT_NOTIFICATION_QUEUE_URL}
-#     FIREBASE_PROJECT_ID:         ${env:FIREBASE_PROJECT_ID}
-#     FIREBASE_PRIVATE_KEY:        ${env:FIREBASE_PRIVATE_KEY}
-#     FIREBASE_CLIENT_EMAIL:       ${env:FIREBASE_CLIENT_EMAIL}
-
-#   iam:
-#     role:
-#       statements:
-#         - Effect: Allow
-#           Action:
-#             - sqs:SendMessage
-#           Resource: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue"
-
-# # ✅ Disable ESBuild for local
-# build:
-#   esbuild: false
-
-# plugins:
-#   - serverless-offline
-
-# custom:
-#   serverless-offline:
-#     httpPort:   3000
-#     lambdaPort: 3001
-
-# functions:
-
-#   # ── Course ──────────────────────────────────────────────────
-#   createCourse:
-#     handler: src/functions/course/createCourse.handler
-#     events:
-#       - http:
-#           path:   faculty/courses
-#           method: post
-
-#   uploadCourseIntroVideo:
-#     handler: src/functions/course/uploadCourseIntroVideo.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/intro-video
-#           method: post
-
-#   getMyCourses:
-#     handler: src/functions/course/getMycourse.handler
-#     events:
-#       - http:
-#           path:   faculty/courses
-#           method: get
-
-#   getCourseById:
-#     handler: src/functions/course/getCourseById.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}
-#           method: get
-
-#   getCoursePreview:
-#     handler: src/functions/course/getCoursePreview.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/preview
-#           method: get
-
-#   updateCourse:
-#     handler: src/functions/course/updateCourse.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}
-#           method: patch
-
-#   publishCourse:
-#     handler: src/functions/course/publishCourse.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/publish
-#           method: patch
-
-#   getCourseContent:
-#     handler: src/functions/course/getCourseContent.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/content
-#           method: get
-
-#   getAllProcessingMaterial:
-#     handler: src/functions/course/getProcessingMaterial.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/processing-materials
-#           method: get
-
-#   getAllCourseReviews:
-#     handler: src/functions/course/getAllReviews.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/reviews
-#           method: get
-
-#   addReviewReply:
-#     handler: src/functions/course/reviewReply.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/reviews/{reviewId}/reply
-#           method: post
-
-#   addCoursePricing:
-#     handler: src/functions/course/addCoursePricing.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/pricing
-#           method: patch
-
-#   # ── Folder ──────────────────────────────────────────────────
-#   createFolderInCourse:
-#     handler: src/functions/folder/createFolder.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/folders
-#           method: post
-
-#   updateFolder:
-#     handler: src/functions/folder/updateFolder.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/folders/{folderId}
-#           method: patch
-
-#   deleteFolder:
-#     handler: src/functions/folder/deleteFolder.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/folders/{folderId}
-#           method: delete
-
-#   # ── Material ─────────────────────────────────────────────────
-#   createMaterial:
-#     handler: src/functions/material/createMaterial.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/materials
-#           method: post
-
-#   updateMaterial:
-#     handler: src/functions/material/updateMaterial.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/materials/{materialId}
-#           method: patch
-
-#   deleteMaterial:
-#     handler: src/functions/material/deleteMaterial.handler
-#     events:
-#       - http:
-#           path:   faculty/courses/{courseId}/materials/{materialId}
-#           method: delete
-
-#   # ── Bundle ───────────────────────────────────────────────────
-#   createCourseBundle:
-#     handler: src/functions/bundle/createBundle.handler
-#     events:
-#       - http:
-#           path:   faculty/bundle
-#           method: post
-
-#   getMyBundles:
-#     handler: src/functions/bundle/getMyBundles.handler
-#     events:
-#       - http:
-#           path:   faculty/bundle
-#           method: get
-
-#   getBundleById:
-#     handler: src/functions/bundle/getBundelById.handler
-#     events:
-#       - http:
-#           path:   faculty/bundle/{bundleId}
-#           method: get
-
-#   # ── Students ─────────────────────────────────────────────────
-#   getAllStudents:
-#     handler: src/functions/students/getAllStudents.handler
-#     events:
-#       - http:
-#           path:   faculty/students
-#           method: get
-
-#   # ── Announcements ────────────────────────────────────────────
-#   createAnnouncement:
-#     handler: src/functions/announcements/createAnnouncement.handler
-#     events:
-#       - http:
-#           path:   faculty/announcements
-#           method: post
-
-#   getAllAnnouncements:
-#     handler: src/functions/announcements/getAllAnnouncement.handler
-#     events:
-#       - http:
-#           path:   faculty/announcements
-#           method: get
-
-#   updateAnnouncement:
-#     handler: src/functions/announcements/updateAnnouncement.handler
-#     events:
-#       - http:
-#           path:   faculty/announcements/{id}
-#           method: put
-
-#   deleteAnnouncement:
-#     handler: src/functions/announcements/deleteAnnouncement.handler
-#     events:
-#       - http:
-#           path:   faculty/announcements/{id}
-#           method: delete
-
-#   # ── Dashboard ────────────────────────────────────────────────
-#   getCounterData:
-#     handler: src/functions/dashboard/getCounterData.handler
-#     events:
-#       - http:
-#           path:   faculty/dashboard/counter
-#           method: get
-
-#   getGraphData:
-#     handler: src/functions/dashboard/getGraphData.handler
-#     events:
-#       - http:
-#           path:   faculty/dashboard/graph
-#           method: get
-
-#   # ── Test ─────────────────────────────────────────────────────
-#   createTest:
-#     handler: src/functions/test/createTest.handler
-#     events:
-#       - http:
-#           path:   faculty/test
-#           method: post
-
-#   getMyAllTests:
-#     handler: src/functions/test/getMyAllTestes.handler
-#     events:
-#       - http:
-#           path:   faculty/test
-#           method: get
-
-#   getTestById:
-#     handler: src/functions/test/getTestById.handler
-#     events:
-#       - http:
-#           path:   faculty/test/{testId}
-#           method: get
-
-#   updateTest:
-#     handler: src/functions/test/updateTest.handler
-#     events:
-#       - http:
-#           path:   faculty/test/{testId}
-#           method: put
-
-#   deleteTest:
-#     handler: src/functions/test/deleteTest.handler
-#     events:
-#       - http:
-#           path:   faculty/test/{testId}
-#           method: delete
-
-#   createTestQuestion:
-#     handler: src/functions/test/createQuestions.handler
-#     events:
-#       - http:
-#           path:   faculty/test/{testId}/questions
-#           method: post
-
-#   updateTestQuestion:
-#     handler: src/functions/test/updateQuestion.handler
-#     events:
-#       - http:
-#           path:   faculty/test/{testId}/questions/{questionId}
-#           method: put
-
-#   deleteTestQuestion:
-#     handler: src/functions/test/deleteQuestions.handler
-#     events:
-#       - http:
-#           path:   faculty/test/{testId}/questions/{questionId}
-#           method: delete
-
-#   publishTest:
-#     handler: src/functions/test/publishTest.handler
-#     events:
-#       - http:
-#           path:   faculty/test/{testId}/publish
-#           method: put
-
-#   # ── Coupon ─────────────────────────────────────────────────────
-#   createCoupon:
-#     handler: src/functions/coupon/createCoupon.handler
-#     events:
-#       - http:
-#           path:   faculty/coupon
-#           method: post
-
-#   getMyAllCoupons:
-#     handler: src/functions/coupon/getAllCoupon.handler
-#     events:
-#       - http:
-#           path:   faculty/coupon
-#           method: get
-
-#   updateCouponStatus:
-#     handler: src/functions/coupon/updateStatus.handler
-#     events:
-#       - http:
-#           path:   faculty/coupon/{couponId}/status
-#           method: put
-
-#   deleteCoupon:
-#     handler: src/functions/coupon/deleteCoupon.handler
-#     events:
-#       - http:
-#           path:   faculty/coupon/{couponId}
-#           method: delete
-
-#   # ── Video ─────────────────────────────────────────────────────
-#   createVideoUploadProgress:
-#     handler: src/functions/video/processVideoUpload.handler
-#     events:
-#       - http:
-#           path:   faculty/video/create-upload-progress
-#           method: post
-
-
-
-
-
-
-
-
 
 
 # service: faculty-service
@@ -715,15 +358,31 @@
 
 
 
+
 service: faculty-service
 
+useDotenv: true
+
 provider:
-  name: aws
-  runtime: nodejs20.x
-  region: ap-south-1
-  timeout: 30
+  name:       aws
+  runtime:    nodejs20.x
+  region:     ap-south-1
+  timeout:    29
+  memorySize: 256
+  stage:      ${opt:stage, 'dev'}
   environment:
-    VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue
+    SUPABASE_URL:                ${ssm:/learning-app/SUPABASE_URL}
+    SUPABASE_ANON_KEY:           ${ssm:/learning-app/SUPABASE_ANON_KEY}
+    SUPABASE_SERVICE_ROLE_KEY:   ${ssm:/learning-app/SUPABASE_SERVICE_ROLE_KEY}
+    UPSTASH_REDIS_URL:           ${ssm:/learning-app/UPSTASH_REDIS_URL}
+    UPSTASH_REDIS_TOKEN:         ${ssm:/learning-app/UPSTASH_REDIS_TOKEN}
+    TPSTREAMS_API_KEY:           ${ssm:/learning-app/TPSTREAMS_API_KEY}
+    TPSTREAMS_ORG_ID:            ${ssm:/learning-app/TPSTREAMS_ORG_ID}
+    CHAT_NOTIFICATION_QUEUE_URL: ${ssm:/learning-app/CHAT_NOTIFICATION_QUEUE_URL}
+    FIREBASE_PROJECT_ID:         ${ssm:/learning-app/FIREBASE_PROJECT_ID}
+    FIREBASE_PRIVATE_KEY:        ${ssm:/learning-app/FIREBASE_PRIVATE_KEY}
+    FIREBASE_CLIENT_EMAIL:       ${ssm:/learning-app/FIREBASE_CLIENT_EMAIL}
+
   iam:
     role:
       statements:
@@ -732,335 +391,454 @@ provider:
             - sqs:SendMessage
           Resource: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue"
 
+build:
+  esbuild:
+    bundle:    true
+    minify:    false
+    sourcemap: true
+    external:
+      - '@supabase/supabase-js'
+      - '@upstash/redis'
+      - 'dotenv'
+      - '@aws-sdk/client-sqs'
+      - 'zod'
+      - 'firebase-admin'
+
 plugins:
   - serverless-offline
 
 custom:
   serverless-offline:
-    httpPort: 3000
+    httpPort:   3000
     lambdaPort: 3001
 
 functions:
 
   # ── Course ──────────────────────────────────────────────────
-
   createCourse:
     handler: src/functions/course/createCourse.handler
     events:
       - http:
-          path: faculty/courses
+          path:   faculty/courses
           method: post
+          cors:   true
 
   uploadCourseIntroVideo:
     handler: src/functions/course/uploadCourseIntroVideo.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/intro-video
+          path:   faculty/courses/{courseId}/intro-video
           method: post
+          cors:   true
 
   getMyCourses:
     handler: src/functions/course/getMycourse.handler
     events:
       - http:
-          path: faculty/courses
+          path:   faculty/courses
           method: get
+          cors:   true
 
   getCourseById:
     handler: src/functions/course/getCourseById.handler
     events:
       - http:
-          path: faculty/courses/{courseId}
+          path:   faculty/courses/{courseId}
           method: get
+          cors:   true
 
   getCoursePreview:
     handler: src/functions/course/getCoursePreview.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/preview
+          path:   faculty/courses/{courseId}/preview
           method: get
+          cors:   true
 
   updateCourse:
     handler: src/functions/course/updateCourse.handler
     events:
       - http:
-          path: faculty/courses/{courseId}
+          path:   faculty/courses/{courseId}
           method: patch
+          cors:   true
 
   publishCourse:
     handler: src/functions/course/publishCourse.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/publish
+          path:   faculty/courses/{courseId}/publish
           method: patch
+          cors:   true
 
   getCourseContent:
     handler: src/functions/course/getCourseContent.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/content
+          path:   faculty/courses/{courseId}/content
           method: get
+          cors:   true
 
   getAllProcessingMaterial:
     handler: src/functions/course/getProcessingMaterial.handler
     events:
       - http:
-          path: faculty/courses/processing-materials
+          path:   faculty/courses/processing-materials
           method: get
+          cors:   true
 
   getAllCourseReviews:
     handler: src/functions/course/getAllReviews.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/reviews
+          path:   faculty/courses/{courseId}/reviews
           method: get
-
+          cors:   true
 
   addReviewReply:
     handler: src/functions/course/reviewReply.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/reviews/{reviewId}/reply
-          method: post  
+          path:   faculty/courses/{courseId}/reviews/{reviewId}/reply
+          method: post
+          cors:   true
 
   addCoursePricing:
     handler: src/functions/course/addCoursePricing.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/pricing
+          path:   faculty/courses/{courseId}/pricing
           method: patch
-
+          cors:   true
 
   # ── Folder ──────────────────────────────────────────────────
-
   createFolderInCourse:
     handler: src/functions/folder/createFolder.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/folders
+          path:   faculty/courses/{courseId}/folders
           method: post
+          cors:   true
 
   updateFolder:
     handler: src/functions/folder/updateFolder.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/folders/{folderId}
+          path:   faculty/courses/{courseId}/folders/{folderId}
           method: patch
+          cors:   true
 
   deleteFolder:
     handler: src/functions/folder/deleteFolder.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/folders/{folderId}
+          path:   faculty/courses/{courseId}/folders/{folderId}
           method: delete
+          cors:   true
+
+  getFullFoldersInCourse:
+    handler: src/functions/course/getFullFoldersIncourse.handler
+    events:
+      - http:
+          path:   faculty/courses/{courseId}/folders
+          method: get
+          cors:   true
 
   # ── Material ─────────────────────────────────────────────────
-
   createMaterial:
     handler: src/functions/material/createMaterial.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/materials
+          path:   faculty/courses/{courseId}/materials
           method: post
+          cors:   true
 
   updateMaterial:
     handler: src/functions/material/updateMaterial.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/materials/{materialId}
+          path:   faculty/courses/{courseId}/materials/{materialId}
           method: patch
+          cors:   true
 
   deleteMaterial:
     handler: src/functions/material/deleteMaterial.handler
     events:
       - http:
-          path: faculty/courses/{courseId}/materials/{materialId}
+          path:   faculty/courses/{courseId}/materials/{materialId}
           method: delete
+          cors:   true
 
   # ── Bundle ───────────────────────────────────────────────────
-
   createCourseBundle:
     handler: src/functions/bundle/createBundle.handler
     events:
       - http:
-          path: faculty/bundle
+          path:   faculty/bundle
           method: post
+          cors:   true
 
   getMyBundles:
     handler: src/functions/bundle/getMyBundles.handler
     events:
       - http:
-          path: faculty/bundle
+          path:   faculty/bundle
           method: get
+          cors:   true
 
   getBundleById:
     handler: src/functions/bundle/getBundelById.handler
     events:
       - http:
-          path: faculty/bundle/{bundleId}
+          path:   faculty/bundle/{bundleId}
           method: get
+          cors:   true
+
+  updateBundle:
+    handler: src/functions/bundle/updateBundle.handler
+    events:
+      - http:
+          path:   faculty/bundle/{bundleId}
+          method: patch
+          cors:   true
+
+  deleteBundle:
+    handler: src/functions/bundle/deleteBundle.handler
+    events:
+      - http:
+          path:   faculty/bundle/{bundleId}
+          method: delete
+          cors:   true
 
   # ── Students ─────────────────────────────────────────────────
-
   getAllStudents:
     handler: src/functions/students/getAllStudents.handler
     events:
       - http:
-          path: faculty/students
+          path:   faculty/students
           method: get
+          cors:   true
 
   # ── Announcements ────────────────────────────────────────────
-
   createAnnouncement:
     handler: src/functions/announcements/createAnnouncement.handler
     events:
       - http:
-          path: faculty/announcements
+          path:   faculty/announcements
           method: post
+          cors:   true
 
   getAllAnnouncements:
     handler: src/functions/announcements/getAllAnnouncement.handler
     events:
       - http:
-          path: faculty/announcements
+          path:   faculty/announcements
           method: get
+          cors:   true
+
+  getAnnouncementById:
+    handler: src/functions/announcements/getAnnouncementById.handler
+    events:
+      - http:
+          path:   faculty/announcements/{announcementId}
+          method: get
+          cors:   true
 
   updateAnnouncement:
     handler: src/functions/announcements/updateAnnouncement.handler
     events:
       - http:
-          path: faculty/announcements/{id}
-          method: put
+          path:   faculty/announcements/{announcementId}
+          method: patch
+          cors:   true
 
   deleteAnnouncement:
     handler: src/functions/announcements/deleteAnnouncement.handler
     events:
       - http:
-          path: faculty/announcements/{id}
+          path:   faculty/announcements/{announcementId}
           method: delete
+          cors:   true
+  
+
 
   # ── Dashboard ────────────────────────────────────────────────
-
   getCounterData:
     handler: src/functions/dashboard/getCounterData.handler
     events:
       - http:
-          path: faculty/dashboard/counter
+          path:   faculty/dashboard/counters
           method: get
+          cors:   true
 
-  getGraphData:
-    handler: src/functions/dashboard/getGraphData.handler
+  getEnrollmentTrend:
+    handler: src/functions/dashboard/getEnrollmentTrend.handler
     events:
       - http:
-          path: faculty/dashboard/graph
+          path:   faculty/dashboard/enrollment-trends
           method: get
+          cors:   true
 
+  getRevenueTrend:
+    handler: src/functions/dashboard/getRevenueTrend.handler
+    events:
+      - http:
+          path:   faculty/dashboard/revenue-trends
+          method: get
+          cors:   true
 
-  
+  getTopCoursesPerformance:
+    handler: src/functions/dashboard/getTopCoursesPerformance.handler
+    events:
+      - http:
+          path:   faculty/dashboard/top-courses-performances
+          method: get
+          cors:   true
+
   # ── Test ─────────────────────────────────────────────────────
-
   createTest:
     handler: src/functions/test/createTest.handler
     events:
       - http:
-          path: faculty/test
+          path:   faculty/test
           method: post
-  
+          cors:   true
+
   getMyAllTests:
     handler: src/functions/test/getMyAllTestes.handler
     events:
       - http:
-          path: faculty/test
+          path:   faculty/test
           method: get
-    
-  
+          cors:   true
+
   getTestById:
     handler: src/functions/test/getTestById.handler
     events:
       - http:
-          path: faculty/test/{testId}
+          path:   faculty/test/{testId}
           method: get
+          cors:   true
 
   updateTest:
     handler: src/functions/test/updateTest.handler
     events:
       - http:
-          path: faculty/test/{testId}
-          method: put
-
+          path:   faculty/test/{testId}
+          method: patch
+          cors:   true
 
   deleteTest:
     handler: src/functions/test/deleteTest.handler
     events:
       - http:
-          path: faculty/test/{testId}
+          path:   faculty/test/{testId}
           method: delete
+          cors:   true
 
   createTestQuestion:
     handler: src/functions/test/createQuestions.handler
     events:
       - http:
-          path: faculty/test/{testId}/questions
+          path:   faculty/test/{testId}/questions
           method: post
-  
+          cors:   true
+
+  getTestQuestionByTestId:
+    handler: src/functions/test/getQuestionsTestId.handler
+    events:
+      - http:
+          path:   faculty/test/{testId}/questions
+          method: get
+          cors:   true
+
   updateTestQuestion:
     handler: src/functions/test/updateQuestion.handler
     events:
       - http:
-          path: faculty/test/{testId}/questions/{questionId}
-          method: put
+          path:   faculty/test/{testId}/questions/{questionId}
+          method: patch
+          cors:   true
 
   deleteTestQuestion:
     handler: src/functions/test/deleteQuestions.handler
     events:
       - http:
-          path: faculty/test/{testId}/questions/{questionId}
+          path:   faculty/test/{testId}/questions/{questionId}
           method: delete
+          cors:   true
 
-  
   publishTest:
     handler: src/functions/test/publishTest.handler
     events:
       - http:
-          path: faculty/test/{testId}/publish
-          method: put 
+          path:   faculty/test/{testId}/publish
+          method: patch
+          cors:   true
 
-  
   # ── Coupon ─────────────────────────────────────────────────────
+
+  getMyCouponAnalytics:
+    handler: src/functions/coupon/getMyCouponAnalytics.handler
+    events:
+      - http:
+          path:   faculty/coupons/analytics
+          method: get
+          cors:   true
 
   createCoupon:
     handler: src/functions/coupon/createCoupon.handler
     events:
       - http:
-          path: faculty/coupon
+          path:   faculty/coupon
           method: post
+          cors:   true
+          
+  getMyAllCourses:
+    handler: src/functions/coupon/getAllMyCourses.handler
+    events:
+      - http:
+          path:   faculty/coupons/enabled-courses
+          method: get
+          cors:   true
 
   getMyAllCoupons:
     handler: src/functions/coupon/getAllCoupon.handler
     events:
       - http:
-          path: faculty/coupon
+          path:   faculty/coupons
           method: get
+          cors:   true
 
   updateCouponStatus:
     handler: src/functions/coupon/updateStatus.handler
     events:
       - http:
-          path: faculty/coupon/{couponId}/status
-          method: put
+          path:   faculty/coupon/{couponId}/status
+          method: patch
+          cors:   true
+
+  updateCoupon:
+    handler: src/functions/coupon/editCoupon.handler
+    events:
+      - http:
+          path:   faculty/coupon/{couponId}
+          method: patch
+          cors:   true
 
   deleteCoupon:
     handler: src/functions/coupon/deleteCoupon.handler
     events:
       - http:
-          path: faculty/coupon/{couponId}
+          path:   faculty/coupon/{couponId}
           method: delete
-
+          cors:   true
 
   # ── Video ─────────────────────────────────────────────────────
-
   createVideoUploadProgress:
     handler: src/functions/video/processVideoUpload.handler
     events:
       - http:
-          path: faculty/video/create-upload-progress
+          path:   faculty/video/create-upload-progress
           method: post
+          cors:   true

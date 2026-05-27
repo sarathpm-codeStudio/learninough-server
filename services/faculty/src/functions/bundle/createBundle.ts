@@ -10,14 +10,11 @@ export const handlerFun = async (event: any) => {
 
         const bundle = await bundleService.createCourseBundle(event);
 
-        if (bundle.is_draft) {
-            return handleResponse.success(bundle, "Bundle save to draft successfully", 200);
 
-        } else {
 
-            return handleResponse.success(bundle, "Bundle published successfully", 200);
+        return handleResponse.success(bundle, "Bundle published successfully", 200);
 
-        }
+        ``
 
     } catch (err: any) {
 

@@ -4,7 +4,7 @@ export enum AccountStatus { PENDING = "PENDING", APPROVED = "APPROVED", REJECTED
 
 export enum MaterialStatus { PENDING = "PENDING", TRANSCODING = "TRANSCODING", COMPLETED = "COMPLETED", FAILED = "FAILED" }
 
-export enum MaterialType { VIDEO = "VIDEO", PDF = "PDF", LINK = "LINK", NOTES = "NOTES", IMAGE = "IMAGE" }
+export enum MaterialType { VIDEO = "VIDEO", PDF = "PDF", LINK = "LINK", NOTES = "NOTES", IMAGE = "IMAGE", TEST = "TEST" }
 
 
 export enum userRole { FACULTY = "FACULTY", STUDENT = "STUDENT", ADMIN = "ADMIN" }
@@ -29,15 +29,12 @@ export type CourseBundleData = {
     title: string,
     description: string,
     price: number,
-    discount_type: string,
-    discount_price: number,
-    discount: number,
-    course_ids: string[],
-    img_url?: string,
-    is_new: boolean,
-    bundle_id?: string,
-    is_draft: boolean,
-
+    finalPrice: number,
+    discount: string,
+    courses: string[],
+    coverImage: string,
+    enableCoupons?: boolean | undefined,
+    isDraft?: boolean | undefined,
 }
 
 export type AnnouncementData = {
@@ -45,27 +42,29 @@ export type AnnouncementData = {
     title: string,
     content: string,
     image_url?: string,
-    time_period?: string,
-    course_id?: string,
+    timePeriod?: string,
+    audience?: string,
+    isDraft?: boolean,
 
 }
 
 
 export type TestBaseDetailsData = {
 
+    unique_id: string,
     title: string,
     chapter?: string,
-    course_id?: string,
-    module_id?: string,
-    total_marks: number,
-    is_draft: boolean,
-    is_deleted: boolean,
+    course: string,
+    module?: string,
+    totalMarks: number,
+    isDraft: boolean,
+    isDeleted: boolean,
     instructions: string,
-    type: string,
-    is_new: boolean,
-    test_id?: string,
+    testType: string,
+    isNew: boolean,
+    testId?: string,
     duration: number,
-    is_random: boolean,
+    isRandom: boolean,
 }
 
 
@@ -75,7 +74,7 @@ export type QuestionData = {
     question: string,
     type: string,
     marks: number,
-    option?: [
+    options?: [
         {
             option_text: string,
             is_correct: boolean,
@@ -89,14 +88,13 @@ export type QuestionData = {
 
 export type CouponData = {
 
-    title: string,
-    description?: string,
-    discount_type: string,
-    discount: number,
-    is_new: boolean,
-    is_draft: boolean,
+    code: string,
+    discountType: string,
+    discountValue: number,
     courses: string[],
-    coupon_id?: string,
+    expiryDate: string,
+    maxUsage: number,
+    usagePerPerson: number,
 
 
 }

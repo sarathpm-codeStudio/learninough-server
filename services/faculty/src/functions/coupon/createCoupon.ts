@@ -17,7 +17,7 @@ export const handlerFun = async (event: any) => {
 
     } catch (err: any) {
 
-        return handleResponse.error(err, "Error creating coupon", 400);
+        return handleResponse.error(err, err.message, 400);
     }
 };
 

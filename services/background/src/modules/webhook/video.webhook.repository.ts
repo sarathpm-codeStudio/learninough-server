@@ -17,6 +17,8 @@ export const videoWebhookRepository = {
                     data?.video?.status === "Error" ? MaterialStatus.FAILED :
                         MaterialStatus.TRANSCODING;
 
+            const materialStatus = videoStatus === MaterialStatus.COMPLETED ? MaterialStatus.COMPLETED : MaterialStatus.PENDING;
+
             const { data: updatedUploadProgress, error: uploadProgressError } = await supabase
                 .from("video_upload_progress")
                 .update({
@@ -49,6 +51,7 @@ export const videoWebhookRepository = {
                 const { data: updatedCourse, error: courseError } = await supabase
                     .from("course_materials")
                     .update({
+                        material_status: materialStatus,
                         video_uploading_status: videoStatus,
                         video_upload_progress: data?.video?.progress, // this not valid
                         duration_sec: data?.video?.duration,
@@ -81,7 +84,7 @@ export const videoWebhookRepository = {
             //  Get all material videos
             const { data: allVideos } = await supabase
                 .from("course_materials")
-                .select("id, title, material_status")
+                .select("id, title, video_uploading_status")
                 .eq("course_id", courseId)
                 .eq("is_deleted", false)
                 .eq("type", "VIDEO")
@@ -97,7 +100,7 @@ export const videoWebhookRepository = {
             const failedVideos = [
                 // Failed material videos
                 ...(allVideos?.filter(
-                    v => v.material_status === MaterialStatus.FAILED
+                    v => v.video_uploading_status === MaterialStatus.FAILED
                 ) ?? []),
                 // Failed intro video ✅
                 ...(introFailed ? [{
@@ -109,8 +112,8 @@ export const videoWebhookRepository = {
             const processingVideos = [
                 // Processing material videos
                 ...(allVideos?.filter(
-                    v => v.material_status !== MaterialStatus.COMPLETED &&
-                        v.material_status !== MaterialStatus.FAILED
+                    v => v.video_uploading_status !== MaterialStatus.COMPLETED &&
+                        v.video_uploading_status !== MaterialStatus.FAILED
                 ) ?? []),
                 // Processing intro video ✅
                 ...(introProcessing ? [{

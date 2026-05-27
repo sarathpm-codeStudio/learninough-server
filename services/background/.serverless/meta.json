@@ -1,0 +1,315 @@
+{
+  "/home/dev/Desktop/learninough-server/services/background/serverless.yml": {
+    "versionFramework": "4.35.1",
+    "servicePath": "/home/dev/Desktop/learninough-server/services/background/serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "background-service",
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs20.x",
+        "region": "ap-south-1",
+        "timeout": 30,
+        "environment": {
+          "VIDEO_UPLOAD_QUEUE_URL": {
+            "Ref": "VideoUploadQueue"
+          },
+          "COURSE_INTRO_VIDEO_QUEUE_URL": {
+            "Ref": "CourseIntroVideoUploadQueue"
+          }
+        },
+        "iam": {
+          "role": {
+            "statements": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "sqs:ReceiveMessage",
+                  "sqs:DeleteMessage",
+                  "sqs:GetQueueAttributes"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "VideoUploadQueue",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "sqs:ReceiveMessage",
+                  "sqs:DeleteMessage",
+                  "sqs:GetQueueAttributes"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "CourseIntroVideoUploadQueue",
+                    "Arn"
+                  ]
+                }
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "sqs:ReceiveMessage",
+                  "sqs:DeleteMessage",
+                  "sqs:GetQueueAttributes"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "ChatNotificationQueue",
+                    "Arn"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "stage": "dev",
+        "versionFunctions": true
+      },
+      "plugins": [
+        "serverless-offline"
+      ],
+      "custom": {
+        "serverless-offline": {
+          "httpPort": 3002,
+          "lambdaPort": 3003
+        }
+      },
+      "resources": {
+        "Resources": {
+          "VideoUploadQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "video-upload-queue",
+              "VisibilityTimeout": 300
+            }
+          },
+          "CourseIntroVideoUploadQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "course-intro-video-upload-queue",
+              "VisibilityTimeout": 300
+            }
+          },
+          "ChatNotificationQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "chat-notification-queue",
+              "VisibilityTimeout": 300
+            }
+          }
+        }
+      },
+      "functions": {
+        "createVideoUploadProgress": {
+          "handler": "src/functions/video/processVideoUpload.handler",
+          "events": [
+            {
+              "http": {
+                "path": "/video/create-upload-progress",
+                "method": "post"
+              }
+            }
+          ]
+        },
+        "processVideoUpload": {
+          "handler": "src/functions/video/processVideoUpload.handler",
+          "events": [
+            {
+              "sqs": {
+                "arn": {
+                  "Fn::GetAtt": [
+                    "VideoUploadQueue",
+                    "Arn"
+                  ]
+                },
+                "batchSize": 1
+              }
+            }
+          ]
+        },
+        "courseIntroVideoUpload": {
+          "handler": "src/functions/video/courseIntroVideoUpload.handler",
+          "events": [
+            {
+              "sqs": {
+                "arn": {
+                  "Fn::GetAtt": [
+                    "CourseIntroVideoUploadQueue",
+                    "Arn"
+                  ]
+                },
+                "batchSize": 1
+              }
+            }
+          ]
+        },
+        "chatNotificationWorker": {
+          "handler": "src/functions/chat/chat.notification.handler",
+          "events": [
+            {
+              "sqs": {
+                "arn": {
+                  "Fn::GetAtt": [
+                    "ChatNotificationQueue",
+                    "Arn"
+                  ]
+                },
+                "batchSize": 1
+              }
+            }
+          ]
+        },
+        "syncVideoProgress": {
+          "handler": "src/functions/video/syncVideoProgress.handler",
+          "events": [
+            {
+              "schedule": {
+                "rate": "rate(5 minutes)",
+                "enabled": false
+              }
+            }
+          ]
+        },
+        "tpstreamsWebhook": {
+          "handler": "src/functions/webhooks/tpstreamsWebhook.handler",
+          "events": [
+            {
+              "http": {
+                "path": "/webhooks/tpstreams",
+                "method": "post"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs20.x",
+      "region": "ap-south-1",
+      "timeout": 30,
+      "environment": {
+        "VIDEO_UPLOAD_QUEUE_URL": {
+          "Ref": "VideoUploadQueue"
+        },
+        "COURSE_INTRO_VIDEO_QUEUE_URL": {
+          "Ref": "CourseIntroVideoUploadQueue"
+        }
+      },
+      "iam": {
+        "role": {
+          "statements": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Resource": {
+                "Fn::GetAtt": [
+                  "VideoUploadQueue",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Resource": {
+                "Fn::GetAtt": [
+                  "CourseIntroVideoUploadQueue",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ChatNotificationQueue",
+                  "Arn"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "stage": "dev",
+      "versionFunctions": true
+    },
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "error": {
+      "message": "Serverless plugin \"serverless-offline\" not found. Make sure it's installed and listed in the \"plugins\" section of your serverless config file. Use the --debug flag to learn more.",
+      "stack": "ServerlessError2: Serverless plugin \"serverless-offline\" not found. Make sure it's installed and listed in the \"plugins\" section of your serverless config file. Use the --debug flag to learn more.\n    at PluginManager.resolveServicePlugins (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2320:4570)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async PluginManager.loadAllPlugins (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2320:2753)\n    at async Serverless.init (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2372:9869)\n    at async runFramework (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2399:843)\n    at async TraditionalRunner.run (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2395:28530)\n    at async route (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2566:2848)\n    at async Object.run (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2567:3886)\n    at async run2 (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2567:5040)",
+      "code": "PLUGIN_NOT_FOUND"
+    },
+    "serviceRawFile": "service: background-service\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n  region: ap-south-1\n  timeout: 30\n  environment:\n    VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue\n    COURSE_INTRO_VIDEO_QUEUE_URL: !Ref CourseIntroVideoUploadQueue\n  iam:\n    role:\n      statements:\n        - Effect: Allow\n          Action:\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt VideoUploadQueue.Arn\n        - Effect: Allow\n          Action:\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt CourseIntroVideoUploadQueue.Arn\n        - Effect: Allow\n          Action:\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt ChatNotificationQueue.Arn\n\nplugins:\n  - serverless-offline\n\ncustom:\n  serverless-offline:\n    httpPort: 3002\n    lambdaPort: 3003\n\nresources:\n  Resources:\n    VideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-queue\n        VisibilityTimeout: 300\n\n    CourseIntroVideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: course-intro-video-upload-queue\n        VisibilityTimeout: 300\n\n    ChatNotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-queue\n        VisibilityTimeout: 300\n\nfunctions:\n\n\n\n  # ── HTTP Endpoints ─────────────────────────────────────────\n\n  createVideoUploadProgress:\n    handler: src/functions/video/processVideoUpload.handler\n    events:\n      - http:\n          path: /video/create-upload-progress\n          method: post\n          \n\n\n  # ── SQS Background Jobs ──────────────────────────────────────\n\n  processVideoUpload:\n    handler: src/functions/video/processVideoUpload.handler\n    events:\n      - sqs:\n          arn: !GetAtt VideoUploadQueue.Arn\n          batchSize: 1\n\n  courseIntroVideoUpload:\n    handler: src/functions/video/courseIntroVideoUpload.handler\n    events:\n      - sqs:\n          arn: !GetAtt CourseIntroVideoUploadQueue.Arn\n          batchSize: 1\n\n\n  chatNotificationWorker:\n    handler: src/functions/chat/chat.notification.handler\n    events:\n      - sqs:\n          arn: !GetAtt ChatNotificationQueue.Arn\n          batchSize: 1\n\n\n  # ── cron Jobs ──────────────────────────────────────\n\n  syncVideoProgress:\n    handler: src/functions/video/syncVideoProgress.handler\n    events:\n      - schedule:\n          rate: rate(5 minutes)\n          enabled: false\n\n\n\n  # ── Webhooks ─────────────────────────────────────────────────\n\n  tpstreamsWebhook:\n    handler: src/functions/webhooks/tpstreamsWebhook.handler\n    events:\n      - http:\n          path: /webhooks/tpstreams\n          method: post\n          # No auth — TPStreams calls this directly\n",
+    "command": [
+      "offline"
+    ],
+    "options": {},
+    "orgId": "5acd3926-d700-405e-92da-dc1a13a30598",
+    "orgName": "sarath1937",
+    "userId": "n0TL8qG4d4qRbh4SlP",
+    "userName": "sarath1937",
+    "serviceProviderAwsAccountId": "397251795477",
+    "serviceProviderAwsCfStackName": "background-service-dev",
+    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:ap-south-1:397251795477:stack/background-service-dev/87692360-4ad5-11f1-af96-0a83936a9a5f",
+    "serviceProviderAwsCfStackCreated": "2026-05-08T12:00:39.274Z",
+    "serviceProviderAwsCfStackUpdated": null,
+    "serviceProviderAwsCfStackStatus": "CREATE_COMPLETE",
+    "serviceProviderAwsCfStackOutputs": [
+      {
+        "OutputKey": "SyncVideoProgressLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:background-service-dev-syncVideoProgress:3",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-SyncVideoProgressLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ChatNotificationWorkerLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:background-service-dev-chatNotificationWorker:3",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "TpstreamsWebhookLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:background-service-dev-tpstreamsWebhook:3",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ServiceEndpoint",
+        "OutputValue": "https://c22wx5dv23.execute-api.ap-south-1.amazonaws.com/dev",
+        "Description": "URL of the service endpoint",
+        "ExportName": "sls-background-service-dev-ServiceEndpoint"
+      },
+      {
+        "OutputKey": "ServerlessDeploymentBucketName",
+        "OutputValue": "serverless-framework-deployments-ap-south-1-978cf2f5-1fe8",
+        "ExportName": "sls-background-service-dev-ServerlessDeploymentBucketName"
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+
+
+
+
+
+import { couponService } from "../../modules/coupon/coupon.service";
+import { verifyAuth, verifyRole, verifyAccountStatus } from "../../../../../shared/utils/verifyAuth";
+import { compose } from "../../../../../shared/utils/compose";
+import { handleResponse } from "../../../../../shared/utils/response";
+
+
+export const handlerFun = async (event: any) => {
+
+    try {
+
+        const coupon = await couponService.updateCoupon(event);
+
+        return handleResponse.success(coupon, "Coupon updated successfully", 200);
+
+
+    } catch (err: any) {
+
+        return handleResponse.error(err, err.message, 400);
+    }
+};
+
+
+export const handler = compose(
+    verifyAuth,
+    verifyRole("FACULTY"),
+    verifyAccountStatus
+)(handlerFun);

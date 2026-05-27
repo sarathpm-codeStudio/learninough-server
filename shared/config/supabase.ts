@@ -1,5 +1,5 @@
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
@@ -41,3 +41,29 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
         transport: ws as any,
     },
 });
+
+/**
+ * Build a Supabase client that is authenticated as the calling user.
+ *
+ * The provided access token is attached to every PostgREST request via the
+ * `Authorization` header, so RLS policies that depend on `auth.uid()` (e.g.
+ * `auth.uid() = faculty_id`) evaluate against the real user instead of the
+ * anonymous role. Use this inside Lambda handlers after `verifyAuth` has
+ * validated the token.
+ */
+export const getSupabaseClient = (accessToken: string): SupabaseClient => {
+    return createClient(supabaseUrl as string, supabaseKey as string, {
+        global: {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        },
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+        realtime: {
+            transport: ws as any,
+        },
+    });
+};

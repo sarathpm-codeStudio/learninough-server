@@ -2,7 +2,7 @@
 import { announcementRepository } from "./announcements.repository";
 import { createAnnouncementSchema } from "../../../../../shared/validators/announcement.validator"
 import { validate } from "../../../../../shared/utils/validate";
-import { cacheService } from "../../../../../shared/cache/cache.service"
+// import { cacheService } from "../../../../../shared/cache/cache.service"
 
 
 
@@ -14,9 +14,9 @@ export const announcementService = {
 
             const validatedData: any = validate(createAnnouncementSchema, JSON.parse(event.body));
 
-            const announcement = await announcementRepository.createAnnouncement(validatedData, event.user.id);
+            const announcement = await announcementRepository.createAnnouncement(validatedData, event.user.id, event.supabase);
 
-            await cacheService.delete(`announcements:faculty:${event.user.id}`);
+            // await cacheService.delete(`announcements:faculty:${event.user.id}`);
 
             return announcement;
 
@@ -34,12 +34,14 @@ export const announcementService = {
 
             const cacheKey = `announcements:faculty:${event.user.id}`;
 
-            const cached = await cacheService.get(cacheKey);
-            if (cached) return cached;
+            // const cached = await cacheService.get(cacheKey);
+            // if (cached) return cached;
+            const { filter, page, limit, search } = event.queryStringParameters;
 
-            const announcements = await announcementRepository.getAllAnnouncements(event.user.id);
 
-            await cacheService.set(cacheKey, announcements, 3600);
+            const announcements = await announcementRepository.getAllAnnouncements(event.user.id, filter, page, limit, search, event.supabase);
+
+            // await cacheService.set(cacheKey, announcements, 3600);
 
             return announcements;
 
@@ -52,18 +54,40 @@ export const announcementService = {
         }
     },
 
-    deleteAnnouncement: async (event: any) => {
+    getAnnouncementById: async (event: any) => {
         try {
 
-            const announcementId = event.pathParameters?.id;
+            const announcementId = event.pathParameters?.announcementId;
+            console.log("announcementId", announcementId);
 
             if (!announcementId) {
                 throw new Error("Announcement ID is required")
             }
 
-            const result = await announcementRepository.deleteAnnouncement(announcementId, event.user.id);
+            const announcement = await announcementRepository.getAnnouncementById(announcementId, event.supabase);
 
-            await cacheService.delete(`announcements:faculty:${event.user.id}`);
+            return announcement;
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
+
+    deleteAnnouncement: async (event: any) => {
+        try {
+
+            const announcementId = event.pathParameters?.announcementId;
+
+            if (!announcementId) {
+                throw new Error("Announcement ID is required")
+            }
+
+            const result = await announcementRepository.deleteAnnouncement(announcementId, event.user.id, event.supabase);
+
+            // await cacheService.delete(`announcements:faculty:${event.user.id}`);
 
             return result;
 
@@ -78,7 +102,7 @@ export const announcementService = {
     updateAnnouncement: async (event: any) => {
         try {
 
-            const announcementId = event.pathParameters?.id;
+            const announcementId = event.pathParameters?.announcementId;
 
             if (!announcementId) {
                 throw new Error("Announcement ID is required")
@@ -86,9 +110,9 @@ export const announcementService = {
 
             const validatedData: any = validate(createAnnouncementSchema, JSON.parse(event.body));
 
-            const announcement = await announcementRepository.updateAnnouncement(validatedData, announcementId);
+            const announcement = await announcementRepository.updateAnnouncement(validatedData, announcementId, event.supabase);
 
-            await cacheService.delete(`announcements:faculty:${event.user.id}`);
+            // await cacheService.delete(`announcements:faculty:${event.user.id}`);
 
             return announcement;
 
