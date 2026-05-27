@@ -179,8 +179,10 @@ export const studentsRepository = {
                 course_id,
                 student:profiles!enrollments_student_id_fkey (
                     id,
-                    full_name,
-                    email
+                    first_name,
+                    last_name,
+                    email,
+                    avatar_url
                 ),
                 course:courses!enrollments_course_id_fkey (
                     id,

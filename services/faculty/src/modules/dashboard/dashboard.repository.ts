@@ -23,21 +23,21 @@ export const facultyDashboardRepository = {
             if (coursesError) throw new Error(coursesError.message);
     
             const courseIds = courses.map((c) => c.id);
-
-            console.log("courseIds",courseIds);
     
             // 2. Active courses count
             const activeCourses = courses.length;
     
             // 3. Total students (unique students enrolled in faculty courses)
-            const { data: enrollments, error: enrollmentsError } = await db
-                .from("enrollments")
-                .select("student_id, amount_paid")
-                .in("course_id", courseIds);
+            let enrollments: { student_id: string; amount_paid?: number }[] = [];
+            if (courseIds.length > 0) {
+                const { data, error: enrollmentsError } = await db
+                    .from("enrollments")
+                    .select("student_id, amount_paid")
+                    .in("course_id", courseIds);
     
-            if (enrollmentsError) throw new Error(enrollmentsError.message);
-
-            console.log("enrollments",enrollments);
+                if (enrollmentsError) throw new Error(enrollmentsError.message);
+                enrollments = data ?? [];
+            }
     
             const totalStudents = new Set(enrollments.map((e) => e.student_id)).size;
     
