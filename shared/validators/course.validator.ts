@@ -30,6 +30,7 @@ export const updateCourseSchema = z.object({
 export const createFolderSchema = z.object({
 
     title: z.string(),
+    description: z.string().optional(),
     parent_id: z.string().optional(),
 
 });

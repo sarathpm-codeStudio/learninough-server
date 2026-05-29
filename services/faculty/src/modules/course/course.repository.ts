@@ -118,65 +118,76 @@ export const facultyCourseRepository = {
         }
     },
 
-    getMyCourses: async (facultyId: string, filter: boolean, search: string, client?: SupabaseClient) => {
-      
-        console.log("search", search);
-        console.log("filter", filter);
-        console.log("facultyId**********************************************************************", facultyId);
-
-        try {
-            const supabase = client ?? anonSupabase;
-            const { data: courses, error } = await supabase
-                .from("courses")
-                .select(`*`)
-                .eq("faculty_id", facultyId)
-                .eq("is_draft", filter)
-                // .ilike("title", `%${search}%`)
-                .order("created_at", { ascending: false });
-
-                // console.log("courses %%%%%%", courses);
-
-            if (error) throw new Error(error.message);
-            return courses;
-
-        } catch (error: any) {
-            throw new Error(error.message);
-        }
-    },
-
-    // addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
+    // getMyCourses: async (facultyId: string, filter: string, search: string, client?: SupabaseClient) => {
     //     try {
-
     //         const supabase = client ?? anonSupabase;
 
-    //         console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data)
-
-
-
-    //         const { data: course, error } = await supabase
+    //         let query = supabase
     //             .from("courses")
-    //             .update({
-    //                 validity: data.validity,
-    //                 price: data.price,
-    //                 discount: data.discount,
-    //                 discount_type: data.discount_type,
-    //                 final_price: data.final_price,
-    //                 enableCoupons: data.enableCoupons,
+    //             .select(`*`)
+    //             .eq("faculty_id", facultyId);
 
-    //             })
-    //             .eq("id", courseId)
-    //             .select()
-    //             .single();
-                
+    //         if (filter !== "all") {
+    //             const isDraft = filter === "true";
+    //             query = query.eq("is_draft", isDraft);
+    //         }
+
+    //         if (search?.trim()) {
+    //             query = query.ilike("title", `%${search.trim()}%`);
+    //         }
+
+    //         const { data: courses, error } = await query.order("created_at", { ascending: false });
 
     //         if (error) throw new Error(error.message);
-    //         return course;
+    //         return courses;
 
     //     } catch (error: any) {
     //         throw new Error(error.message);
     //     }
     // },
 
+    getMyCourses: async (facultyId: string, filter: string, search: string, client?: SupabaseClient) => {
+        try {
+            const supabase = client ?? anonSupabase;
+
+            let query = supabase
+                .from("courses")
+                .select(`
+                    id,
+                    title,
+                    category,
+                    price,
+                    final_price,
+                    validity,
+                    languages,
+                    cover_image,
+                  enrollments(count)
+                `)
+                .eq("faculty_id", facultyId);
+
+            if (filter !== "all") {
+                const isDraft = filter === "true";
+                query = query.eq("is_draft", isDraft);
+            }
+
+            if (search?.trim()) {
+                query = query.ilike("title", `%${search.trim()}%`);
+            }
+
+            const { data: courses, error } = await query.order("created_at", { ascending: false });
+
+            if (error) throw new Error(error.message);
+
+            // ✅ Flatten enrollment count into each course
+            return courses?.map(course => ({
+                ...course,
+                total_enrolled: course.enrollments[0]?.count ?? 0
+            }));
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
 
     addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
@@ -301,23 +312,77 @@ export const facultyCourseRepository = {
     },
 
 
+    // getCourseById: async (courseId: string, client?: SupabaseClient) => {
+    //     try {
+    //         const supabase = client ?? anonSupabase;
+    //         const { data: course, error } = await supabase
+    //             .from("courses")
+    //             .select("*")
+    //             .eq("id", courseId)
+    //             .single();
+
+    //         if (error) throw new Error(error.message);
+    //         if (!course) throw new Error("Course not found");
+    //         return course;
+
+    //     } catch (error: any) {
+    //         throw new Error(error.message);
+    //     }
+    // },
+
+    
     getCourseById: async (courseId: string, client?: SupabaseClient) => {
         try {
             const supabase = client ?? anonSupabase;
-            const { data: course, error } = await supabase
-                .from("courses")
-                .select("*")
-                .eq("id", courseId)
-                .single();
+
+            const [
+                { data: course, error },
+                { data: enrollments },
+            ] = await Promise.all([
+                supabase
+                    .from("courses")
+                    .select(`
+                        *,
+                        enrollments(count),
+                        course_folders(count),
+                        course_materials(count)
+                    `)
+                    .eq("id", courseId)
+                    .single(),
+
+                // ✅ Separate query only for revenue calculation
+                supabase
+                    .from("enrollments")
+                    .select("amount_paid")
+                    .eq("course_id", courseId),
+            ]);
 
             if (error) throw new Error(error.message);
             if (!course) throw new Error("Course not found");
-            return course;
+
+            // ✅ Calculate total revenue from separate query
+            const totalRevenue = enrollments?.reduce(
+                (sum, e: any) => sum + (e.amount_paid ?? 0), 0
+            ) ?? 0;
+
+            return {
+                ...course,
+                total_enrolled : course.enrollments[0]?.count    ?? 0,
+                total_revenue  : totalRevenue,
+                total_folders  : course.course_folders[0]?.count  ?? 0,
+                total_materials: course.course_materials[0]?.count ?? 0,
+
+                // cleanup raw nested data
+                enrollments     : undefined,
+                course_folders  : undefined,
+                course_materials: undefined,
+            };
 
         } catch (error: any) {
             throw new Error(error.message);
         }
     },
+
 
     updateCourseDetails: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
@@ -595,6 +660,7 @@ console.log("videoUploadProgress",videoUploadProgress);
                     parent_id: data.parent_id ?? null,
                     sort_order: nextSortOrder,
                     title: data.title || "Untitled Folder",
+                    description: data.description ?? "",
                 })
                 .select()
                 .single();
@@ -687,7 +753,7 @@ console.log("videoUploadProgress",videoUploadProgress);
             if (data?.type === "VIDEO" || data?.type === "TEST") {
                 materialStatus = MaterialStatus.PENDING;
             } else {
-                materialStatus = MaterialStatus.COMPLETED;
+                materialStatus = MaterialStatus.READY;
             }
 
             const { data: material, error } = await supabase
@@ -715,7 +781,32 @@ console.log("videoUploadProgress",videoUploadProgress);
             if (error) throw new Error(error.message);
             if (!material) throw new Error("Material not created");
 
+          // update folder content counts
+          if (data.parent_id) {
+              const folderCountField =
+                  data.type === MaterialType.VIDEO ? "total_video" :
+                  data.type === MaterialType.TEST ? "total_test" :
+                  data.type === MaterialType.PDF ? "total_notes" :
+                  null;
 
+              if (folderCountField) {
+                  const { data: existingFolder, error: fetchError } = await supabase
+                      .from("course_folders")
+                      .select("total_video, total_test, total_notes")
+                      .eq("id", data.parent_id)
+                      .single();
+
+                  if (fetchError) throw new Error(fetchError.message);
+
+                  const currentCount = Number(existingFolder[folderCountField] ?? 0);
+                  const { error: folderError } = await supabase
+                      .from("course_folders")
+                      .update({ [folderCountField]: currentCount + 1 })
+                      .eq("id", data.parent_id);
+
+                  if (folderError) throw new Error(folderError.message);
+              }
+          }
 
             return material;
 
@@ -821,6 +912,32 @@ console.log("videoUploadProgress",videoUploadProgress);
                 if (testError) throw new Error(testError.message);
             }
 
+            if (material?.folder_id) {
+                const folderCountField =
+                    material.type === MaterialType.VIDEO ? "total_video" :
+                    material.type === MaterialType.TEST ? "total_test" :
+                    material.type === MaterialType.PDF ? "total_notes" :
+                    null;
+
+                if (folderCountField) {
+                    const { data: existingFolder, error: folderFetchError } = await supabase
+                        .from("course_folders")
+                        .select("total_video, total_test, total_notes")
+                        .eq("id", material.folder_id)
+                        .single();
+
+                    if (folderFetchError) throw new Error(folderFetchError.message);
+
+                    const currentCount = Number(existingFolder[folderCountField] ?? 0);
+                    const { error: folderUpdateError } = await supabase
+                        .from("course_folders")
+                        .update({ [folderCountField]: Math.max(0, currentCount - 1) })
+                        .eq("id", material.folder_id);
+
+                    if (folderUpdateError) throw new Error(folderUpdateError.message);
+                }
+            }
+
             return material;
 
         } catch (error: any) {
@@ -877,6 +994,7 @@ console.log("videoUploadProgress",videoUploadProgress);
             const supabase = client ?? anonSupabase;
             const from = (page - 1) * limit;
             const to = from + limit - 1;
+            console.log("courseId $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", courseId , page, limit);
 
             // 1. Get paginated reviews with student + reply details
             const { data: reviews, error, count } = await supabase
@@ -1028,8 +1146,27 @@ console.log("videoUploadProgress",videoUploadProgress);
 
             throw new Error(error.message);
         }
-    }
+    },
+    getAllMaterialModule: async (materialId: string, client?: SupabaseClient) => {
+        try {
+            const supabase = client ?? anonSupabase;
+            const { data: contents, error } = await supabase
+                .from("course_materials")
+                .select("id,title,type")
+                .eq("id", materialId)
+                .eq("is_deleted", false)
+                .neq("type", "TEST")
+                .order("sort_order", { ascending: true });
 
+
+            if (error) throw new Error(error.message);
+            if (!contents) throw new Error("Contents not found");
+            return contents;
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    }
 };
 
 // ── helpers ──────────────────────────────────────────────────────────────────

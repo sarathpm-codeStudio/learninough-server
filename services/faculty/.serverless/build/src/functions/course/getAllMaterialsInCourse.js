@@ -3646,13 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/course/getProcessingMaterial.ts
-var getProcessingMaterial_exports = {};
-__export(getProcessingMaterial_exports, {
+// src/functions/course/getAllMaterialsInCourse.ts
+var getAllMaterialsInCourse_exports = {};
+__export(getAllMaterialsInCourse_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(getProcessingMaterial_exports);
+module.exports = __toCommonJS(getAllMaterialsInCourse_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -3771,41 +3771,10 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  // getMyCourses: async (facultyId: string, filter: string, search: string, client?: SupabaseClient) => {
-  //     try {
-  //         const supabase = client ?? anonSupabase;
-  //         let query = supabase
-  //             .from("courses")
-  //             .select(`*`)
-  //             .eq("faculty_id", facultyId);
-  //         if (filter !== "all") {
-  //             const isDraft = filter === "true";
-  //             query = query.eq("is_draft", isDraft);
-  //         }
-  //         if (search?.trim()) {
-  //             query = query.ilike("title", `%${search.trim()}%`);
-  //         }
-  //         const { data: courses, error } = await query.order("created_at", { ascending: false });
-  //         if (error) throw new Error(error.message);
-  //         return courses;
-  //     } catch (error: any) {
-  //         throw new Error(error.message);
-  //     }
-  // },
   getMyCourses: async (facultyId, filter, search, client) => {
     try {
       const supabase2 = client ?? supabase;
-      let query = supabase2.from("courses").select(`
-                    id,
-                    title,
-                    category,
-                    price,
-                    final_price,
-                    validity,
-                    languages,
-                    cover_image,
-                  enrollments(count)
-                `).eq("faculty_id", facultyId);
+      let query = supabase2.from("courses").select(`*`).eq("faculty_id", facultyId);
       if (filter !== "all") {
         const isDraft = filter === "true";
         query = query.eq("is_draft", isDraft);
@@ -3815,14 +3784,34 @@ var facultyCourseRepository = {
       }
       const { data: courses, error } = await query.order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
-      return courses?.map((course) => ({
-        ...course,
-        total_enrolled: course.enrollments[0]?.count ?? 0
-      }));
+      return courses;
     } catch (error) {
       throw new Error(error.message);
     }
   },
+  // addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
+  //     try {
+  //         const supabase = client ?? anonSupabase;
+  //         console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data)
+  //         const { data: course, error } = await supabase
+  //             .from("courses")
+  //             .update({
+  //                 validity: data.validity,
+  //                 price: data.price,
+  //                 discount: data.discount,
+  //                 discount_type: data.discount_type,
+  //                 final_price: data.final_price,
+  //                 enableCoupons: data.enableCoupons,
+  //             })
+  //             .eq("id", courseId)
+  //             .select()
+  //             .single();
+  //         if (error) throw new Error(error.message);
+  //         return course;
+  //     } catch (error: any) {
+  //         throw new Error(error.message);
+  //     }
+  // },
   addCoursePricing: async (data, courseId, facultyId, client) => {
     try {
       const supabase2 = client ?? supabase;
@@ -3899,54 +3888,13 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  // getCourseById: async (courseId: string, client?: SupabaseClient) => {
-  //     try {
-  //         const supabase = client ?? anonSupabase;
-  //         const { data: course, error } = await supabase
-  //             .from("courses")
-  //             .select("*")
-  //             .eq("id", courseId)
-  //             .single();
-  //         if (error) throw new Error(error.message);
-  //         if (!course) throw new Error("Course not found");
-  //         return course;
-  //     } catch (error: any) {
-  //         throw new Error(error.message);
-  //     }
-  // },
   getCourseById: async (courseId, client) => {
     try {
       const supabase2 = client ?? supabase;
-      const [
-        { data: course, error },
-        { data: enrollments }
-      ] = await Promise.all([
-        supabase2.from("courses").select(`
-                        *,
-                        enrollments(count),
-                        course_folders(count),
-                        course_materials(count)
-                    `).eq("id", courseId).single(),
-        // ✅ Separate query only for revenue calculation
-        supabase2.from("enrollments").select("amount_paid").eq("course_id", courseId)
-      ]);
+      const { data: course, error } = await supabase2.from("courses").select("*").eq("id", courseId).single();
       if (error) throw new Error(error.message);
       if (!course) throw new Error("Course not found");
-      const totalRevenue = enrollments?.reduce(
-        (sum, e) => sum + (e.amount_paid ?? 0),
-        0
-      ) ?? 0;
-      return {
-        ...course,
-        total_enrolled: course.enrollments[0]?.count ?? 0,
-        total_revenue: totalRevenue,
-        total_folders: course.course_folders[0]?.count ?? 0,
-        total_materials: course.course_materials[0]?.count ?? 0,
-        // cleanup raw nested data
-        enrollments: void 0,
-        course_folders: void 0,
-        course_materials: void 0
-      };
+      return course;
     } catch (error) {
       throw new Error(error.message);
     }
@@ -4299,7 +4247,6 @@ var facultyCourseRepository = {
       const supabase2 = client ?? supabase;
       const from = (page - 1) * limit;
       const to = from + limit - 1;
-      console.log("courseId $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", courseId, page, limit);
       const { data: reviews, error, count } = await supabase2.from("reviews").select(`
                 *,
                 student:profiles!reviews_student_id_fkey (
@@ -4378,10 +4325,10 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  getAllMaterialModule: async (materialId, client) => {
+  getAllMaterialCourse: async (courseId, client) => {
     try {
       const supabase2 = client ?? supabase;
-      const { data: contents, error } = await supabase2.from("course_materials").select("id,title,type").eq("id", materialId).eq("is_deleted", false).neq("type", "TEST").order("sort_order", { ascending: true });
+      const { data: contents, error } = await supabase2.from("course_materials").select("id,title,type").eq("course_id", courseId).eq("is_deleted", false).neq("type", "TEST").order("sort_order", { ascending: true });
       if (error) throw new Error(error.message);
       if (!contents) throw new Error("Contents not found");
       return contents;
@@ -4660,9 +4607,9 @@ var facultyCourseService = {
       throw new Error(error);
     }
   },
-  getAllMaterialModule: async (event) => {
+  getAllMaterialCourse: async (event) => {
     try {
-      const contents = await facultyCourseRepository.getAllMaterialModule(event.pathParameters.materialId, event.supabase);
+      const contents = await facultyCourseRepository.getAllMaterialCourse(event.pathParameters.courseId, event.supabase);
       return contents;
     } catch (error) {
       console.log("error", error);
@@ -4743,13 +4690,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/course/getProcessingMaterial.ts
+// src/functions/course/getAllMaterialsInCourse.ts
 var handlerFun = async (event) => {
   try {
-    const materials = await facultyCourseService.getAllProcessingMaterial(event);
-    return handleResponse.success(materials, "All processing materials fetched successfully", 200);
+    const course = await facultyCourseService.getAllMaterialCourse(event);
+    return handleResponse.success(course, "All contents in module fetched successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error fetching all processing materials", 400);
+    return handleResponse.error(err, "Error fetching all contents in module", 400);
   }
 };
 var handler = compose(
@@ -4762,4 +4709,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=getProcessingMaterial.js.map
+//# sourceMappingURL=getAllMaterialsInCourse.js.map

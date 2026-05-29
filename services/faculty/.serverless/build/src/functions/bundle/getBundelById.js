@@ -3702,6 +3702,7 @@ var updateCourseSchema = import_zod.z.object({
 });
 var createFolderSchema = import_zod.z.object({
   title: import_zod.z.string(),
+  description: import_zod.z.string().optional(),
   parent_id: import_zod.z.string().optional()
 });
 var uploadMaterialSchema = import_zod.z.object({

@@ -3754,7 +3754,7 @@ var facultyDashboardRepository = {
   getEnrollmentTrend: async (facultyId, period, client) => {
     try {
       const db = client ?? supabase;
-      const { data: courses, error: coursesError } = await db.from("courses").select("id").eq("faculty_id", facultyId).eq("is_deleted", false);
+      const { data: courses, error: coursesError } = await db.from("courses").select("id").eq("faculty_id", facultyId).eq("is_draft", false).eq("is_deleted", false);
       if (coursesError) throw new Error(coursesError.message);
       const courseIds = courses.map((c) => c.id);
       const now = /* @__PURE__ */ new Date();
@@ -3769,6 +3769,7 @@ var facultyDashboardRepository = {
       }
       let enrollments = [];
       if (courseIds.length > 0) {
+        console.log("courseIds", courseIds);
         const { data, error: enrollmentsError } = await db.from("enrollments").select("enrolled_at").in("course_id", courseIds).gte("enrolled_at", startDate.toISOString()).lte("enrolled_at", now.toISOString());
         if (enrollmentsError) throw new Error(enrollmentsError.message);
         enrollments = data ?? [];

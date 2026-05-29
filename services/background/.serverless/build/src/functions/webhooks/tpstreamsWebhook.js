@@ -25752,7 +25752,7 @@ var videoWebhookRepository = {
       console.log("updatedUploadProgress", data);
       let courseId = "";
       const videoStatus = data?.video?.status === "Completed" ? "COMPLETED" /* COMPLETED */ : data?.video?.status === "Error" ? "FAILED" /* FAILED */ : "TRANSCODING" /* TRANSCODING */;
-      const materialStatus = videoStatus === "COMPLETED" /* COMPLETED */ ? "COMPLETED" /* COMPLETED */ : "PENDING" /* PENDING */;
+      const materialStatus = videoStatus === "COMPLETED" /* COMPLETED */ ? "READY" /* READY */ : videoStatus === "TRANSCODING" /* TRANSCODING */ ? "PROCESSING" /* PROCESSING */ : videoStatus === "FAILED" /* FAILED */ ? "FAILED" /* FAILED */ : "PENDING" /* PENDING */;
       const { data: updatedUploadProgress, error: uploadProgressError } = await supabase.from("video_upload_progress").update({
         uploading_status: videoStatus,
         upload_progress: data?.video?.progress

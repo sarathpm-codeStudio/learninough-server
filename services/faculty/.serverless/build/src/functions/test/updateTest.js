@@ -3732,7 +3732,7 @@ var facultyTestRepository = {
         title: data.title,
         course_id: data?.course,
         module_id: data?.module || null,
-        total_marks: data.totalMarks,
+        // total_marks: data.totalMarks,
         duration_minutes: data.duration,
         instructions: data.instructions,
         type: data.testType
@@ -3750,6 +3750,14 @@ var facultyTestRepository = {
         material_status: "PENDING"
       }).select().single();
       if (materialError) throw new Error(materialError.message);
+      const folderId = data?.module?.trim() ? data.module : null;
+      if (folderId) {
+        const { data: existingFolder, error: fetchError } = await supabase2.from("course_folders").select("total_test").eq("id", folderId).single();
+        if (fetchError) throw new Error(fetchError.message);
+        const currentCount = Number(existingFolder?.total_test ?? 0);
+        const { error: folderError } = await supabase2.from("course_folders").update({ total_test: currentCount + 1 }).eq("id", folderId);
+        if (folderError) throw new Error(folderError.message);
+      }
       return test;
     } catch (error) {
       console.log("error", error);
@@ -3846,6 +3854,13 @@ var facultyTestRepository = {
       if (error) throw error;
       const { data: module2, error: moduleError } = await supabase2.from("course_materials").update({ is_deleted: true }).eq("unique_id", result.unique_id).select().single();
       if (moduleError) throw moduleError;
+      if (module2?.folder_id) {
+        const { data: existingFolder, error: fetchError } = await supabase2.from("course_folders").select("total_test").eq("id", module2.folder_id).single();
+        if (fetchError) throw new Error(fetchError.message);
+        const currentCount = Number(existingFolder?.total_test ?? 0);
+        const { error: folderError } = await supabase2.from("course_folders").update({ total_test: Math.max(0, currentCount - 1) }).eq("id", module2.folder_id);
+        if (folderError) throw new Error(folderError.message);
+      }
       return result;
     } catch (error) {
       console.log("error", error);
@@ -3861,8 +3876,8 @@ var facultyTestRepository = {
       const { data: result, error } = await supabase2.from("questions").insert({
         test_id,
         question: data.question,
-        type: data.type,
-        marks: data.marks,
+        material_id: data.material_id,
+        material_title: data.material_title,
         question_number: nextQuestionNumber
         // ✅
       }).select().single();
@@ -4006,7 +4021,7 @@ var facultyTestRepository = {
         is_draft: false
       }).eq("id", test_id).select().single();
       const { data: materialResult, error: materialError } = await supabase2.from("course_materials").update({
-        material_status: "COMPLETED"
+        material_status: "READY" /* READY */
       }).eq("unique_id", result.unique_id).select().single();
       if (materialError) throw materialError;
       if (error) throw error;
@@ -4041,7 +4056,7 @@ var createTestBaseDetailsSchema = import_zod.z.object({
   title: import_zod.z.string().min(1, "Title is required"),
   module: import_zod.z.string().optional(),
   course: import_zod.z.string().min(1, "Course ID is required"),
-  totalMarks: import_zod.z.string().min(1, "Total marks is required"),
+  // totalMarks: z.string().min(1, "Total marks is required"),
   duration: import_zod.z.string().min(1, "Duration is required"),
   instructions: import_zod.z.string().optional(),
   testType: import_zod.z.string()

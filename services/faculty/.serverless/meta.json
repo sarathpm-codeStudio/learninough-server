@@ -944,5 +944,776 @@
         "ExportName": "sls-faculty-service-dev-ServiceEndpoint"
       }
     ]
+  },
+  "/home/dev/Desktop/learninough-server/services/faculty/serverless.yml": {
+    "versionFramework": "4.36.1",
+    "servicePath": "/home/dev/Desktop/learninough-server/services/faculty/serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "faculty-service",
+      "useDotenv": true,
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs20.x",
+        "region": "ap-south-1",
+        "timeout": 29,
+        "memorySize": 256,
+        "stage": "dev",
+        "environment": {
+          "SUPABASE_URL": "${ssm:/learning-app/SUPABASE_URL}",
+          "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+          "SUPABASE_SERVICE_ROLE_KEY": "${ssm:/learning-app/SUPABASE_SERVICE_ROLE_KEY}",
+          "UPSTASH_REDIS_URL": "#",
+          "UPSTASH_REDIS_TOKEN": "<REDACTED>",
+          "TPSTREAMS_API_KEY": "<REDACTED>",
+          "TPSTREAMS_ORG_ID": "#",
+          "CHAT_NOTIFICATION_QUEUE_URL": "#",
+          "FIREBASE_PROJECT_ID": "#",
+          "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+          "FIREBASE_CLIENT_EMAIL": "${ssm:/learning-app/FIREBASE_CLIENT_EMAIL}"
+        },
+        "iam": {
+          "role": {
+            "statements": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "sqs:SendMessage"
+                ],
+                "Resource": {
+                  "Fn::Sub": "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "build": {
+        "esbuild": {
+          "bundle": true,
+          "minify": false,
+          "sourcemap": true,
+          "external": [
+            "@supabase/supabase-js",
+            "@upstash/redis",
+            "dotenv",
+            "@aws-sdk/client-sqs",
+            "zod",
+            "firebase-admin"
+          ]
+        }
+      },
+      "plugins": [
+        "serverless-offline"
+      ],
+      "custom": {
+        "serverless-offline": {
+          "httpPort": 3000,
+          "lambdaPort": 3001
+        }
+      },
+      "functions": {
+        "createCourse": {
+          "handler": "src/functions/course/createCourse.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "uploadCourseIntroVideo": {
+          "handler": "src/functions/course/uploadCourseIntroVideo.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/intro-video",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getMyCourses": {
+          "handler": "src/functions/course/getMycourse.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getCourseById": {
+          "handler": "src/functions/course/getCourseById.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getCoursePreview": {
+          "handler": "src/functions/course/getCoursePreview.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/preview",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "updateCourse": {
+          "handler": "src/functions/course/updateCourse.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "publishCourse": {
+          "handler": "src/functions/course/publishCourse.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/publish",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getCourseContent": {
+          "handler": "src/functions/course/getCourseContent.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/content",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getAllProcessingMaterial": {
+          "handler": "src/functions/course/getProcessingMaterial.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/processing-materials",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getAllCourseReviews": {
+          "handler": "src/functions/course/getAllReviews.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/reviews",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "addReviewReply": {
+          "handler": "src/functions/course/reviewReply.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/reviews/{reviewId}/reply",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "addCoursePricing": {
+          "handler": "src/functions/course/addCoursePricing.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/pricing",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getAllContentInModule": {
+          "handler": "src/functions/course/getAllContentInModule.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/modules/{moduleId}/contents",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "createFolderInCourse": {
+          "handler": "src/functions/folder/createFolder.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/folders",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "updateFolder": {
+          "handler": "src/functions/folder/updateFolder.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/folders/{folderId}",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "deleteFolder": {
+          "handler": "src/functions/folder/deleteFolder.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/folders/{folderId}",
+                "method": "delete",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getFullFoldersInCourse": {
+          "handler": "src/functions/course/getFullFoldersIncourse.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/folders",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "createMaterial": {
+          "handler": "src/functions/material/createMaterial.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/materials",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "updateMaterial": {
+          "handler": "src/functions/material/updateMaterial.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/materials/{materialId}",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "deleteMaterial": {
+          "handler": "src/functions/material/deleteMaterial.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/materials/{materialId}",
+                "method": "delete",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "createCourseBundle": {
+          "handler": "src/functions/bundle/createBundle.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bundle",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getMyBundles": {
+          "handler": "src/functions/bundle/getMyBundles.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bundle",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getBundleById": {
+          "handler": "src/functions/bundle/getBundelById.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bundle/{bundleId}",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "updateBundle": {
+          "handler": "src/functions/bundle/updateBundle.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bundle/{bundleId}",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "deleteBundle": {
+          "handler": "src/functions/bundle/deleteBundle.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bundle/{bundleId}",
+                "method": "delete",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getAllStudents": {
+          "handler": "src/functions/students/getAllStudents.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/students",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "createAnnouncement": {
+          "handler": "src/functions/announcements/createAnnouncement.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/announcements",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getAllAnnouncements": {
+          "handler": "src/functions/announcements/getAllAnnouncement.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/announcements",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getAnnouncementById": {
+          "handler": "src/functions/announcements/getAnnouncementById.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/announcements/{announcementId}",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "updateAnnouncement": {
+          "handler": "src/functions/announcements/updateAnnouncement.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/announcements/{announcementId}",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "deleteAnnouncement": {
+          "handler": "src/functions/announcements/deleteAnnouncement.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/announcements/{announcementId}",
+                "method": "delete",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getCounterData": {
+          "handler": "src/functions/dashboard/getCounterData.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/dashboard/counters",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getEnrollmentTrend": {
+          "handler": "src/functions/dashboard/getEnrollmentTrend.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/dashboard/enrollment-trends",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getRevenueTrend": {
+          "handler": "src/functions/dashboard/getRevenueTrend.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/dashboard/revenue-trends",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getTopCoursesPerformance": {
+          "handler": "src/functions/dashboard/getTopCoursesPerformance.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/dashboard/top-courses-performances",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "createTest": {
+          "handler": "src/functions/test/createTest.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getMyAllTests": {
+          "handler": "src/functions/test/getMyAllTestes.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getTestById": {
+          "handler": "src/functions/test/getTestById.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "updateTest": {
+          "handler": "src/functions/test/updateTest.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "deleteTest": {
+          "handler": "src/functions/test/deleteTest.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}",
+                "method": "delete",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "createTestQuestion": {
+          "handler": "src/functions/test/createQuestions.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}/questions",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getTestQuestionByTestId": {
+          "handler": "src/functions/test/getQuestionsTestId.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}/questions",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "updateTestQuestion": {
+          "handler": "src/functions/test/updateQuestion.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}/questions/{questionId}",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "deleteTestQuestion": {
+          "handler": "src/functions/test/deleteQuestions.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}/questions/{questionId}",
+                "method": "delete",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "publishTest": {
+          "handler": "src/functions/test/publishTest.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/test/{testId}/publish",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getMyCouponAnalytics": {
+          "handler": "src/functions/coupon/getMyCouponAnalytics.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupons/analytics",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "createCoupon": {
+          "handler": "src/functions/coupon/createCoupon.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupon",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getMyAllCourses": {
+          "handler": "src/functions/coupon/getAllMyCourses.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupons/enabled-courses",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "getMyAllCoupons": {
+          "handler": "src/functions/coupon/getAllCoupon.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupons",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "updateCouponStatus": {
+          "handler": "src/functions/coupon/updateStatus.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupon/{couponId}/status",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "updateCoupon": {
+          "handler": "src/functions/coupon/editCoupon.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupon/{couponId}",
+                "method": "patch",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "deleteCoupon": {
+          "handler": "src/functions/coupon/deleteCoupon.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/coupon/{couponId}",
+                "method": "delete",
+                "cors": true
+              }
+            }
+          ]
+        },
+        "createVideoUploadProgress": {
+          "handler": "src/functions/video/processVideoUpload.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/video/create-upload-progress",
+                "method": "post",
+                "cors": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs20.x",
+      "region": "ap-south-1",
+      "timeout": 29,
+      "memorySize": 256,
+      "stage": "dev",
+      "environment": {
+        "SUPABASE_URL": "${ssm:/learning-app/SUPABASE_URL}",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+        "SUPABASE_SERVICE_ROLE_KEY": "${ssm:/learning-app/SUPABASE_SERVICE_ROLE_KEY}",
+        "UPSTASH_REDIS_URL": "#",
+        "UPSTASH_REDIS_TOKEN": "<REDACTED>",
+        "TPSTREAMS_API_KEY": "<REDACTED>",
+        "TPSTREAMS_ORG_ID": "#",
+        "CHAT_NOTIFICATION_QUEUE_URL": "#",
+        "FIREBASE_PROJECT_ID": "#",
+        "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+        "FIREBASE_CLIENT_EMAIL": "${ssm:/learning-app/FIREBASE_CLIENT_EMAIL}"
+      },
+      "iam": {
+        "role": {
+          "statements": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "sqs:SendMessage"
+              ],
+              "Resource": {
+                "Fn::Sub": "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "error": {
+      "message": "Failed to resolve variable '/learning-app/FIREBASE_PRIVATE_KEY' with resolver 'ssm' and provider 'default-aws-credential-resolver': Error: getaddrinfo EAI_AGAIN ssm.ap-south-1.amazonaws.com",
+      "stack": "Error: Failed to resolve variable '/learning-app/FIREBASE_PRIVATE_KEY' with resolver 'ssm' and provider 'default-aws-credential-resolver': Error: getaddrinfo EAI_AGAIN ssm.ap-south-1.amazonaws.com\n    at #resolveKey (file:///home/dev/.serverless/releases/4.36.1/package/dist/sf-core.js:977:25984)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async _ResolverManager.resolve (file:///home/dev/.serverless/releases/4.36.1/package/dist/sf-core.js:977:32026)\n    at async #handlePlaceholderNode (file:///home/dev/.serverless/releases/4.36.1/package/dist/sf-core.js:977:30550)\n    at async file:///home/dev/.serverless/releases/4.36.1/package/dist/sf-core.js:977:28394\n    at async processNodeAndHandleCompletion (file:///home/dev/.serverless/releases/4.36.1/package/dist/sf-core.js:977:16781)",
+      "code": "RESOLVER_RESOLVE_VARIABLE_ERROR"
+    },
+    "serviceRawFile": "\n\n\n\n\n# service: faculty-service\n\n# provider:\n#   name: aws\n#   runtime: nodejs20.x\n#   region: ap-south-1\n#   timeout: 30\n#   environment:\n#     VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue\n#   iam:\n#     role:\n#       statements:\n#         - Effect: Allow\n#           Action:\n#             - sqs:SendMessage\n#           Resource: !Sub \"arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue\"\n\n# plugins:\n#   - serverless-offline\n\n# custom:\n#   serverless-offline:\n#     httpPort: 3000\n#     lambdaPort: 3001\n\n# functions:\n\n#   # ── Course ──────────────────────────────────────────────────\n\n#   createCourse:\n#     handler: src/functions/course/createCourse.handler\n#     events:\n#       - http:\n#           path: faculty/courses\n#           method: post\n\n#   uploadCourseIntroVideo:\n#     handler: src/functions/course/uploadCourseIntroVideo.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/intro-video\n#           method: post\n\n#   getMyCourses:\n#     handler: src/functions/course/getMycourse.handler\n#     events:\n#       - http:\n#           path: faculty/courses\n#           method: get\n\n#   getCourseById:\n#     handler: src/functions/course/getCourseById.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}\n#           method: get\n\n#   getCoursePreview:\n#     handler: src/functions/course/getCoursePreview.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/preview\n#           method: get\n\n#   updateCourse:\n#     handler: src/functions/course/updateCourse.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}\n#           method: patch\n\n#   publishCourse:\n#     handler: src/functions/course/publishCourse.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/publish\n#           method: patch\n\n#   getCourseContent:\n#     handler: src/functions/course/getCourseContent.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/content\n#           method: get\n\n#   getAllProcessingMaterial:\n#     handler: src/functions/course/getProcessingMaterial.handler\n#     events:\n#       - http:\n#           path: faculty/courses/processing-materials\n#           method: get\n\n#   getAllCourseReviews:\n#     handler: src/functions/course/getAllReviews.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/reviews\n#           method: get\n\n\n#   addReviewReply:\n#     handler: src/functions/course/reviewReply.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/reviews/{reviewId}/reply\n#           method: post  \n\n#   addCoursePricing:\n#     handler: src/functions/course/addCoursePricing.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/pricing\n#           method: patch\n\n\n#   # ── Folder ──────────────────────────────────────────────────\n\n#   createFolderInCourse:\n#     handler: src/functions/folder/createFolder.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/folders\n#           method: post\n\n#   updateFolder:\n#     handler: src/functions/folder/updateFolder.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/folders/{folderId}\n#           method: patch\n\n#   deleteFolder:\n#     handler: src/functions/folder/deleteFolder.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/folders/{folderId}\n#           method: delete\n\n#   # ── Material ─────────────────────────────────────────────────\n\n#   createMaterial:\n#     handler: src/functions/material/createMaterial.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/materials\n#           method: post\n\n#   updateMaterial:\n#     handler: src/functions/material/updateMaterial.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/materials/{materialId}\n#           method: patch\n\n#   deleteMaterial:\n#     handler: src/functions/material/deleteMaterial.handler\n#     events:\n#       - http:\n#           path: faculty/courses/{courseId}/materials/{materialId}\n#           method: delete\n\n#   # ── Bundle ───────────────────────────────────────────────────\n\n#   createCourseBundle:\n#     handler: src/functions/bundle/createBundle.handler\n#     events:\n#       - http:\n#           path: faculty/bundle\n#           method: post\n\n#   getMyBundles:\n#     handler: src/functions/bundle/getMyBundles.handler\n#     events:\n#       - http:\n#           path: faculty/bundle\n#           method: get\n\n#   getBundleById:\n#     handler: src/functions/bundle/getBundelById.handler\n#     events:\n#       - http:\n#           path: faculty/bundle/{bundleId}\n#           method: get\n\n#   # ── Students ─────────────────────────────────────────────────\n\n#   getAllStudents:\n#     handler: src/functions/students/getAllStudents.handler\n#     events:\n#       - http:\n#           path: faculty/students\n#           method: get\n\n#   # ── Announcements ────────────────────────────────────────────\n\n#   createAnnouncement:\n#     handler: src/functions/announcements/createAnnouncement.handler\n#     events:\n#       - http:\n#           path: faculty/announcements\n#           method: post\n\n#   getAllAnnouncements:\n#     handler: src/functions/announcements/getAllAnnouncement.handler\n#     events:\n#       - http:\n#           path: faculty/announcements\n#           method: get\n\n#   updateAnnouncement:\n#     handler: src/functions/announcements/updateAnnouncement.handler\n#     events:\n#       - http:\n#           path: faculty/announcements/{id}\n#           method: put\n\n#   deleteAnnouncement:\n#     handler: src/functions/announcements/deleteAnnouncement.handler\n#     events:\n#       - http:\n#           path: faculty/announcements/{id}\n#           method: delete\n\n#   # ── Dashboard ────────────────────────────────────────────────\n\n#   getCounterData:\n#     handler: src/functions/dashboard/getCounterData.handler\n#     events:\n#       - http:\n#           path: faculty/dashboard/counter\n#           method: get\n\n#   getGraphData:\n#     handler: src/functions/dashboard/getGraphData.handler\n#     events:\n#       - http:\n#           path: faculty/dashboard/graph\n#           method: get\n\n\n  \n#   # ── Test ─────────────────────────────────────────────────────\n\n#   createTest:\n#     handler: src/functions/test/createTest.handler\n#     events:\n#       - http:\n#           path: faculty/test\n#           method: post\n  \n#   getMyAllTests:\n#     handler: src/functions/test/getMyAllTestes.handler\n#     events:\n#       - http:\n#           path: faculty/test\n#           method: get\n    \n  \n#   getTestById:\n#     handler: src/functions/test/getTestById.handler\n#     events:\n#       - http:\n#           path: faculty/test/{testId}\n#           method: get\n\n#   updateTest:\n#     handler: src/functions/test/updateTest.handler\n#     events:\n#       - http:\n#           path: faculty/test/{testId}\n#           method: put\n\n\n#   deleteTest:\n#     handler: src/functions/test/deleteTest.handler\n#     events:\n#       - http:\n#           path: faculty/test/{testId}\n#           method: delete\n\n#   createTestQuestion:\n#     handler: src/functions/test/createQuestions.handler\n#     events:\n#       - http:\n#           path: faculty/test/{testId}/questions\n#           method: post\n  \n#   updateTestQuestion:\n#     handler: src/functions/test/updateQuestion.handler\n#     events:\n#       - http:\n#           path: faculty/test/{testId}/questions/{questionId}\n#           method: put\n\n#   deleteTestQuestion:\n#     handler: src/functions/test/deleteQuestions.handler\n#     events:\n#       - http:\n#           path: faculty/test/{testId}/questions/{questionId}\n#           method: delete\n\n  \n#   publishTest:\n#     handler: src/functions/test/publishTest.handler\n#     events:\n#       - http:\n#           path: faculty/test/{testId}/publish\n#           method: put \n\n  \n#   # ── Coupon ─────────────────────────────────────────────────────\n\n#   createCoupon:\n#     handler: src/functions/coupon/createCoupon.handler\n#     events:\n#       - http:\n#           path: faculty/coupon\n#           method: post\n\n#   getMyAllCoupons:\n#     handler: src/functions/coupon/getAllCoupon.handler\n#     events:\n#       - http:\n#           path: faculty/coupon\n#           method: get\n\n#   updateCouponStatus:\n#     handler: src/functions/coupon/updateStatus.handler\n#     events:\n#       - http:\n#           path: faculty/coupon/{couponId}/status\n#           method: put\n\n#   deleteCoupon:\n#     handler: src/functions/coupon/deleteCoupon.handler\n#     events:\n#       - http:\n#           path: faculty/coupon/{couponId}\n#           method: delete\n\n\n#   # ── Video ─────────────────────────────────────────────────────\n\n#   createVideoUploadProgress:\n#     handler: src/functions/video/processVideoUpload.handler\n#     events:\n#       - http:\n#           path: faculty/video/create-upload-progress\n#           method: post\n\n\n\n\n\n\n\nservice: faculty-service\n\nuseDotenv: true\n\nprovider:\n  name:       aws\n  runtime:    nodejs20.x\n  region:     ap-south-1\n  timeout:    29\n  memorySize: 256\n  stage:      ${opt:stage, 'dev'}\n  environment:\n    SUPABASE_URL:                ${ssm:/learning-app/SUPABASE_URL}\n    SUPABASE_ANON_KEY:           ${ssm:/learning-app/SUPABASE_ANON_KEY}\n    SUPABASE_SERVICE_ROLE_KEY:   ${ssm:/learning-app/SUPABASE_SERVICE_ROLE_KEY}\n    UPSTASH_REDIS_URL:           ${ssm:/learning-app/UPSTASH_REDIS_URL}\n    UPSTASH_REDIS_TOKEN:         ${ssm:/learning-app/UPSTASH_REDIS_TOKEN}\n    TPSTREAMS_API_KEY:           ${ssm:/learning-app/TPSTREAMS_API_KEY}\n    TPSTREAMS_ORG_ID:            ${ssm:/learning-app/TPSTREAMS_ORG_ID}\n    CHAT_NOTIFICATION_QUEUE_URL: ${ssm:/learning-app/CHAT_NOTIFICATION_QUEUE_URL}\n    FIREBASE_PROJECT_ID:         ${ssm:/learning-app/FIREBASE_PROJECT_ID}\n    FIREBASE_PRIVATE_KEY:        ${ssm:/learning-app/FIREBASE_PRIVATE_KEY}\n    FIREBASE_CLIENT_EMAIL:       ${ssm:/learning-app/FIREBASE_CLIENT_EMAIL}\n\n  iam:\n    role:\n      statements:\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage\n          Resource: !Sub \"arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:video-upload-queue\"\n\nbuild:\n  esbuild:\n    bundle:    true\n    minify:    false\n    sourcemap: true\n    external:\n      - '@supabase/supabase-js'\n      - '@upstash/redis'\n      - 'dotenv'\n      - '@aws-sdk/client-sqs'\n      - 'zod'\n      - 'firebase-admin'\n\nplugins:\n  - serverless-offline\n\ncustom:\n  serverless-offline:\n    httpPort:   3000\n    lambdaPort: 3001\n\nfunctions:\n\n  # ── Course ──────────────────────────────────────────────────\n  createCourse:\n    handler: src/functions/course/createCourse.handler\n    events:\n      - http:\n          path:   faculty/courses\n          method: post\n          cors:   true\n\n  uploadCourseIntroVideo:\n    handler: src/functions/course/uploadCourseIntroVideo.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/intro-video\n          method: post\n          cors:   true\n\n  getMyCourses:\n    handler: src/functions/course/getMycourse.handler\n    events:\n      - http:\n          path:   faculty/courses\n          method: get\n          cors:   true\n\n  getCourseById:\n    handler: src/functions/course/getCourseById.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}\n          method: get\n          cors:   true\n\n  getCoursePreview:\n    handler: src/functions/course/getCoursePreview.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/preview\n          method: get\n          cors:   true\n\n  updateCourse:\n    handler: src/functions/course/updateCourse.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}\n          method: patch\n          cors:   true\n\n  publishCourse:\n    handler: src/functions/course/publishCourse.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/publish\n          method: patch\n          cors:   true\n\n  getCourseContent:\n    handler: src/functions/course/getCourseContent.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/content\n          method: get\n          cors:   true\n\n  getAllProcessingMaterial:\n    handler: src/functions/course/getProcessingMaterial.handler\n    events:\n      - http:\n          path:   faculty/courses/processing-materials\n          method: get\n          cors:   true\n\n  getAllCourseReviews:\n    handler: src/functions/course/getAllReviews.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/reviews\n          method: get\n          cors:   true\n\n  addReviewReply:\n    handler: src/functions/course/reviewReply.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/reviews/{reviewId}/reply\n          method: post\n          cors:   true\n\n  addCoursePricing:\n    handler: src/functions/course/addCoursePricing.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/pricing\n          method: patch\n          cors:   true\n\n  getAllContentInModule:\n    handler: src/functions/course/getAllContentInModule.handler\n    events:\n      - http:\n          path:   faculty/courses/modules/{moduleId}/contents\n          method: get\n          cors:   true\n\n  # ── Folder ──────────────────────────────────────────────────\n  createFolderInCourse:\n    handler: src/functions/folder/createFolder.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/folders\n          method: post\n          cors:   true\n\n  updateFolder:\n    handler: src/functions/folder/updateFolder.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/folders/{folderId}\n          method: patch\n          cors:   true\n\n  deleteFolder:\n    handler: src/functions/folder/deleteFolder.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/folders/{folderId}\n          method: delete\n          cors:   true\n\n  getFullFoldersInCourse:\n    handler: src/functions/course/getFullFoldersIncourse.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/folders\n          method: get\n          cors:   true\n\n  # ── Material ─────────────────────────────────────────────────\n  createMaterial:\n    handler: src/functions/material/createMaterial.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/materials\n          method: post\n          cors:   true\n\n  updateMaterial:\n    handler: src/functions/material/updateMaterial.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/materials/{materialId}\n          method: patch\n          cors:   true\n\n  deleteMaterial:\n    handler: src/functions/material/deleteMaterial.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/materials/{materialId}\n          method: delete\n          cors:   true\n\n  # ── Bundle ───────────────────────────────────────────────────\n  createCourseBundle:\n    handler: src/functions/bundle/createBundle.handler\n    events:\n      - http:\n          path:   faculty/bundle\n          method: post\n          cors:   true\n\n  getMyBundles:\n    handler: src/functions/bundle/getMyBundles.handler\n    events:\n      - http:\n          path:   faculty/bundle\n          method: get\n          cors:   true\n\n  getBundleById:\n    handler: src/functions/bundle/getBundelById.handler\n    events:\n      - http:\n          path:   faculty/bundle/{bundleId}\n          method: get\n          cors:   true\n\n  updateBundle:\n    handler: src/functions/bundle/updateBundle.handler\n    events:\n      - http:\n          path:   faculty/bundle/{bundleId}\n          method: patch\n          cors:   true\n\n  deleteBundle:\n    handler: src/functions/bundle/deleteBundle.handler\n    events:\n      - http:\n          path:   faculty/bundle/{bundleId}\n          method: delete\n          cors:   true\n\n  # ── Students ─────────────────────────────────────────────────\n  getAllStudents:\n    handler: src/functions/students/getAllStudents.handler\n    events:\n      - http:\n          path:   faculty/students\n          method: get\n          cors:   true\n\n  # ── Announcements ────────────────────────────────────────────\n  createAnnouncement:\n    handler: src/functions/announcements/createAnnouncement.handler\n    events:\n      - http:\n          path:   faculty/announcements\n          method: post\n          cors:   true\n\n  getAllAnnouncements:\n    handler: src/functions/announcements/getAllAnnouncement.handler\n    events:\n      - http:\n          path:   faculty/announcements\n          method: get\n          cors:   true\n\n  getAnnouncementById:\n    handler: src/functions/announcements/getAnnouncementById.handler\n    events:\n      - http:\n          path:   faculty/announcements/{announcementId}\n          method: get\n          cors:   true\n\n  updateAnnouncement:\n    handler: src/functions/announcements/updateAnnouncement.handler\n    events:\n      - http:\n          path:   faculty/announcements/{announcementId}\n          method: patch\n          cors:   true\n\n  deleteAnnouncement:\n    handler: src/functions/announcements/deleteAnnouncement.handler\n    events:\n      - http:\n          path:   faculty/announcements/{announcementId}\n          method: delete\n          cors:   true\n  \n\n\n  # ── Dashboard ────────────────────────────────────────────────\n  getCounterData:\n    handler: src/functions/dashboard/getCounterData.handler\n    events:\n      - http:\n          path:   faculty/dashboard/counters\n          method: get\n          cors:   true\n\n  getEnrollmentTrend:\n    handler: src/functions/dashboard/getEnrollmentTrend.handler\n    events:\n      - http:\n          path:   faculty/dashboard/enrollment-trends\n          method: get\n          cors:   true\n\n  getRevenueTrend:\n    handler: src/functions/dashboard/getRevenueTrend.handler\n    events:\n      - http:\n          path:   faculty/dashboard/revenue-trends\n          method: get\n          cors:   true\n\n  getTopCoursesPerformance:\n    handler: src/functions/dashboard/getTopCoursesPerformance.handler\n    events:\n      - http:\n          path:   faculty/dashboard/top-courses-performances\n          method: get\n          cors:   true\n\n  # ── Test ─────────────────────────────────────────────────────\n  createTest:\n    handler: src/functions/test/createTest.handler\n    events:\n      - http:\n          path:   faculty/test\n          method: post\n          cors:   true\n\n  getMyAllTests:\n    handler: src/functions/test/getMyAllTestes.handler\n    events:\n      - http:\n          path:   faculty/test\n          method: get\n          cors:   true\n\n  getTestById:\n    handler: src/functions/test/getTestById.handler\n    events:\n      - http:\n          path:   faculty/test/{testId}\n          method: get\n          cors:   true\n\n  updateTest:\n    handler: src/functions/test/updateTest.handler\n    events:\n      - http:\n          path:   faculty/test/{testId}\n          method: patch\n          cors:   true\n\n  deleteTest:\n    handler: src/functions/test/deleteTest.handler\n    events:\n      - http:\n          path:   faculty/test/{testId}\n          method: delete\n          cors:   true\n\n  createTestQuestion:\n    handler: src/functions/test/createQuestions.handler\n    events:\n      - http:\n          path:   faculty/test/{testId}/questions\n          method: post\n          cors:   true\n\n  getTestQuestionByTestId:\n    handler: src/functions/test/getQuestionsTestId.handler\n    events:\n      - http:\n          path:   faculty/test/{testId}/questions\n          method: get\n          cors:   true\n\n  updateTestQuestion:\n    handler: src/functions/test/updateQuestion.handler\n    events:\n      - http:\n          path:   faculty/test/{testId}/questions/{questionId}\n          method: patch\n          cors:   true\n\n  deleteTestQuestion:\n    handler: src/functions/test/deleteQuestions.handler\n    events:\n      - http:\n          path:   faculty/test/{testId}/questions/{questionId}\n          method: delete\n          cors:   true\n\n  publishTest:\n    handler: src/functions/test/publishTest.handler\n    events:\n      - http:\n          path:   faculty/test/{testId}/publish\n          method: patch\n          cors:   true\n\n  # ── Coupon ─────────────────────────────────────────────────────\n\n  getMyCouponAnalytics:\n    handler: src/functions/coupon/getMyCouponAnalytics.handler\n    events:\n      - http:\n          path:   faculty/coupons/analytics\n          method: get\n          cors:   true\n\n  createCoupon:\n    handler: src/functions/coupon/createCoupon.handler\n    events:\n      - http:\n          path:   faculty/coupon\n          method: post\n          cors:   true\n          \n  getMyAllCourses:\n    handler: src/functions/coupon/getAllMyCourses.handler\n    events:\n      - http:\n          path:   faculty/coupons/enabled-courses\n          method: get\n          cors:   true\n\n  getMyAllCoupons:\n    handler: src/functions/coupon/getAllCoupon.handler\n    events:\n      - http:\n          path:   faculty/coupons\n          method: get\n          cors:   true\n\n  updateCouponStatus:\n    handler: src/functions/coupon/updateStatus.handler\n    events:\n      - http:\n          path:   faculty/coupon/{couponId}/status\n          method: patch\n          cors:   true\n\n  updateCoupon:\n    handler: src/functions/coupon/editCoupon.handler\n    events:\n      - http:\n          path:   faculty/coupon/{couponId}\n          method: patch\n          cors:   true\n\n  deleteCoupon:\n    handler: src/functions/coupon/deleteCoupon.handler\n    events:\n      - http:\n          path:   faculty/coupon/{couponId}\n          method: delete\n          cors:   true\n\n  # ── Video ─────────────────────────────────────────────────────\n  createVideoUploadProgress:\n    handler: src/functions/video/processVideoUpload.handler\n    events:\n      - http:\n          path:   faculty/video/create-upload-progress\n          method: post\n          cors:   true",
+    "command": [
+      "offline"
+    ],
+    "options": {},
+    "orgId": "5acd3926-d700-405e-92da-dc1a13a30598",
+    "orgName": "sarath1937",
+    "userId": "n0TL8qG4d4qRbh4SlP",
+    "userName": "sarath1937",
+    "serviceProviderAwsCfStackId": null,
+    "serviceProviderAwsCfStackCreated": null,
+    "serviceProviderAwsCfStackUpdated": null,
+    "serviceProviderAwsCfStackStatus": null,
+    "serviceProviderAwsCfStackOutputs": null
   }
 }

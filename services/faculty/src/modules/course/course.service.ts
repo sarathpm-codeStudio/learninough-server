@@ -71,10 +71,14 @@ export const facultyCourseService = {
 
         try {
 
-            console.log("event.queryStringParameters", event.queryStringParameters);
-            const filter = event.queryStringParameters.filter === "true"
+            const filter = event.queryStringParameters?.filter ?? "all";
 
-            const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, event.queryStringParameters.search, event.supabase);
+            const courses = await facultyCourseRepository.getMyCourses(
+                event.user.id,
+                filter,
+                event.queryStringParameters?.search,
+                event.supabase
+            );
 
             return courses;
 
@@ -352,6 +356,16 @@ export const facultyCourseService = {
 
             console.log("error", error);
 
+            throw new Error(error)
+        }
+    },
+
+    getAllMaterialModule: async (event: any) => {
+        try {
+            const contents = await facultyCourseRepository.getAllMaterialModule(event.pathParameters.materialId, event.supabase);
+            return contents;
+        } catch (error: any) {
+            console.log("error", error);
             throw new Error(error)
         }
     },

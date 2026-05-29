@@ -80,6 +80,7 @@ export const facultyDashboardRepository = {
                 .from("courses")
                 .select("id")
                 .eq("faculty_id", facultyId)
+                .eq("is_draft", false)
                 .eq("is_deleted", false);
     
             if (coursesError) throw new Error(coursesError.message);
@@ -101,6 +102,7 @@ export const facultyDashboardRepository = {
             // 3. Fetch enrollments within date range (skip query when no courses — .in([]) is invalid)
             let enrollments: { enrolled_at?: string }[] = [];
             if (courseIds.length > 0) {
+                console.log("courseIds", courseIds);
                 const { data, error: enrollmentsError } = await db
                     .from("enrollments")
                     .select("enrolled_at")
@@ -109,6 +111,7 @@ export const facultyDashboardRepository = {
                     .lte("enrolled_at", now.toISOString());
     
                 if (enrollmentsError) throw new Error(enrollmentsError.message);
+                
                 enrollments = data ?? [];
             }
     

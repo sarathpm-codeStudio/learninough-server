@@ -511,6 +511,14 @@ functions:
           method: patch
           cors:   true
 
+  getAllContentInModule:
+    handler: src/functions/course/getAllContentInModule.handler
+    events:
+      - http:
+          path:   faculty/courses/modules/{moduleId}/contents
+          method: get
+          cors:   true
+
   # ── Folder ──────────────────────────────────────────────────
   createFolderInCourse:
     handler: src/functions/folder/createFolder.handler
