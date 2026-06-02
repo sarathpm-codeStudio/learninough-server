@@ -51,6 +51,36 @@ export const facultyTestService = {
         }
     },
 
+    getTestsPageAnalytics: async (event: any) => {
+        try {
+
+            const result = await facultyTestRepository.getTestsPageAnalytics(event.user.id, event.supabase);
+
+            return result;
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
+
+    getTestAnalytics: async (event: any) => {
+        try {
+
+            const result = await facultyTestRepository.getTestAnalytics(event.pathParameters.testId, event.supabase);
+
+            return result;
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
+
     getTestById: async (event: any) => {
         try {
 

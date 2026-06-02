@@ -2,6 +2,18 @@
 
 import { SupabaseClient } from "@supabase/supabase-js";
 import { supabase as anonSupabase } from "../../../../../shared/config/supabase";
+import {
+    buildChartPeriodSlots,
+    endOfLocalDay,
+    getChartPeriodBounds,
+    groupTimestampForChartPeriod,
+    type ChartPeriod,
+} from "../../utils/chartPeriod";
+
+const ENROLLMENT_YEAR_LABELS = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+] as const;
 
 
 export const facultyDashboardRepository = {
@@ -71,11 +83,10 @@ export const facultyDashboardRepository = {
         }
     },
 
-    getEnrollmentTrend: async (facultyId: string, period: "week" | "month" | "year", client?: SupabaseClient) => {
+    getEnrollmentTrend: async (facultyId: string, period: ChartPeriod, client?: SupabaseClient) => {
         try {
             const db = client ?? anonSupabase;
     
-            // 1. Get all faculty course ids
             const { data: courses, error: coursesError } = await db
                 .from("courses")
                 .select("id")
@@ -86,103 +97,56 @@ export const facultyDashboardRepository = {
             if (coursesError) throw new Error(coursesError.message);
             const courseIds = courses.map((c) => c.id);
     
-            // 2. Calculate date range
-            const now = new Date();
-            let startDate: Date;
+            const bounds = getChartPeriodBounds(period);
+            const slots = buildChartPeriodSlots(period, bounds);
+            const counts = new Map(slots.map((s) => [s.group, 0]));
     
-            if (period === "week") {
-                startDate = new Date(now);
-                startDate.setDate(now.getDate() - 6); // last 7 days
-            } else if (period === "month") {
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1); // start of month
-            } else {
-                startDate = new Date(now.getFullYear(), 0, 1); // start of year
-            }
-    
-            // 3. Fetch enrollments within date range (skip query when no courses — .in([]) is invalid)
-            let enrollments: { enrolled_at?: string }[] = [];
             if (courseIds.length > 0) {
-                console.log("courseIds", courseIds);
                 const { data, error: enrollmentsError } = await db
                     .from("enrollments")
                     .select("enrolled_at")
                     .in("course_id", courseIds)
-                    .gte("enrolled_at", startDate.toISOString())
-                    .lte("enrolled_at", now.toISOString());
+                    .gte("enrolled_at", bounds.fromDate.toISOString())
+                    .lte("enrolled_at", bounds.rangeEnd.toISOString());
     
                 if (enrollmentsError) throw new Error(enrollmentsError.message);
-                
-                enrollments = data ?? [];
-            }
     
-            // 4. Group data based on period
-            if (period === "week") {
-                const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-                const result: Record<string, { primary: string; secondary: string; value: number }> = {};
-    
-                // Build last 7 days map
-                for (let i = 6; i >= 0; i--) {
-                    const d = new Date(now);
-                    d.setDate(now.getDate() - i);
-                    const dayName = days[d.getDay()]!;
-                    const dayNum = String(d.getDate()).padStart(2, "0");
-                    const key = d.toISOString().split("T")[0]!;
-                    result[key] = { primary: dayName, secondary: dayNum, value: 0 };
+                for (const e of data ?? []) {
+                    if (!e.enrolled_at) continue;
+                    const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
+                    if (!grouped) continue;
+                    counts.set(grouped.group, (counts.get(grouped.group) ?? 0) + 1);
                 }
-    
-                // Count enrollments per day
-                enrollments.forEach((e) => {
-                    const key = e.enrolled_at?.split("T")[0];
-                    if (key && result[key]) result[key].value += 1;
-                });
-    
-                return Object.values(result);
-    
-            } else if (period === "month") {
-                const result: Record<string, { primary: string; value: number }> = {
-                    "Week 1": { primary: "Week 1", value: 0 },
-                    "Week 2": { primary: "Week 2", value: 0 },
-                    "Week 3": { primary: "Week 3", value: 0 },
-                    "Week 4": { primary: "Week 4", value: 0 },
-                };
-    
-                enrollments.forEach((e) => {
-                    const day = new Date(e.enrolled_at!).getDate();
-                    if (day <= 7) result["Week 1"]!.value += 1;
-                    else if (day <= 14) result["Week 2"]!.value += 1;
-                    else if (day <= 21) result["Week 3"]!.value += 1;
-                    else result["Week 4"]!.value += 1;
-                });
-    
-                return Object.values(result);
-    
-            } else {
-                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
-                const result: Record<number, { primary: string; value: number }> = {};
-                months.forEach((m, i) => {
-                    result[i] = { primary: m, value: 0 };
-                });
-    
-                enrollments.forEach((e) => {
-                    const month = new Date(e.enrolled_at!).getMonth();
-                    result[month]!.value += 1;
-                });
-    
-                return Object.values(result);
             }
     
+            if (period === "week") {
+                return slots.map((s) => ({
+                    primary: s.label,
+                    secondary: s.dayOfMonth!,
+                    value: counts.get(s.group) ?? 0,
+                }));
+            }
+    
+            if (period === "month") {
+                return slots.map((s) => ({
+                    primary: s.label.replace("Wk", "Week"),
+                    value: counts.get(s.group) ?? 0,
+                }));
+            }
+    
+            return slots.map((s, i) => ({
+                primary: ENROLLMENT_YEAR_LABELS[i]!,
+                value: counts.get(s.group) ?? 0,
+            }));
         } catch (error: any) {
             throw new Error(error.message);
         }
     },
 
-    getRevenueTrend: async (facultyId: string, period: "week" | "month" | "year", client?: SupabaseClient) => {
+    getRevenueTrend: async (facultyId: string, period: ChartPeriod, client?: SupabaseClient) => {
         try {
             const db = client ?? anonSupabase;
     
-            // 1. Get all faculty course ids
             const { data: courses, error: coursesError } = await db
                 .from("courses")
                 .select("id")
@@ -192,29 +156,37 @@ export const facultyDashboardRepository = {
             if (coursesError) throw new Error(coursesError.message);
             const courseIds = courses.map((c) => c.id);
     
-            // 2. Calculate current and previous date ranges
-            const now = new Date();
-            let currentStart: Date;
+            const bounds = getChartPeriodBounds(period);
+            const slots = buildChartPeriodSlots(period, bounds);
+            const today = bounds.today;
+    
             let previousStart: Date;
             let previousEnd: Date;
     
             if (period === "week") {
-                currentStart = new Date(now);
-                currentStart.setDate(now.getDate() - 6);
-                previousEnd = new Date(currentStart);
-                previousStart = new Date(previousEnd);
-                previousStart.setDate(previousEnd.getDate() - 7);
+                const prevWeekMonday = new Date(
+                    bounds.fromDate.getFullYear(),
+                    bounds.fromDate.getMonth(),
+                    bounds.fromDate.getDate() - 7
+                );
+                previousStart = prevWeekMonday;
+                previousEnd = endOfLocalDay(
+                    new Date(
+                        bounds.fromDate.getFullYear(),
+                        bounds.fromDate.getMonth(),
+                        bounds.fromDate.getDate() - 1
+                    )
+                );
             } else if (period === "month") {
-                currentStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                previousEnd = new Date(currentStart);
-                previousStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                previousStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                previousEnd = endOfLocalDay(
+                    new Date(today.getFullYear(), today.getMonth(), 0)
+                );
             } else {
-                currentStart = new Date(now.getFullYear(), 0, 1);
-                previousEnd = new Date(currentStart);
-                previousStart = new Date(now.getFullYear() - 1, 0, 1);
+                previousStart = new Date(today.getFullYear() - 1, 0, 1);
+                previousEnd = endOfLocalDay(new Date(today.getFullYear() - 1, 11, 31));
             }
     
-            // 3. Fetch current period enrollments (skip when no courses — .in([]) is invalid)
             let currentEnrollments: { enrolled_at?: string; amount_paid?: number }[] = [];
             let previousEnrollments: { amount_paid?: number }[] = [];
             if (courseIds.length > 0) {
@@ -222,13 +194,12 @@ export const facultyDashboardRepository = {
                     .from("enrollments")
                     .select("enrolled_at, amount_paid")
                     .in("course_id", courseIds)
-                    .gte("enrolled_at", currentStart.toISOString())
-                    .lte("enrolled_at", now.toISOString());
+                    .gte("enrolled_at", bounds.fromDate.toISOString())
+                    .lte("enrolled_at", bounds.rangeEnd.toISOString());
     
                 if (currentError) throw new Error(currentError.message);
                 currentEnrollments = current ?? [];
     
-                // 4. Fetch previous period enrollments (for trend %)
                 const { data: previous, error: previousError } = await db
                     .from("enrollments")
                     .select("amount_paid")
@@ -240,7 +211,6 @@ export const facultyDashboardRepository = {
                 previousEnrollments = previous ?? [];
             }
     
-            // 5. Calculate trend percentage
             const currentTotal = currentEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
             const previousTotal = previousEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
     
@@ -252,59 +222,22 @@ export const facultyDashboardRepository = {
                 trendText = `${Math.abs(change).toFixed(1)}% ${direction} from ${periodLabel}`;
             }
     
-            // 6. Group data based on period
-            let chartData: { label: string; value: number }[] = [];
+            const revenueByGroup = new Map(slots.map((s) => [s.group, 0]));
     
-            if (period === "week") {
-                const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-                const result: Record<string, { label: string; value: number }> = {};
-    
-                for (let i = 6; i >= 0; i--) {
-                    const d = new Date(now);
-                    d.setDate(now.getDate() - i);
-                    const key = d.toISOString().split("T")[0]!;
-                    result[key] = { label: days[d.getDay()]!, value: 0 };
-                }
-    
-                currentEnrollments.forEach((e) => {
-                    const key = e.enrolled_at?.split("T")[0];
-                    if (key && result[key]) result[key].value += Number(e.amount_paid);
-                });
-    
-                chartData = Object.values(result);
-    
-            } else if (period === "month") {
-                const result = {
-                    "Wk 1": { label: "Wk 1", value: 0 },
-                    "Wk 2": { label: "Wk 2", value: 0 },
-                    "Wk 3": { label: "Wk 3", value: 0 },
-                    "Wk 4": { label: "Wk 4", value: 0 },
-                };
-    
-                currentEnrollments.forEach((e) => {
-                    const day = new Date(e.enrolled_at!).getDate();
-                    if (day <= 7) result["Wk 1"].value += Number(e.amount_paid);
-                    else if (day <= 14) result["Wk 2"].value += Number(e.amount_paid);
-                    else if (day <= 21) result["Wk 3"].value += Number(e.amount_paid);
-                    else result["Wk 4"].value += Number(e.amount_paid);
-                });
-    
-                chartData = Object.values(result);
-    
-            } else {
-                const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-                                "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-    
-                const result: Record<number, { label: string; value: number }> = {};
-                months.forEach((m, i) => { result[i] = { label: m, value: 0 }; });
-    
-                currentEnrollments.forEach((e) => {
-                    const month = new Date(e.enrolled_at!).getMonth();
-                    result[month]!.value += Number(e.amount_paid);
-                });
-    
-                chartData = Object.values(result);
+            for (const e of currentEnrollments) {
+                if (!e.enrolled_at) continue;
+                const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
+                if (!grouped) continue;
+                revenueByGroup.set(
+                    grouped.group,
+                    (revenueByGroup.get(grouped.group) ?? 0) + Number(e.amount_paid)
+                );
             }
+    
+            const chartData = slots.map((s) => ({
+                label: s.label,
+                value: revenueByGroup.get(s.group) ?? 0,
+            }));
     
             return { data: chartData, trend: trendText };
     

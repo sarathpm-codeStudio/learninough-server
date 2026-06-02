@@ -3813,16 +3813,16 @@ var videoRepository = {
   //         throw new Error(error);
   //     }
   // },
-  createVideoUploadProgress: async (uniqueId, facultyId, assetId, type, client) => {
+  createVideoUploadProgress: async (uniqueId, facultyId, assetId, type, status, client) => {
     try {
       const supabase2 = client ?? supabase;
-      console.log(">>>>>>>>>>>>>>>>>>", uniqueId, facultyId, assetId, type);
+      console.log(">>>>>>>>>>>>>>>>>>", uniqueId, facultyId, assetId, type, status);
       const { error } = await supabase2.from("video_upload_progress").upsert({
         faculty_id: facultyId,
         unique_id: uniqueId,
         type,
         asset_id: assetId,
-        uploading_status: "uploaded",
+        uploading_status: status,
         upload_progress: 0,
         transcoding_progress: 0
       }, {
@@ -3845,7 +3845,7 @@ var videoRepository = {
         if (course) {
           await supabase2.from("course_materials").update({
             video_asset_id: assetId,
-            video_uploading_status: "uploaded",
+            video_uploading_status: status,
             video_upload_progress: 0,
             video_transcoding_progress: 0
           }).eq("unique_id", uniqueId);
@@ -3866,7 +3866,7 @@ var videoService = {
     try {
       const data = JSON.parse(event.body);
       console.log("event####################################", data);
-      await videoRepository.createVideoUploadProgress(data.unique_id, event.user.id, data.asset_id, data.type, event.supabase);
+      await videoRepository.createVideoUploadProgress(data.unique_id, event.user.id, data.asset_id, data.type, data.status, event.supabase);
       return true;
     } catch (error) {
       throw new Error(error.message);

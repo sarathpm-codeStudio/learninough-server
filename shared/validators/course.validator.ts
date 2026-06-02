@@ -39,6 +39,7 @@ export const createFolderSchema = z.object({
 export const uploadMaterialSchema = z.object({
     title: z.string(),
     type: z.nativeEnum(MaterialType),
+    video_cover_img: z.string().optional(),
 });
 
 

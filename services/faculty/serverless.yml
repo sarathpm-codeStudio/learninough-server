@@ -471,6 +471,14 @@ functions:
           method: patch
           cors:   true
 
+  deleteCourse:
+    handler: src/functions/course/deleteCourse.handler
+    events:
+      - http:
+          path:   faculty/courses/{courseId}
+          method: delete
+          cors:   true
+
   getCourseContent:
     handler: src/functions/course/getCourseContent.handler
     events:
@@ -516,6 +524,30 @@ functions:
     events:
       - http:
           path:   faculty/courses/modules/{moduleId}/contents
+          method: get
+          cors:   true
+
+  getCourseAnalytics:
+    handler: src/functions/course/getCourseAnalytics.handler
+    events:
+      - http:
+          path:   faculty/courses/{courseId}/analytics
+          method: get
+          cors:   true
+
+  getCourseEnrollmentVsCompletionChart:
+    handler: src/functions/course/getCourseEnrollmentVsCompletionChart.handler
+    events:
+      - http:
+          path:   faculty/courses/{courseId}/enrollment-vs-completion-chart
+          method: get
+          cors:   true
+
+  getCourseRevenueTrend:
+    handler: src/functions/course/getCourseRevenueTrend.handler
+    events:
+      - http:
+          path:   faculty/courses/{courseId}/revenue-trend
           method: get
           cors:   true
 
@@ -720,11 +752,27 @@ functions:
           method: get
           cors:   true
 
+  getTestsPageAnalytics:
+    handler: src/functions/test/getTestsPageAnalytics.handler
+    events:
+      - http:
+          path:   faculty/test/analytics
+          method: get
+          cors:   true
+
   getTestById:
     handler: src/functions/test/getTestById.handler
     events:
       - http:
           path:   faculty/test/{testId}
+          method: get
+          cors:   true
+
+  getTestAnalytics:
+    handler: src/functions/test/getTestAnalytics.handler
+    events:
+      - http:
+          path:   faculty/test/{testId}/analytics
           method: get
           cors:   true
 

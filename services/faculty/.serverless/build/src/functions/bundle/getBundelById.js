@@ -3707,7 +3707,8 @@ var createFolderSchema = import_zod.z.object({
 });
 var uploadMaterialSchema = import_zod.z.object({
   title: import_zod.z.string(),
-  type: import_zod.z.nativeEnum(MaterialType)
+  type: import_zod.z.nativeEnum(MaterialType),
+  video_cover_img: import_zod.z.string().optional()
 });
 var createCourseBundleSchema = import_zod.z.object({
   title: import_zod.z.string(),

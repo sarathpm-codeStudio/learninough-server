@@ -131,6 +131,17 @@ export const facultyTestRepository = {
         const from = (page - 1) * limit;
         const to = from + limit - 1;
 
+        console.log("filter", filter);
+        console.log("faculty_id", faculty_id);
+
+    let filterValue:any = "all";
+
+    if(filter === "true"){
+        filterValue = true;
+    }else if(filter === "false"){
+        filterValue = false;
+    }
+
         let query = supabase
             .from("tests")
             .select("*, courses(*)", { count: "exact" }) // ✅ get total count
@@ -138,8 +149,9 @@ export const facultyTestRepository = {
             .eq("is_deleted", false);
 
 
-        if (filter !== "all") {
-            query = query.eq("is_draft", filter);
+        if (filterValue !== "all") {
+            console.log("filter)))))))))))))))))))))))))))))))))))))))))", filter);
+            query = query.eq("is_draft", filterValue);
         }
 
         if (search) {
@@ -153,6 +165,309 @@ export const facultyTestRepository = {
         if (error) throw new Error(error.message);
 
         return { data, total: count ?? 0 }; // ✅ return both
+    },
+
+    getTestsPageAnalytics: async (facultyId: string, client?: SupabaseClient) => {
+        try {
+            const supabase = client ?? anonSupabase;
+    
+            // 1. Active tests count
+            const { count: activeTests, error: activeError } = await supabase
+                .from('tests')
+                .select('*', { count: 'exact', head: true })
+                .eq('faculty_id', facultyId)
+                .eq('is_draft', false)
+                .eq('is_deleted', false);
+    
+            if (activeError) throw new Error(activeError.message);
+    
+            // 2. Draft tests count
+            const { count: draftTests, error: draftError } = await supabase
+                .from('tests')
+                .select('*', { count: 'exact', head: true })
+                .eq('faculty_id', facultyId)
+                .eq('is_draft', true)
+                .eq('is_deleted', false);
+    
+            if (draftError) throw new Error(draftError.message);
+    
+            // 3. Total completed attempts
+            //    submitted_at IS NOT NULL means student submitted the test
+            const { count: totalCompletedAttempts, error: attemptError } = await supabase
+                .from('test_attempts')
+                .select('tests!inner(faculty_id)', { count: 'exact', head: true })
+                .eq('tests.faculty_id', facultyId)
+                .not('submitted_at', 'is', null);
+    
+            if (attemptError) throw new Error(attemptError.message);
+    
+            return {
+                activeTests:            activeTests ?? 0,
+                draftTests:             draftTests ?? 0,
+                totalCompletedAttempts: totalCompletedAttempts ?? 0,
+            };
+    
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
+    // getTestAnalytics: async (testId: string, client?: SupabaseClient) => {
+    //     try {
+    //         const supabase = client ?? anonSupabase;
+    
+    //         // 1. Get test details (allocated duration)
+    //         const { data: test, error: testError } = await supabase
+    //             .from('tests')
+    //             .select('duration_minutes, title')
+    //             .eq('id', testId)
+    //             .single();
+    
+    //         if (testError) throw new Error(testError.message);
+    
+    //         // 2. Get all attempts for this test
+    //         const { data: attempts, error: attemptsError } = await supabase
+    //             .from('test_attempts')
+    //             .select(`
+    //                 id,
+    //                 student_id,
+    //                 started_at,
+    //                 submitted_at,
+    //                 correct_count,
+    //                 total_questions,
+    //                 profiles!test_attempts_student_id_fkey (
+    //                     id,
+    //                     first_name,
+    //                     last_name
+    //                 )
+    //             `)
+    //             .eq('test_id', testId);
+    
+    //         if (attemptsError) throw new Error(attemptsError.message);
+    
+    //         const totalAttempts     = attempts?.length ?? 0;
+    //         const completedAttempts = attempts?.filter(a => a.submitted_at !== null) ?? [];
+    //         const completedCount    = completedAttempts.length;
+    
+    //         // 3. Completion rate
+    //         const completionRate = totalAttempts > 0
+    //             ? Math.round((completedCount / totalAttempts) * 100)
+    //             : 0;
+    
+    //         // 4. Avg duration (only from completed attempts)
+    //         let avgDurationSeconds = 0;
+    //         if (completedCount > 0) {
+    //             const totalSeconds = completedAttempts.reduce((sum, a) => {
+    //                 const start = new Date(a.started_at).getTime();
+    //                 const end   = new Date(a.submitted_at!).getTime();
+    //                 return sum + Math.floor((end - start) / 1000);
+    //             }, 0);
+    //             avgDurationSeconds = Math.floor(totalSeconds / completedCount);
+    //         }
+    
+    //         const avgHours   = Math.floor(avgDurationSeconds / 3600);
+    //         const avgMinutes = Math.floor((avgDurationSeconds % 3600) / 60);
+    
+    //         // 5. Top student — highest correct_count among completed attempts
+    //         //    tie-break: whoever took less time
+    //         let topStudent: {
+    //             name: string;
+    //             score: number;
+    //             totalQuestions: number;
+    //         } | null = null;
+    
+    //         if (completedCount > 0) {
+    //             const top = completedAttempts.reduce((best, current) => {
+    //                 if (!best) return current;
+    
+    //                 const bestScore    = best.correct_count    ?? 0;
+    //                 const currentScore = current.correct_count ?? 0;
+    
+    //                 if (currentScore > bestScore) return current;
+    
+    //                 // tie-break: less time taken wins
+    //                 if (currentScore === bestScore) {
+    //                     const bestTime    = new Date(best.submitted_at!).getTime()    - new Date(best.started_at).getTime();
+    //                     const currentTime = new Date(current.submitted_at!).getTime() - new Date(current.started_at).getTime();
+    //                     return currentTime < bestTime ? current : best;
+    //                 }
+    
+    //                 return best;
+    //             }, null as typeof completedAttempts[0] | null);
+    
+    //             if (top) {
+    //                 topStudent = {
+    //                     name:           `${(top.profiles as any)?.first_name ?? ''} ${(top.profiles as any)?.last_name ?? ''}`.trim() || 'Unknown',
+    //                     score:          top.correct_count    ?? 0,
+    //                     totalQuestions: top.total_questions  ?? 0,
+    //                 };
+    //             }
+    //         }
+    
+    //         return {
+    //             // Completion rate card
+    //             completedCount,                        // 6
+    //             totalAttempts,                         // 6
+    //             completionRate,                        // 100
+    
+    //             // Avg duration card
+    //             avgDuration: {
+    //                 hours:   avgHours,                 // 1
+    //                 minutes: avgMinutes,               // 42
+    //                 display: avgHours > 0             
+    //                     ? `${avgHours}h ${avgMinutes}m`
+    //                     : `${avgMinutes}m`,            // "1h 42m"
+    //             },
+    
+    //             // Allocated duration from test table
+    //             allocatedDuration: {
+    //                 raw:     test.duration_minutes,    // "120"
+    //                 display: (() => {
+    //                     const mins = parseInt(test.duration_minutes);
+    //                     const h    = Math.floor(mins / 60);
+    //                     const m    = mins % 60;
+    //                     return h > 0 ? `${h}h ${m.toString().padStart(2,'0')}m` : `${m}m`;
+    //                 })(),                              // "2h 00m"
+    //             },
+    
+    //             // Top student card
+    //             topStudent,                            // { name, score, totalQuestions }
+    //         };
+    
+    //     } catch (error: any) {
+    //         throw new Error(error.message);
+    //     }
+    // },
+
+    getTestAnalytics: async (testId: string, client?: SupabaseClient) => {
+        try {
+            const supabase = client ?? anonSupabase;
+    
+            // 1. Get test details (allocated duration)
+            const { data: test, error: testError } = await supabase
+                .from('tests')
+                .select('duration_minutes, title, question_count')
+                .eq('id', testId)
+                .single();
+    
+            if (testError) throw new Error(testError.message);
+    
+            // 2. Get all attempts for this test
+            const { data: attempts, error: attemptsError } = await supabase
+                .from('test_attempts')
+                .select(`
+                    id,
+                    student_id,
+                    started_at,
+                    submitted_at,
+                    correct_count,
+                    total_questions,
+                    profiles!test_attempts_student_id_fkey (
+                        id,
+                        first_name,
+                        last_name
+                    )
+                `)
+                .eq('test_id', testId);
+    
+            if (attemptsError) throw new Error(attemptsError.message);
+    
+            const totalAttempts     = attempts?.length ?? 0;
+            const completedAttempts = attempts?.filter(a => a.submitted_at !== null) ?? [];
+            const completedCount    = completedAttempts.length;
+    
+            // 3. Completion rate
+            const completionRate = totalAttempts > 0
+                ? Math.round((completedCount / totalAttempts) * 100)
+                : 0;
+    
+            // 4. Avg duration (only from completed attempts)
+            let avgDurationSeconds = 0;
+            if (completedCount > 0) {
+                const totalSeconds = completedAttempts.reduce((sum, a) => {
+                    const start = new Date(a.started_at).getTime();
+                    const end   = new Date(a.submitted_at!).getTime();
+                    return sum + Math.floor((end - start) / 1000);
+                }, 0);
+                avgDurationSeconds = Math.floor(totalSeconds / completedCount);
+            }
+    
+            const avgHours   = Math.floor(avgDurationSeconds / 3600);
+            const avgMinutes = Math.floor((avgDurationSeconds % 3600) / 60);
+    
+            // 5. Top student — highest correct_count among completed attempts
+            //    tie-break: whoever took less time
+            let topStudent: {
+                name:           string;
+                score:          number;
+                totalQuestions: number;
+            } | null = null;
+    
+            if (completedCount > 0) {
+                const top = completedAttempts.reduce((best, current) => {
+                    if (!best) return current;
+    
+                    const bestScore    = best.correct_count    ?? 0;
+                    const currentScore = current.correct_count ?? 0;
+    
+                    if (currentScore > bestScore) return current;
+    
+                    // tie-break: less time taken wins
+                    if (currentScore === bestScore) {
+                        const bestTime    = new Date(best.submitted_at!).getTime()    - new Date(best.started_at).getTime();
+                        const currentTime = new Date(current.submitted_at!).getTime() - new Date(current.started_at).getTime();
+                        return currentTime < bestTime ? current : best;
+                    }
+    
+                    return best;
+                }, null as typeof completedAttempts[0] | null);
+    
+                if (top) {
+                    topStudent = {
+                        name:           `${(top.profiles as any)?.first_name ?? ''} ${(top.profiles as any)?.last_name ?? ''}`.trim() || 'Unknown',
+                        score:          top.correct_count    ?? 0,
+                        totalQuestions: top.total_questions  ?? 0,
+                    };
+                }
+            }
+    
+            return {
+                // Completion rate card
+                completedCount,
+                totalAttempts,
+                completionRate,
+    
+                // Avg duration card
+                avgDuration: {
+                    hours:   avgHours,
+                    minutes: avgMinutes,
+                    display: avgHours > 0
+                        ? `${avgHours}h ${avgMinutes}m`
+                        : `${avgMinutes}m`,
+                },
+    
+                // Allocated duration from test table
+                allocatedDuration: {
+                    raw:     test.duration_minutes,
+                    display: (() => {
+                        const mins = parseInt(test.duration_minutes);
+                        const h    = Math.floor(mins / 60);
+                        const m    = mins % 60;
+                        return h > 0 ? `${h}h ${m.toString().padStart(2,'0')}m` : `${m}m`;
+                    })(),
+                },
+    
+                // Top student card — default values when no attempts yet
+                topStudent: topStudent ?? {
+                    name:           'No attempts yet',
+                    score:          0,
+                    totalQuestions: test.question_count ?? 0,
+                },
+            };
+    
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
     },
 
 

@@ -22,6 +22,7 @@ export type MaterialData = {
     external_url?: string,
     video_data?: any,
     file_name?: string,
+    video_cover_img?: string,
 }
 
 export type CourseBundleData = {
