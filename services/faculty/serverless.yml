@@ -659,6 +659,22 @@ functions:
           method: get
           cors:   true
 
+  getStudentCourses:
+    handler: src/functions/students/getStudentCourses.handler
+    events:
+      - http:
+          path:   faculty/students/{studentId}/courses
+          method: get
+          cors:   true
+
+  getStudentAnalytics:
+    handler: src/functions/students/getStudentAnalytics.handler
+    events:
+      - http:
+          path:   faculty/students/{studentId}/analytics
+          method: get
+          cors:   true
+
   # ── Announcements ────────────────────────────────────────────
   createAnnouncement:
     handler: src/functions/announcements/createAnnouncement.handler

@@ -3646,13 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/students/getAllStudents.ts
-var getAllStudents_exports = {};
-__export(getAllStudents_exports, {
+// src/functions/students/getStudentCourses.ts
+var getStudentCourses_exports = {};
+__export(getStudentCourses_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(getAllStudents_exports);
+module.exports = __toCommonJS(getStudentCourses_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -4213,13 +4213,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/students/getAllStudents.ts
+// src/functions/students/getStudentCourses.ts
 var handlerFun = async (event) => {
   try {
-    const students = await studentsService.getAllMyStudents(event);
-    return handleResponse.success(students, "Students fetched successfully", 200);
+    const studentCourses = await studentsService.getStudentCourses(event);
+    return handleResponse.success(studentCourses, "Student courses fetched successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error fetching students", 400);
+    return handleResponse.error(err, "Error fetching student courses", 400);
   }
 };
 var handler = compose(
@@ -4232,4 +4232,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=getAllStudents.js.map
+//# sourceMappingURL=getStudentCourses.js.map

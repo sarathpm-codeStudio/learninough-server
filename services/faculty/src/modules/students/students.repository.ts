@@ -265,7 +265,220 @@ export const studentsRepository = {
     },
 
 
-    getStudentDetails: async ({
+    getStudentCourses: async ({
+        facultyId,
+        studentId,
+        page,
+        limit,
+        search,
+        client,
+    }: {
+        facultyId: string;
+        studentId: string;
+        page: number;
+        limit: number;
+        search: string;
+        client?: SupabaseClient;
+    }) => {
+        try {
+            const supabase = client ?? anonSupabase;
+            const from = (page - 1) * limit;
+            const to = from + limit - 1;
+
+            const { data: student, error: studentError } = await supabase
+                .from("profiles")
+                .select("id, first_name, last_name, avatar_url")
+                .eq("id", studentId)
+                .single();
+
+            if (studentError) throw new Error(studentError.message);
+
+            let enrollmentQuery = supabase
+                .from("enrollments")
+                .select(
+                    `
+        course:courses!enrollments_course_id_fkey (
+          id,
+          title,
+          faculty_id
+        )
+      `,
+                    { count: "exact" }
+                )
+                .eq("student_id", studentId)
+                .eq("course.faculty_id", facultyId);
+
+            if (search) {
+                const { data: matchingCourses, error: courseSearchError } =
+                    await supabase
+                        .from("courses")
+                        .select("id")
+                        .eq("faculty_id", facultyId)
+                        .ilike("title", `%${search}%`);
+
+                if (courseSearchError) throw new Error(courseSearchError.message);
+
+                const matchingCourseIds = matchingCourses?.map((c) => c.id) ?? [];
+                if (matchingCourseIds.length === 0) {
+                    return { student, data: [], total: 0 };
+                }
+
+                enrollmentQuery = enrollmentQuery.in(
+                    "course_id",
+                    matchingCourseIds
+                );
+            }
+
+            const { data: enrollments, error, count } = await enrollmentQuery
+                .range(from, to)
+                .order("created_at", { ascending: false });
+
+            if (error) throw new Error(error.message);
+            if (!enrollments || enrollments.length === 0) {
+                return { student, data: [], total: count ?? 0 };
+            }
+
+            const courseIds = enrollments.map((e: any) => e.course.id);
+
+            const { data: courseProgressList, error: progressError } =
+                await supabase
+                    .from("course_progress")
+                    .select(
+                        "course_id, total_materials, completed_materials, completion_pct, is_completed, started_at, completed_at"
+                    )
+                    .eq("student_id", studentId)
+                    .in("course_id", courseIds);
+
+            if (progressError) throw new Error(progressError.message);
+
+            const progressByCourseId: Record<string, any> = {};
+            courseProgressList?.forEach((row) => {
+                progressByCourseId[row.course_id] = row;
+            });
+
+            const { data: tests, error: testsError } = await supabase
+                .from("tests")
+                .select("id, course_id")
+                .in("course_id", courseIds)
+                .eq("faculty_id", facultyId)
+                .eq("is_deleted", false);
+
+            if (testsError) throw new Error(testsError.message);
+
+            const testIds = tests?.map((t) => t.id) ?? [];
+            const attemptsByTestId: Record<string, any[]> = {};
+
+            if (testIds.length > 0) {
+                const { data: attempts, error: attemptsError } = await supabase
+                    .from("test_attempts")
+                    .select(
+                        "test_id, correct_count, total_questions, submitted_at, started_at"
+                    )
+                    .eq("student_id", studentId)
+                    .in("test_id", testIds);
+
+                if (attemptsError) throw new Error(attemptsError.message);
+
+                attempts?.forEach((attempt) => {
+                    const existing = attemptsByTestId[attempt.test_id] ?? [];
+                    existing.push(attempt);
+                    attemptsByTestId[attempt.test_id] = existing;
+                });
+            }
+
+            const pickBestCompletedAttempt = (attempts: any[]) => {
+                const completed = attempts.filter((a) => a.submitted_at !== null);
+                if (completed.length === 0) return null;
+
+                return completed.reduce((best, current) => {
+                    const bestScore = best.correct_count ?? 0;
+                    const currentScore = current.correct_count ?? 0;
+
+                    if (currentScore > bestScore) return current;
+
+                    if (currentScore === bestScore) {
+                        const bestTime =
+                            new Date(best.submitted_at).getTime() -
+                            new Date(best.started_at).getTime();
+                        const currentTime =
+                            new Date(current.submitted_at).getTime() -
+                            new Date(current.started_at).getTime();
+                        return currentTime < bestTime ? current : best;
+                    }
+
+                    return best;
+                });
+            };
+
+            const testScoreByCourseId: Record<
+                string,
+                { correct: number; total: number }
+            > = {};
+
+            tests?.forEach((test) => {
+                const bestAttempt = pickBestCompletedAttempt(
+                    attemptsByTestId[test.id] ?? []
+                );
+                if (!bestAttempt) return;
+
+                const courseTestStats = testScoreByCourseId[test.course_id] ?? {
+                    correct: 0,
+                    total: 0,
+                };
+                courseTestStats.correct += bestAttempt.correct_count ?? 0;
+                courseTestStats.total += bestAttempt.total_questions ?? 0;
+                testScoreByCourseId[test.course_id] = courseTestStats;
+            });
+
+            const courses = enrollments.map((item: any) => {
+                const course = item.course;
+                const courseProgress = progressByCourseId[course.id];
+
+                const total_materials = courseProgress?.total_materials ?? 0;
+                const completed_materials =
+                    courseProgress?.completed_materials ?? 0;
+                const progress = courseProgress
+                    ? Math.round(Number(courseProgress.completion_pct))
+                    : 0;
+
+                const testStats = testScoreByCourseId[course.id];
+                const test_score =
+                    testStats && testStats.total > 0
+                        ? Math.round((testStats.correct / testStats.total) * 100)
+                        : 0;
+
+                let status: "Completed" | "Active" | "Not start";
+                if (courseProgress?.is_completed) {
+                    status = "Completed";
+                } else if (courseProgress?.started_at) {
+                    status = "Active";
+                } else {
+                    status = "Not start";
+                }
+
+                return {
+                    id: course.id,
+                    title: course.title,
+                    total_materials,
+                    completed_materials,
+                    progress,
+                    status,
+                    test_score,
+                };
+            });
+
+            return {
+                // student,
+                data: courses,
+                total: count ?? 0,
+            };
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
+    getStudentAnalytics: async ({
         facultyId,
         studentId,
         client,
@@ -276,99 +489,100 @@ export const studentsRepository = {
     }) => {
         try {
             const supabase = client ?? anonSupabase;
-            const { data: enrollments, error } = await supabase
-                .from("enrollments")
+
+            const { data: student, error: studentError } = await supabase
+                .from("profiles")
+                .select("id, first_name, last_name, avatar_url")
+                .eq("id", studentId)
+                .single();
+
+            if (studentError) throw new Error(studentError.message);
+    
+            // 1. Direct course enrollments for this faculty
+            const { data: directEnrollments, error: directError } = await supabase
+                .from('enrollments')
+                .select('id, course_id, amount_paid, is_bundle_enrollment, enrolled_at')
+                .eq('faculty_id', facultyId)
+                .eq('student_id', studentId)
+                
+    
+            if (directError) throw new Error(directError.message);
+    
+            // 2. Bundle enrollments for this faculty
+            const { data: bundleEnrollments, error: bundleError } = await supabase
+                .from('bundle_enrollments')
+                .select('id, bundle_id, amount_paid, enrolled_at')
+                .eq('faculty_id', facultyId)
+                .eq('student_id', studentId);
+    
+            if (bundleError) throw new Error(bundleError.message);
+    
+            // 3. Count enrolled courses
+            //    - Direct non-bundle enrollments → count each as 1 course
+            //    - Bundle enrollments → count the is_bundle_enrollment rows (amount = 0)
+            //      but revenue comes from bundle_enrollments table
+            const directCourseCount  = directEnrollments?.filter(e => !e.is_bundle_enrollment).length ?? 0;
+            const bundleCourseCount  = directEnrollments?.filter(e => e.is_bundle_enrollment).length ?? 0;
+            const totalCourseCount   = directCourseCount + bundleCourseCount;
+    
+            // 4. Total amount spent
+            //    - Direct purchases: sum amount_paid from enrollments (is_bundle_enrollment = false)
+            //    - Bundle purchases: sum amount_paid from bundle_enrollments
+            const directRevenue = directEnrollments
+                ?.filter(e => !e.is_bundle_enrollment)
+                .reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
+    
+            const bundleRevenue = bundleEnrollments
+                ?.reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
+    
+            const totalAmountSpent = directRevenue + bundleRevenue;
+    
+            // 5. Test score rate for this faculty's tests
+            //    score rate = (total correct answers / total questions attempted) * 100
+            const { data: attempts, error: attemptsError } = await supabase
+                .from('test_attempts')
                 .select(`
-        student:profiles!enrollments_student_id_fkey (
-          id,
-          full_name
-        ),
-        course:courses!enrollments_course_id_fkey (
-          id,
-          title,
-          faculty_id
-        )
-      `)
-                .eq("student_id", studentId)
-                .eq("course.faculty_id", facultyId);
-
-            if (error) throw new Error(error.message);
-            if (!enrollments || enrollments.length === 0) return null;
-
-            const student = enrollments[0]?.student;
-            const courseIds = enrollments.map((e: any) => e.course.id);
-
-            const { data: materials, error: matError } = await supabase
-                .from("course_materials")
-                .select("id, course_id")
-                .in("course_id", courseIds)
-                .eq("type", "VIDEO");
-
-            if (matError) throw new Error(matError.message);
-
-            const { data: progressData, error: progError } = await supabase
-                .from("video_progress")
-                .select("material_id, course_id, completed")
-                .eq("student_id", studentId)
-                .in("course_id", courseIds);
-
-            if (progError) throw new Error(progError.message);
-
-            const courseStats: Record<
-                string,
-                { total: number; completed: number }
-            > = {};
-
-            materials?.forEach((m: any) => {
-                const courseId = m.course_id;
-
-                if (!courseStats[courseId]) {
-                    courseStats[courseId] = { total: 0, completed: 0 };
-                }
-
-                const stats = courseStats[courseId];
-                stats.total++;
-            });
-
-            progressData?.forEach((p: any) => {
-                const courseId = p.course_id;
-
-                if (!courseStats[courseId]) {
-                    courseStats[courseId] = { total: 0, completed: 0 };
-                }
-
-                if (p.completed) {
-                    courseStats[courseId].completed++;
-                }
-            });
-
-            const courses = enrollments.map((item: any) => {
-                const course = item.course;
-                const stats = courseStats[course.id] || {
-                    total: 0,
-                    completed: 0
-                };
-
-                const progress =
-                    stats.total > 0
-                        ? Math.round((stats.completed / stats.total) * 100)
-                        : 0;
-
-                return {
-                    id: course.id,
-                    title: course.title,
-                    total_materials: stats.total,
-                    completed_materials: stats.completed,
-                    progress,
-                    completed: progress === 100
-                };
-            });
-
+                    correct_count,
+                    total_questions,
+                    submitted_at,
+                    tests!inner (
+                        faculty_id
+                    )
+                `)
+                .eq('student_id', studentId)
+                .eq('tests.faculty_id', facultyId)
+                .not('submitted_at', 'is', null); // only completed attempts
+    
+            if (attemptsError) throw new Error(attemptsError.message);
+    
+            const totalCorrect   = attempts?.reduce((sum, a) => sum + (a.correct_count   ?? 0), 0) ?? 0;
+            const totalQuestions = attempts?.reduce((sum, a) => sum + (a.total_questions  ?? 0), 0) ?? 0;
+            const totalAttempts  = attempts?.length ?? 0;
+    
+            const testScoreRate = totalQuestions > 0
+                ? Math.round((totalCorrect / totalQuestions) * 100)
+                : 0;
+    
             return {
                 student,
-                courses
-            };
 
+                // Course enrollment
+                totalCourseCount,       // total courses enrolled under this faculty
+                directCourseCount,      // via direct purchase
+                bundleCourseCount,      // via bundle purchase
+    
+                // Revenue
+                totalAmountSpent,       // total ₹ spent with this faculty
+                directRevenue,          // from direct course purchases
+                bundleRevenue,          // from bundle purchases
+    
+                // Test performance
+                testScoreRate,          // e.g. 78 → "78%"
+                totalAttempts,          // how many tests completed
+                totalCorrect,           // total correct answers
+                totalQuestions,         // total questions attempted
+            };
+    
         } catch (error: any) {
             throw new Error(error.message);
         }

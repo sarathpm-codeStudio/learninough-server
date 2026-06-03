@@ -3646,13 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/students/getAllStudents.ts
-var getAllStudents_exports = {};
-__export(getAllStudents_exports, {
+// src/functions/students/getStudentDetails.ts
+var getStudentDetails_exports = {};
+__export(getStudentDetails_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(getAllStudents_exports);
+module.exports = __toCommonJS(getStudentDetails_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -3891,55 +3891,51 @@ var studentsRepository = {
       throw new Error(error.message);
     }
   },
-  getStudentCourses: async ({
+  getStudentDetails: async ({
     facultyId,
     studentId,
-    page,
-    limit,
-    search,
     client
   }) => {
     try {
       const supabase2 = client ?? supabase;
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
-      const { data: student, error: studentError } = await supabase2.from("profiles").select("id, first_name, last_name, avatar_url").eq("id", studentId).single();
-      if (studentError) throw new Error(studentError.message);
-      let enrollmentQuery = supabase2.from("enrollments").select(
-        `
+      const { data: enrollments, error } = await supabase2.from("enrollments").select(`
+        student:profiles!enrollments_student_id_fkey (
+          id,
+          first_name,
+          last_name,
+          avatar_url
+        ),
         course:courses!enrollments_course_id_fkey (
           id,
           title,
           faculty_id
         )
-      `,
-        { count: "exact" }
-      ).eq("student_id", studentId).eq("course.faculty_id", facultyId);
-      if (search) {
-        const { data: matchingCourses, error: courseSearchError } = await supabase2.from("courses").select("id").eq("faculty_id", facultyId).ilike("title", `%${search}%`);
-        if (courseSearchError) throw new Error(courseSearchError.message);
-        const matchingCourseIds = matchingCourses?.map((c) => c.id) ?? [];
-        if (matchingCourseIds.length === 0) {
-          return { student, data: [], total: 0 };
-        }
-        enrollmentQuery = enrollmentQuery.in(
-          "course_id",
-          matchingCourseIds
-        );
-      }
-      const { data: enrollments, error, count } = await enrollmentQuery.range(from, to).order("created_at", { ascending: false });
+      `).eq("student_id", studentId).eq("course.faculty_id", facultyId);
       if (error) throw new Error(error.message);
-      if (!enrollments || enrollments.length === 0) {
-        return { student, data: [], total: count ?? 0 };
-      }
+      if (!enrollments || enrollments.length === 0) return null;
+      const student = enrollments[0]?.student;
       const courseIds = enrollments.map((e) => e.course.id);
-      const { data: courseProgressList, error: progressError } = await supabase2.from("course_progress").select(
-        "course_id, total_materials, completed_materials, completion_pct, is_completed, started_at, completed_at"
-      ).eq("student_id", studentId).in("course_id", courseIds);
-      if (progressError) throw new Error(progressError.message);
-      const progressByCourseId = {};
-      courseProgressList?.forEach((row) => {
-        progressByCourseId[row.course_id] = row;
+      const { data: materials, error: matError } = await supabase2.from("course_materials").select("id, course_id").in("course_id", courseIds).eq("type", "VIDEO");
+      if (matError) throw new Error(matError.message);
+      const { data: progressData, error: progError } = await supabase2.from("video_progress").select("material_id, course_id, completed").eq("student_id", studentId).in("course_id", courseIds);
+      if (progError) throw new Error(progError.message);
+      const courseStats = {};
+      materials?.forEach((m) => {
+        const courseId = m.course_id;
+        if (!courseStats[courseId]) {
+          courseStats[courseId] = { total: 0, completed: 0 };
+        }
+        const stats = courseStats[courseId];
+        stats.total++;
+      });
+      progressData?.forEach((p) => {
+        const courseId = p.course_id;
+        if (!courseStats[courseId]) {
+          courseStats[courseId] = { total: 0, completed: 0 };
+        }
+        if (p.completed) {
+          courseStats[courseId].completed++;
+        }
       });
       const { data: tests, error: testsError } = await supabase2.from("tests").select("id, course_id").in("course_id", courseIds).eq("faculty_id", facultyId).eq("is_deleted", false);
       if (testsError) throw new Error(testsError.message);
@@ -3987,34 +3983,26 @@ var studentsRepository = {
       });
       const courses = enrollments.map((item) => {
         const course = item.course;
-        const courseProgress = progressByCourseId[course.id];
-        const total_materials = courseProgress?.total_materials ?? 0;
-        const completed_materials = courseProgress?.completed_materials ?? 0;
-        const progress = courseProgress ? Math.round(Number(courseProgress.completion_pct)) : 0;
+        const stats = courseStats[course.id] || {
+          total: 0,
+          completed: 0
+        };
+        const progress = stats.total > 0 ? Math.round(stats.completed / stats.total * 100) : 0;
         const testStats = testScoreByCourseId[course.id];
         const test_score = testStats && testStats.total > 0 ? Math.round(testStats.correct / testStats.total * 100) : 0;
-        let status;
-        if (courseProgress?.is_completed) {
-          status = "Completed";
-        } else if (courseProgress?.started_at) {
-          status = "Active";
-        } else {
-          status = "Not start";
-        }
         return {
           id: course.id,
           title: course.title,
-          total_materials,
-          completed_materials,
+          total_materials: stats.total,
+          completed_materials: stats.completed,
           progress,
-          status,
+          completed: progress === 100,
           test_score
         };
       });
       return {
-        // student,
-        data: courses,
-        total: count ?? 0
+        student,
+        courses
       };
     } catch (error) {
       throw new Error(error.message);
@@ -4027,9 +4015,7 @@ var studentsRepository = {
   }) => {
     try {
       const supabase2 = client ?? supabase;
-      const { data: student, error: studentError } = await supabase2.from("profiles").select("id, first_name, last_name, avatar_url").eq("id", studentId).single();
-      if (studentError) throw new Error(studentError.message);
-      const { data: directEnrollments, error: directError } = await supabase2.from("enrollments").select("id, course_id, amount_paid, is_bundle_enrollment, enrolled_at").eq("faculty_id", facultyId).eq("student_id", studentId);
+      const { data: directEnrollments, error: directError } = await supabase2.from("enrollments").select("id, course_id, amount_paid, is_bundle_enrollment, enrolled_at").eq("faculty_id", facultyId).eq("student_id", studentId).eq("is_deleted", false);
       if (directError) throw new Error(directError.message);
       const { data: bundleEnrollments, error: bundleError } = await supabase2.from("bundle_enrollments").select("id, bundle_id, amount_paid, enrolled_at").eq("faculty_id", facultyId).eq("student_id", studentId);
       if (bundleError) throw new Error(bundleError.message);
@@ -4053,7 +4039,6 @@ var studentsRepository = {
       const totalAttempts = attempts?.length ?? 0;
       const testScoreRate = totalQuestions > 0 ? Math.round(totalCorrect / totalQuestions * 100) : 0;
       return {
-        student,
         // Course enrollment
         totalCourseCount,
         // total courses enrolled under this faculty
@@ -4107,19 +4092,15 @@ var studentsService = {
       throw new Error(error);
     }
   },
-  getStudentCourses: async (event) => {
+  getStudentDetails: async (event) => {
     try {
       const { studentId } = event.pathParameters;
-      const { page, limit, search } = event.queryStringParameters;
-      const result = await studentsRepository.getStudentCourses({
+      const studentDetails = await studentsRepository.getStudentDetails({
         facultyId: event.user.id,
         studentId,
-        page,
-        limit,
-        search,
         client: event.supabase
       });
-      return result;
+      return studentDetails;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
@@ -4213,13 +4194,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/students/getAllStudents.ts
+// src/functions/students/getStudentDetails.ts
 var handlerFun = async (event) => {
   try {
-    const students = await studentsService.getAllMyStudents(event);
-    return handleResponse.success(students, "Students fetched successfully", 200);
+    const studentDetails = await studentsService.getStudentDetails(event);
+    return handleResponse.success(studentDetails, "Student details fetched successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error fetching students", 400);
+    return handleResponse.error(err, "Error fetching student details", 400);
   }
 };
 var handler = compose(
@@ -4232,4 +4213,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=getAllStudents.js.map
+//# sourceMappingURL=getStudentDetails.js.map
