@@ -3835,9 +3835,69 @@ var couponRepository = {
       throw new Error(error.message);
     }
   },
+  // getMyCoupons: async (facultyId: string, filter: "active" | "deactivate" | "expired", page: number = 1, limit: number = 10, search: string = "", client?: SupabaseClient) => {
+  //     try {
+  //         const db = client ?? anonSupabase;
+  //         // Calculate offset
+  //         const from = (page - 1) * limit;
+  //         const to = from + limit - 1;
+  //         // Base query
+  //         let query = db
+  //             .from("coupons")
+  //             .select(`
+  //                 *,
+  //                 coupon_courses (
+  //                     course_id,
+  //                     courses (
+  //                         id,
+  //                         title
+  //                     )
+  //                 )
+  //             `, { count: "exact" })
+  //             .eq("faculty_id", facultyId)
+  //             .eq("is_deleted", false)
+  //             .order("created_at", { ascending: false })
+  //             .range(from, to);
+  //         // Apply filter
+  //         if (filter === "active") {
+  //             query = query.eq("is_active", true);
+  //         } else if (filter === "deactivate") {
+  //             query = query.eq("is_active", false);
+  //         } else if (filter === "expired") {
+  //             const now = new Date().toISOString();
+  //             query = query.lt("expire_date", now).not("expire_date", "is", null);
+  //         }
+  //         // Apply search
+  //         if (search.trim()) {
+  //             query = query.or(`code.ilike.%${search}%,title.ilike.%${search}%`);
+  //         }
+  //         const { data: coupons, error, count } = await query;
+  //         if (error) throw new Error(error.message);
+  //         // Calculate pagination meta
+  //         const totalPages = Math.ceil((count ?? 0) / limit);
+  //         const hasNextPage = page < totalPages;
+  //         const hasPrevPage = page > 1;
+  //         return {
+  //             coupons,
+  //             pagination: {
+  //                 total: count ?? 0,
+  //                 total_pages: totalPages,
+  //                 current_page: page,
+  //                 limit,
+  //                 has_next: hasNextPage,
+  //                 has_prev: hasPrevPage,
+  //             }
+  //         };
+  //     } catch (error: any) {
+  //         throw new Error(error.message);
+  //     }
+  // },
   getMyCoupons: async (facultyId, filter, page = 1, limit = 10, search = "", client) => {
     try {
       const db = client ?? supabase;
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const { error: deactivateError } = await db.from("coupons").update({ is_active: false }).eq("faculty_id", facultyId).eq("is_active", true).eq("is_deleted", false).lt("expire_date", now);
+      if (deactivateError) throw new Error(deactivateError.message);
       const from = (page - 1) * limit;
       const to = from + limit - 1;
       let query = db.from("coupons").select(`
@@ -3847,20 +3907,18 @@ var couponRepository = {
                         courses (
                             id,
                             title
-                            
                         )
                     )
                 `, { count: "exact" }).eq("faculty_id", facultyId).eq("is_deleted", false).order("created_at", { ascending: false }).range(from, to);
       if (filter === "active") {
-        query = query.eq("is_active", true);
+        query = query.eq("is_active", true).gt("expire_date", now);
       } else if (filter === "deactivate") {
         query = query.eq("is_active", false);
       } else if (filter === "expired") {
-        const now = (/* @__PURE__ */ new Date()).toISOString();
         query = query.lt("expire_date", now).not("expire_date", "is", null);
       }
       if (search.trim()) {
-        query = query.or(`code.ilike.%${search}%,title.ilike.%${search}%`);
+        query = query.or(`code.ilike.%${search}%,description.ilike.%${search}%`);
       }
       const { data: coupons, error, count } = await query;
       if (error) throw new Error(error.message);

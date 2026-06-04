@@ -3802,7 +3802,7 @@ var facultyTestRepository = {
     } else if (filter === "false") {
       filterValue = false;
     }
-    let query = supabase2.from("tests").select("*, courses(*)", { count: "exact" }).eq("faculty_id", faculty_id).eq("is_deleted", false);
+    let query = supabase2.from("tests").select("*, courses(*), test_attempts(count)", { count: "exact" }).eq("faculty_id", faculty_id).eq("is_deleted", false);
     if (filterValue !== "all") {
       console.log("filter)))))))))))))))))))))))))))))))))))))))))", filter);
       query = query.eq("is_draft", filterValue);
@@ -3812,7 +3812,12 @@ var facultyTestRepository = {
     }
     const { data, error, count } = await query.range(from, to).order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return { data, total: count ?? 0 };
+    const dataWithAttemptCount = (data ?? []).map((test) => {
+      const attempt_count = test.test_attempts?.[0]?.count ?? 0;
+      const { test_attempts: _attempts, ...rest } = test;
+      return { ...rest, attempt_count };
+    });
+    return { data: dataWithAttemptCount, total: count ?? 0 };
   },
   getTestsPageAnalytics: async (facultyId, client) => {
     try {
@@ -4026,6 +4031,86 @@ var facultyTestRepository = {
       throw new Error(error.message);
     }
   },
+  getAllAttemptsByTestId: async (test_id, page, limit, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      const { data: attempts, error: attemptsError, count } = await supabase2.from("test_attempts").select(`
+                    id,
+                    test_id,
+                    student_id,
+                    attempt_number,
+                    started_at,
+                    submitted_at,
+                    total_questions,
+                    attempted_count,
+                    correct_count,
+                    created_at,
+                    profiles!test_attempts_student_id_fkey (
+                        id,
+                        first_name,
+                        last_name
+                    )
+                `, { count: "exact" }).eq("test_id", test_id).order("submitted_at", { ascending: false, nullsFirst: false }).order("started_at", { ascending: false }).range(from, to);
+      if (attemptsError) throw new Error(attemptsError.message);
+      const PASS_THRESHOLD_PERCENT = 50;
+      const data = (attempts ?? []).map((attempt) => {
+        const profile = attempt.profiles;
+        const firstName = profile?.first_name ?? "";
+        const lastName = profile?.last_name ?? "";
+        const correct = attempt.correct_count ?? 0;
+        const total = attempt.total_questions ?? 0;
+        const isCompleted = attempt.submitted_at !== null;
+        const percentage = total > 0 ? Math.round(correct / total * 100) : 0;
+        let resultStatus;
+        let resultDisplay;
+        if (!isCompleted) {
+          resultStatus = "IN_PROGRESS";
+          resultDisplay = "In progress";
+        } else if (percentage >= PASS_THRESHOLD_PERCENT) {
+          resultStatus = "PASS";
+          resultDisplay = `PASS \u2022 ${percentage}%`;
+        } else {
+          resultStatus = "FAIL";
+          resultDisplay = `FAIL \u2022 ${percentage}%`;
+        }
+        const timing = formatAttemptTiming(
+          attempt.started_at,
+          attempt.submitted_at
+        );
+        return {
+          id: attempt.id,
+          test_id: attempt.test_id,
+          student_id: attempt.student_id,
+          attempt_number: attempt.attempt_number,
+          first_name: firstName,
+          last_name: lastName,
+          studentName: `${firstName} ${lastName}`.trim() || "Unknown",
+          started_at: attempt.started_at,
+          submitted_at: attempt.submitted_at,
+          total_questions: attempt.total_questions,
+          attempted_count: attempt.attempted_count,
+          correct_count: attempt.correct_count,
+          isCompleted,
+          timing,
+          score: {
+            correct,
+            total,
+            display: `${correct} / ${total}`
+          },
+          result: {
+            status: resultStatus,
+            percentage: isCompleted ? percentage : null,
+            display: resultDisplay
+          }
+        };
+      });
+      return { data, total: count ?? 0 };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
   getTestById: async (test_id, client) => {
     try {
       const supabase2 = client ?? supabase;
@@ -4174,12 +4259,7 @@ var facultyTestRepository = {
         console.warn("No questions found for test_id:", test_id);
         return [];
       }
-      console.log("result", result);
-      const mapped = result.map((question) => ({
-        ...question,
-        options: question.type === "mcq" ? question.options ?? [] : []
-      }));
-      return mapped;
+      return result;
     } catch (error) {
       console.error("Error in getTestQuestionByTestId:", error);
       return {
@@ -4193,9 +4273,9 @@ var facultyTestRepository = {
     try {
       const supabase2 = client ?? supabase;
       const { data: result, error } = await supabase2.from("questions").update({
-        question: data.question,
-        type: data.type,
-        marks: data.marks
+        question: data.question
+        // type: data.type,
+        // marks: data.marks,
       }).eq("id", question_id).select().single();
       if (error) throw error;
       if (data.options && data.options.length > 0) {
@@ -4253,6 +4333,44 @@ var facultyTestRepository = {
     }
   }
 };
+function formatTime12h(iso) {
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+function formatDurationDisplay(totalSeconds) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor(totalSeconds % 3600 / 60);
+  return hours > 0 ? `${hours}h ${minutes}m total` : `${minutes}m total`;
+}
+function formatAttemptTiming(startedAt, submittedAt) {
+  const start = formatTime12h(startedAt);
+  if (!submittedAt) {
+    return {
+      start,
+      end: null,
+      rangeDisplay: start,
+      durationSeconds: null,
+      durationDisplay: null
+    };
+  }
+  const end = formatTime12h(submittedAt);
+  const durationSeconds = Math.max(
+    0,
+    Math.floor(
+      (new Date(submittedAt).getTime() - new Date(startedAt).getTime()) / 1e3
+    )
+  );
+  return {
+    start,
+    end,
+    rangeDisplay: `${start} \u2013 ${end}`,
+    durationSeconds,
+    durationDisplay: formatDurationDisplay(durationSeconds)
+  };
+}
 async function getNextSortOrder(courseId, parentId, client) {
   const supabase2 = client ?? supabase;
   let folderQuery = supabase2.from("course_folders").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
@@ -4345,6 +4463,21 @@ var facultyTestService = {
   getTestAnalytics: async (event) => {
     try {
       const result = await facultyTestRepository.getTestAnalytics(event.pathParameters.testId, event.supabase);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getAllAttemptsByTestId: async (event) => {
+    try {
+      const { page, limit } = event.queryStringParameters ?? {};
+      const result = await facultyTestRepository.getAllAttemptsByTestId(
+        event.pathParameters.testId,
+        page,
+        limit,
+        event.supabase
+      );
       return result;
     } catch (error) {
       console.log("error", error);

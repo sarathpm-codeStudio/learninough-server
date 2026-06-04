@@ -2233,7 +2233,7 @@ var require_websocket = __commonJS({
     var http = require("http");
     var net = require("net");
     var tls = require("tls");
-    var { randomBytes, createHash } = require("crypto");
+    var { randomBytes: randomBytes2, createHash } = require("crypto");
     var { Duplex, Readable } = require("stream");
     var { URL } = require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -2763,7 +2763,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key = randomBytes(16).toString("base64");
+      const key = randomBytes2(16).toString("base64");
       const request = isSecure ? https.request : http.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -3646,39 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/coupon/getAllCoupon.ts
-var getAllCoupon_exports = {};
-__export(getAllCoupon_exports, {
+// src/functions/bank/saveBankDetails.ts
+var saveBankDetails_exports = {};
+__export(saveBankDetails_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(getAllCoupon_exports);
-
-// ../../shared/utils/validate.ts
-var validate = (schema, data) => {
-  const result = schema.safeParse(data);
-  if (!result.success) {
-    console.log("result>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", result);
-    const errors = result?.error?.errors?.map((e) => ({
-      field: e.path.join("."),
-      message: e.message
-    }));
-    throw { statusCode: 400, errors };
-  }
-  return result.data;
-};
-
-// ../../shared/validators/coupon.validator.ts
-var import_zod = require("zod");
-var couponValidator = import_zod.z.object({
-  code: import_zod.z.string().min(3, "Coupon title must be at least 3 characters long"),
-  discountType: import_zod.z.string().min(1, "Discount type is required"),
-  discountValue: import_zod.z.number().min(1, "Discount is required"),
-  courses: import_zod.z.array(import_zod.z.string()),
-  expiryDate: import_zod.z.string().min(1, "Expiry date is required"),
-  maxUsage: import_zod.z.number().min(1, "Max usage is required"),
-  usagePerPerson: import_zod.z.number().min(1, "Usage per person is required")
-});
+module.exports = __toCommonJS(saveBankDetails_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -3744,364 +3718,141 @@ var getSupabaseClient = (accessToken) => {
   });
 };
 
-// src/modules/coupon/coupon.repository.ts
-var couponRepository = {
-  getMyCouponsAnalytics: async (facultyId, client) => {
+// src/utils/bank.encryption.ts
+var crypto = __toESM(require("crypto"));
+var ENCRYPTION_KEY = process.env.BANK_ENCRYPTION_KEY;
+var ALGORITHM = "aes-256-gcm";
+if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
+  throw new Error("BANK_ENCRYPTION_KEY must be exactly 32 characters");
+}
+var encrypt = (plainText) => {
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY), iv);
+  const encrypted = Buffer.concat([cipher.update(plainText, "utf8"), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  return Buffer.concat([iv, authTag, encrypted]).toString("base64");
+};
+var decrypt = (encryptedText) => {
+  const buffer = Buffer.from(encryptedText, "base64");
+  const iv = buffer.subarray(0, 16);
+  const authTag = buffer.subarray(16, 32);
+  const encrypted = buffer.subarray(32);
+  const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY), iv);
+  decipher.setAuthTag(authTag);
+  return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
+};
+
+// src/modules/bank/bank.repository.ts
+var maskValue = (value, visibleChars = 4) => {
+  if (value.length <= visibleChars) return value;
+  const masked = "*".repeat(value.length - visibleChars);
+  const visible = value.slice(-visibleChars);
+  return masked + visible;
+};
+var bankRepository = {
+  // ── SAVE ─────────────────────────────────────────────────────────
+  saveBankDetails: async (data, facultyId, client) => {
     try {
       const db = client ?? supabase;
-      const now = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace("Z", "+00");
-      const { count: activeCoupons, error: activeCouponsError } = await db.from("coupons").select("*", { count: "exact", head: true }).eq("faculty_id", facultyId).eq("is_deleted", false).eq("is_active", true).eq("is_draft", false).gt("expire_date", now);
-      if (activeCouponsError) throw new Error(activeCouponsError.message);
-      const { data: redemptions, error: redemptionsError } = await db.from("coupon_redemptions").select("student_id, save_amount").eq("faculty_id", facultyId);
-      if (redemptionsError) throw new Error(redemptionsError.message);
-      const totalRedeemedUsers = new Set(redemptions.map((r) => r.student_id)).size;
-      const totalSavingsGenerated = redemptions.reduce(
-        (sum, r) => sum + Number(r.save_amount),
-        0
-      );
+      const encryptedAccount = encrypt(data.account_number);
+      const encryptedPan = encrypt(data.pan_number);
+      const { data: saved, error } = await db.from("faculty_bank_details").upsert({
+        faculty_id: facultyId,
+        bank_name: data.bank_name,
+        account_holder_name: data.account_holder_name,
+        ifsc_code: data.ifsc_code,
+        account_number: encryptedAccount,
+        pan_number: encryptedPan,
+        is_verified: false
+      }).select("id, faculty_id, bank_name, account_holder_name, ifsc_code, is_verified, created_at").single();
+      if (error) throw new Error(error.message);
+      return saved;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  // ── GET (masked) ──────────────────────────────────────────────────
+  getBankDetails: async (facultyId, client) => {
+    try {
+      const db = client ?? supabase;
+      const { data, error } = await db.from("faculty_bank_details").select("*").eq("faculty_id", facultyId).eq("is_deleted", false).maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) return null;
+      const decryptedAccount = decrypt(data.account_number);
+      const decryptedPan = decrypt(data.pan_number);
       return {
-        active_coupons: activeCoupons ?? 0,
-        total_redeemed_users: totalRedeemedUsers,
-        total_savings_generated: totalSavingsGenerated
+        id: data.id,
+        faculty_id: data.faculty_id,
+        bank_name: data.bank_name,
+        account_holder_name: data.account_holder_name,
+        ifsc_code: data.ifsc_code,
+        is_verified: data.is_verified,
+        verified_at: data.verified_at,
+        is_active: data.is_active,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        // ✅ Masked for frontend display
+        account_number: maskValue(decryptedAccount, 4),
+        // "******7890"
+        pan_number: maskValue(decryptedPan, 4)
+        // "*******234F"
       };
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  // get my all coupon enabled courses
-  createCoupon: async (couponData, facultyId, client) => {
-    const db = client ?? supabase;
-    const isAllCourses = couponData.courses.includes("all");
-    if (!isAllCourses) {
-      const { data: courses, error: coursesError } = await db.from("courses").select("id").in("id", couponData.courses).eq("faculty_id", facultyId).eq("is_deleted", false).eq("enableCoupons", true);
-      if (coursesError) {
-        throw new Error(coursesError.message);
-      }
-      if (!courses || courses.length !== couponData.courses.length) {
-        throw new Error(
-          "One or more selected courses are invalid or do not belong to you."
-        );
-      }
-    }
-    const { data: existingCoupon, error: couponCheckError } = await db.from("coupons").select("id").eq("code", couponData.code).eq("is_deleted", false).maybeSingle();
-    if (couponCheckError) {
-      throw new Error("Coupon code already exists. Please use a different code.");
-    }
-    if (existingCoupon) {
-      throw new Error(
-        "Coupon code already exists. Please use a different code."
-      );
-    }
-    const { data: coupon, error: couponError } = await db.from("coupons").insert({
-      code: couponData.code,
-      discount_type: couponData.discountType,
-      discount: couponData.discountValue,
-      expire_date: couponData.expiryDate,
-      max_usage: couponData.maxUsage,
-      usage_per_person: couponData.usagePerPerson,
-      faculty_id: facultyId,
-      is_active: true,
-      is_all_courses: isAllCourses,
-      is_draft: false
-    }).select().single();
-    if (couponError) {
-      if (couponError.code === "23505") {
-        throw new Error(
-          "Coupon code already exists. Please use a different code."
-        );
-      }
-      throw new Error(couponError.message);
-    }
-    if (!isAllCourses) {
-      const couponCourseRows = couponData.courses.map((courseId) => ({
-        coupon_id: coupon.id,
-        course_id: courseId
-      }));
-      const { error: couponCoursesError } = await db.from("coupon_courses").insert(couponCourseRows);
-      if (couponCoursesError) {
-        throw new Error(couponCoursesError.message);
-      }
-    }
-    return coupon;
-  },
-  getMyCourses: async (facultyId, client) => {
-    console.log("facultyId", facultyId);
-    try {
-      const db = client ?? supabase;
-      const { data: courses, error } = await db.from("courses").select("id, title").eq("faculty_id", facultyId).eq("is_draft", false).eq("enableCoupons", true).order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return courses;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  // getMyCoupons: async (facultyId: string, filter: "active" | "deactivate" | "expired", page: number = 1, limit: number = 10, search: string = "", client?: SupabaseClient) => {
-  //     try {
-  //         const db = client ?? anonSupabase;
-  //         // Calculate offset
-  //         const from = (page - 1) * limit;
-  //         const to = from + limit - 1;
-  //         // Base query
-  //         let query = db
-  //             .from("coupons")
-  //             .select(`
-  //                 *,
-  //                 coupon_courses (
-  //                     course_id,
-  //                     courses (
-  //                         id,
-  //                         title
-  //                     )
-  //                 )
-  //             `, { count: "exact" })
-  //             .eq("faculty_id", facultyId)
-  //             .eq("is_deleted", false)
-  //             .order("created_at", { ascending: false })
-  //             .range(from, to);
-  //         // Apply filter
-  //         if (filter === "active") {
-  //             query = query.eq("is_active", true);
-  //         } else if (filter === "deactivate") {
-  //             query = query.eq("is_active", false);
-  //         } else if (filter === "expired") {
-  //             const now = new Date().toISOString();
-  //             query = query.lt("expire_date", now).not("expire_date", "is", null);
-  //         }
-  //         // Apply search
-  //         if (search.trim()) {
-  //             query = query.or(`code.ilike.%${search}%,title.ilike.%${search}%`);
-  //         }
-  //         const { data: coupons, error, count } = await query;
-  //         if (error) throw new Error(error.message);
-  //         // Calculate pagination meta
-  //         const totalPages = Math.ceil((count ?? 0) / limit);
-  //         const hasNextPage = page < totalPages;
-  //         const hasPrevPage = page > 1;
-  //         return {
-  //             coupons,
-  //             pagination: {
-  //                 total: count ?? 0,
-  //                 total_pages: totalPages,
-  //                 current_page: page,
-  //                 limit,
-  //                 has_next: hasNextPage,
-  //                 has_prev: hasPrevPage,
-  //             }
-  //         };
-  //     } catch (error: any) {
-  //         throw new Error(error.message);
-  //     }
-  // },
-  getMyCoupons: async (facultyId, filter, page = 1, limit = 10, search = "", client) => {
-    try {
-      const db = client ?? supabase;
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const { error: deactivateError } = await db.from("coupons").update({ is_active: false }).eq("faculty_id", facultyId).eq("is_active", true).eq("is_deleted", false).lt("expire_date", now);
-      if (deactivateError) throw new Error(deactivateError.message);
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
-      let query = db.from("coupons").select(`
-                    *,
-                    coupon_courses (
-                        course_id,
-                        courses (
-                            id,
-                            title
-                        )
-                    )
-                `, { count: "exact" }).eq("faculty_id", facultyId).eq("is_deleted", false).order("created_at", { ascending: false }).range(from, to);
-      if (filter === "active") {
-        query = query.eq("is_active", true).gt("expire_date", now);
-      } else if (filter === "deactivate") {
-        query = query.eq("is_active", false);
-      } else if (filter === "expired") {
-        query = query.lt("expire_date", now).not("expire_date", "is", null);
-      }
-      if (search.trim()) {
-        query = query.or(`code.ilike.%${search}%,description.ilike.%${search}%`);
-      }
-      const { data: coupons, error, count } = await query;
-      if (error) throw new Error(error.message);
-      const totalPages = Math.ceil((count ?? 0) / limit);
-      const hasNextPage = page < totalPages;
-      const hasPrevPage = page > 1;
-      return {
-        coupons,
-        pagination: {
-          total: count ?? 0,
-          total_pages: totalPages,
-          current_page: page,
-          limit,
-          has_next: hasNextPage,
-          has_prev: hasPrevPage
-        }
-      };
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  updateCouponStatus: async (facultyId, couponId, status, client) => {
-    try {
-      console.log("facultyId", facultyId);
-      console.log("couponId", couponId);
-      console.log("status", status);
-      const db = client ?? supabase;
-      const { data: coupon, error } = await db.from("coupons").update({
-        is_active: status
-      }).eq("id", couponId).eq("faculty_id", facultyId).select().single();
-      if (error) throw new Error(error.message);
-      return coupon;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  updateCoupon: async (facultyId, couponId, couponData, client) => {
-    try {
-      const db = client ?? supabase;
-      const isAllCourses = couponData.courses.includes("all");
-      if (!isAllCourses) {
-        const { data: courses, error: coursesError } = await db.from("courses").select("id").in("id", couponData.courses).eq("faculty_id", facultyId).eq("is_deleted", false).eq("enableCoupons", true);
-        if (coursesError) {
-          throw new Error(coursesError.message);
-        }
-        if (!courses || courses.length !== couponData.courses.length) {
-          throw new Error(
-            "One or more selected courses are invalid or do not belong to you."
-          );
-        }
-      }
-      const { data: coupon, error } = await db.from("coupons").update({
-        expire_date: couponData.expiryDate,
-        max_usage: couponData.maxUsage,
-        usage_per_person: couponData.usagePerPerson,
-        is_all_courses: isAllCourses
-      }).eq("id", couponId).eq("faculty_id", facultyId).select().single();
-      if (error) throw new Error(error.message);
-      const { data: existingCouponCourses, error: fetchExistingError } = await db.from("coupon_courses").select("course_id").eq("coupon_id", couponId);
-      if (fetchExistingError) {
-        throw new Error(fetchExistingError.message);
-      }
-      const existingCourseIds = (existingCouponCourses ?? []).map(
-        (row) => row.course_id
-      );
-      if (isAllCourses) {
-        if (existingCourseIds.length > 0) {
-          const { error: deleteError } = await db.from("coupon_courses").delete().eq("coupon_id", couponId);
-          if (deleteError) {
-            throw new Error(deleteError.message);
-          }
-        }
-      } else {
-        const newCourseIds = couponData.courses;
-        const toRemove = existingCourseIds.filter(
-          (id) => !newCourseIds.includes(id)
-        );
-        const toAdd = newCourseIds.filter(
-          (id) => !existingCourseIds.includes(id)
-        );
-        if (toRemove.length > 0) {
-          const { error: deleteError } = await db.from("coupon_courses").delete().eq("coupon_id", couponId).in("course_id", toRemove);
-          if (deleteError) {
-            throw new Error(deleteError.message);
-          }
-        }
-        if (toAdd.length > 0) {
-          const couponCourseRows = toAdd.map((courseId) => ({
-            coupon_id: couponId,
-            course_id: courseId
-          }));
-          const { error: couponCoursesError } = await db.from("coupon_courses").insert(couponCourseRows);
-          if (couponCoursesError) {
-            throw new Error(couponCoursesError.message);
-          }
-        }
-      }
-      return coupon;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  deleteCoupon: async (facultyId, couponId, client) => {
-    try {
-      const db = client ?? supabase;
-      const { data: coupon, error } = await db.from("coupons").update({
-        is_deleted: true
-      }).eq("id", couponId).eq("faculty_id", facultyId).select().single();
-      if (error) throw new Error(error.message);
-      return coupon;
     } catch (error) {
       throw new Error(error.message);
     }
   }
 };
 
-// src/modules/coupon/coupon.service.ts
-var couponService = {
-  getMyCouponsAnalytics: async (event) => {
+// ../../shared/utils/validate.ts
+var validate = (schema, data) => {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.log("result>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", result);
+    const errors = result?.error?.errors?.map((e) => ({
+      field: e.path.join("."),
+      message: e.message
+    }));
+    throw { statusCode: 400, errors };
+  }
+  return result.data;
+};
+
+// ../../shared/validators/bank.schema.ts
+var import_zod = require("zod");
+var saveBankDetailsSchema = import_zod.z.object({
+  bank_name: import_zod.z.string().min(2, "Bank name must be at least 2 characters").max(100, "Bank name too long"),
+  account_holder_name: import_zod.z.string().min(2, "Account holder name must be at least 2 characters").max(100, "Account holder name too long"),
+  account_number: import_zod.z.string().regex(/^[0-9]{9,18}$/, "Account number must be 9-18 digits only"),
+  confirm_account_number: import_zod.z.string().regex(/^[0-9]{9,18}$/, "Account number must be 9-18 digits only"),
+  ifsc_code: import_zod.z.string().toUpperCase().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC code format (e.g. SBIN0001234)"),
+  pan_number: import_zod.z.string().toUpperCase().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format (e.g. ABCDE1234F)")
+}).refine(
+  (data) => data.account_number === data.confirm_account_number,
+  {
+    message: "Account numbers do not match",
+    path: ["confirm_account_number"]
+  }
+);
+
+// src/modules/bank/bank.service.ts
+var bankService = {
+  saveBankDetails: async (event) => {
     try {
-      const analytics = await couponRepository.getMyCouponsAnalytics(event.user.id, event.supabase);
-      return analytics;
+      const validatedData = validate(saveBankDetailsSchema, JSON.parse(event.body));
+      const bankDetails = await bankRepository.saveBankDetails(validatedData, event.user.id, event.supabase);
+      return true;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   },
-  createCoupon: async (event) => {
+  getBankDetails: async (event) => {
     try {
-      const validatedData = validate(couponValidator, JSON.parse(event.body));
-      const coupon = await couponRepository.createCoupon(validatedData, event.user.id, event.supabase);
-      return coupon;
+      const bankDetails = await bankRepository.getBankDetails(event.user.id, event.supabase);
+      return bankDetails;
     } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  getMyCourses: async (event) => {
-    try {
-      const courses = await couponRepository.getMyCourses(event.user.id, event.supabase);
-      return courses;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  getMyCoupons: async (event) => {
-    try {
-      const filter = event.queryStringParameters?.filter || "active";
-      const page = event.queryStringParameters?.page || 1;
-      const limit = event.queryStringParameters?.limit || 10;
-      const search = event.queryStringParameters?.search || "";
-      const coupons = await couponRepository.getMyCoupons(event.user.id, filter, page, limit, search, event.supabase);
-      return coupons;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  updateCouponStatus: async (event) => {
-    try {
-      const couponId = event.pathParameters?.couponId;
-      console.log("body", JSON.parse(event.body));
-      const status = JSON.parse(event.body).status;
-      const coupon = await couponRepository.updateCouponStatus(event.user.id, couponId, status, event.supabase);
-      return coupon;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  updateCoupon: async (event) => {
-    try {
-      const couponId = event.pathParameters?.couponId;
-      const couponData = JSON.parse(event.body);
-      const coupon = await couponRepository.updateCoupon(event.user.id, couponId, couponData, event.supabase);
-      return coupon;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  deleteCoupon: async (event) => {
-    try {
-      const couponId = event.pathParameters?.couponId;
-      const coupon = await couponRepository.deleteCoupon(event.user.id, couponId, event.supabase);
-      return coupon;
-    } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   }
 };
@@ -4178,13 +3929,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/coupon/getAllCoupon.ts
+// src/functions/bank/saveBankDetails.ts
 var handlerFun = async (event) => {
   try {
-    const coupons = await couponService.getMyCoupons(event);
-    return handleResponse.success(coupons, "Coupons fetched successfully", 200);
+    const bankDetails = await bankService.saveBankDetails(event);
+    return handleResponse.success(bankDetails, "Bank details saved successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error fetching coupons", 400);
+    return handleResponse.error(err, "Error saving bank details", 400);
   }
 };
 var handler = compose(
@@ -4197,4 +3948,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=getAllCoupon.js.map
+//# sourceMappingURL=saveBankDetails.js.map

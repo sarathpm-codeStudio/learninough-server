@@ -20,83 +20,168 @@ type Arggu = {
 export const studentsRepository = {
 
 
-    // getAllMyStudents: async ({ facultyId, filter, page, limit, search }: Arggu) => {
-
+   
+    // getAllMyStudents: async ({ facultyId, filter, page, limit, search, client }: Arggu) => {
     //     try {
-
-
+    //         const supabase = client ?? anonSupabase;
+    //         console.log("filter", filter);
     //         const from = (page - 1) * limit;
     //         const to = from + limit - 1;
 
+    //         // Step 1: Get faculty course IDs
+    //         const { data: facultyCourses, error: courseError } = await supabase
+    //             .from("courses")
+    //             .select("id")
+    //             .eq("faculty_id", facultyId);
 
+    //         if (courseError) throw new Error(courseError.message);
+
+    //         const courseIds = facultyCourses?.map((c) => c.id) ?? [];
+
+    //         if (courseIds.length === 0) {
+    //             return {
+    //                 data: [],
+    //                 pagination: { page, limit, total: 0, totalPages: 0 },
+    //             };
+    //         }
+
+    //         const targetCourseIds =
+    //             filter.selectedCourse !== "all" ? [filter.selectedCourse] : courseIds;
+
+    //         // Step 2: Get distinct student_ids with latest enrollment (for pagination)
+    //         let studentIdsQuery = supabase
+    //             .from("enrollments")
+    //             .select("student_id", { count: "exact" })
+    //             .in("course_id", targetCourseIds);
+
+    //         if (filter.selectedDate) {
+    //             const startOfDay = new Date(filter.selectedDate);
+    //             startOfDay.setHours(0, 0, 0, 0);
+    //             const endOfDay = new Date(filter.selectedDate);
+    //             endOfDay.setHours(23, 59, 59, 999);
+
+    //             studentIdsQuery = studentIdsQuery
+    //                 .gte("created_at", startOfDay.toISOString())
+    //                 .lte("created_at", endOfDay.toISOString());
+    //         }
+
+    //         const { data: allStudentRows, error: countError, count } =
+    //             await studentIdsQuery;
+
+    //         if (countError) throw new Error(countError.message);
+
+    //         // Deduplicate student IDs
+    //         const uniqueStudentIds = [
+    //             ...new Set(allStudentRows?.map((r) => r.student_id) ?? []),
+    //         ];
+
+    //         // Step 3: Paginate unique student IDs
+    //         const paginatedStudentIds = uniqueStudentIds.slice(from, to + 1);
+
+    //         if (paginatedStudentIds.length === 0) {
+    //             return {
+    //                 data: [],
+    //                 pagination: {
+    //                     page,
+    //                     limit,
+    //                     total: uniqueStudentIds.length,
+    //                     totalPages: Math.ceil(uniqueStudentIds.length / limit),
+    //                 },
+    //             };
+    //         }
+
+    //         // Step 4: Fetch full student + enrollment details for paginated IDs
     //         let query = supabase
     //             .from("enrollments")
     //             .select(`
-    //     id,
-    //     created_at,
-    //     student:profiles!enrollments_student_id_fkey (
-    //       id,
-    //       full_name
-    //     ),
-    //     course:courses!enrollments_course_id_fkey (
-    //       id,
-    //       title,
-    //       faculty_id
-    //     )
-    //   `, { count: "exact" })
-    //             .eq("course.faculty_id", facultyId)
-    //             .order("created_at", { ascending: false })
-    //             .range(from, to);
+    //             id,
+    //             created_at,
+    //             course_id,
+    //             student:profiles!enrollments_student_id_fkey (
+    //                 id,
+    //                 first_name,
+    //                 last_name,
+    //                 email,
+    //                 avatar_url,
+    //                 created_at
+    //             ),
+    //             course:courses!enrollments_course_id_fkey (
+    //                 id,
+    //                 title,
+    //                 faculty_id
+    //             )
+    //         `)
+    //             .in("course_id", targetCourseIds)
+    //             .in("student_id", paginatedStudentIds)
+    //             .order("created_at", { ascending: false });
 
-    //         if (filter.selectedCourse !== "all") {
-    //             query = query.eq("course_id", filter.selectedCourse);
+    //         if (filter.selectedDate) {
+    //             const startOfDay = new Date(filter.selectedDate);
+    //             startOfDay.setHours(0, 0, 0, 0);
+    //             const endOfDay = new Date(filter.selectedDate);
+    //             endOfDay.setHours(23, 59, 59, 999);
+
+    //             query = query
+    //                 .gte("created_at", startOfDay.toISOString())
+    //                 .lte("created_at", endOfDay.toISOString());
     //         }
 
     //         if (search) {
-    //             query = query.ilike(
-    //                 "profiles.full_name",
-    //                 `%${search}%`
-    //             );
+    //             paginatedStudentIds.filter((id) => id); // already filtered below
     //         }
 
-    //         const { data, error, count } = await query;
+    //         const { data, error } = await query;
 
     //         if (error) throw new Error(error.message);
 
+    //         // Step 5: Deduplicate and build student map
     //         const studentMap: Record<string, any> = {};
 
     //         data?.forEach((item: any) => {
     //             const student = item.student;
     //             const course = item.course;
 
+    //             if (!student) return;
+
     //             if (!studentMap[student.id]) {
     //                 studentMap[student.id] = {
     //                     ...student,
-    //                     courses: [],
-    //                     enrolled_at: item.created_at
+    //                     courses: [course],
+    //                     latest_enrolled_at: item.created_at,
     //                 };
+    //             } else {
+    //                 const alreadyAdded = studentMap[student.id].courses.some(
+    //                     (c: any) => c.id === course.id
+    //                 );
+    //                 if (!alreadyAdded) {
+    //                     studentMap[student.id].courses.push(course);
+    //                 }
     //             }
-
-    //             studentMap[student.id].courses.push(course);
     //         });
 
+    //         // Step 6: Search filter on full_name
+    //         let students = Object.values(studentMap);
 
-    //         const final = Object.values(studentMap);
+    //         if (search) {
+    //             const lowerSearch = search.toLowerCase();
+    //             students = students.filter((s: any) =>
+    //                 s.full_name?.toLowerCase().includes(lowerSearch)
+    //             );
+    //         }
+
+    //         const totalUniqueStudents = uniqueStudentIds.length;
 
     //         return {
-    //             data: final,
+    //             data: students,
     //             pagination: {
     //                 page,
     //                 limit,
-    //                 total: count,
-    //                 totalPages: Math.ceil((count || 0) / limit)
-    //             }
+    //                 total: totalUniqueStudents,
+    //                 totalPages: Math.ceil(totalUniqueStudents / limit),
+    //             },
     //         };
-
-
     //     } catch (error: any) {
-
-    //         throw new Error(error.message)
+    //         throw new Error(error.message);
     //     }
     // },
 
@@ -104,60 +189,86 @@ export const studentsRepository = {
     getAllMyStudents: async ({ facultyId, filter, page, limit, search, client }: Arggu) => {
         try {
             const supabase = client ?? anonSupabase;
-            console.log("filter", filter);
             const from = (page - 1) * limit;
             const to = from + limit - 1;
-
+    
+            // Format last active display
+            const formatLastActive = (dateStr: string | null): string => {
+                if (!dateStr) return 'Never';
+    
+                const date      = new Date(dateStr);
+                const now       = new Date();
+                const isToday   = date.toDateString() === now.toDateString();
+    
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                const isYesterday = date.toDateString() === yesterday.toDateString();
+    
+                const timeStr = date.toLocaleTimeString('en-US', {
+                    hour:   '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                });
+    
+                if (isToday)     return `Today ${timeStr}`;
+                if (isYesterday) return `Yesterday ${timeStr}`;
+    
+                return date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day:   'numeric',
+                }) + `, ${timeStr}`;
+            };
+    
             // Step 1: Get faculty course IDs
             const { data: facultyCourses, error: courseError } = await supabase
                 .from("courses")
                 .select("id")
                 .eq("faculty_id", facultyId);
-
+    
             if (courseError) throw new Error(courseError.message);
-
+    
             const courseIds = facultyCourses?.map((c) => c.id) ?? [];
-
+    
             if (courseIds.length === 0) {
                 return {
                     data: [],
                     pagination: { page, limit, total: 0, totalPages: 0 },
                 };
             }
-
+    
             const targetCourseIds =
                 filter.selectedCourse !== "all" ? [filter.selectedCourse] : courseIds;
-
-            // Step 2: Get distinct student_ids with latest enrollment (for pagination)
+    
+            // Step 2: Get distinct student_ids (for pagination)
             let studentIdsQuery = supabase
                 .from("enrollments")
                 .select("student_id", { count: "exact" })
                 .in("course_id", targetCourseIds);
-
+    
             if (filter.selectedDate) {
                 const startOfDay = new Date(filter.selectedDate);
                 startOfDay.setHours(0, 0, 0, 0);
                 const endOfDay = new Date(filter.selectedDate);
                 endOfDay.setHours(23, 59, 59, 999);
-
+    
                 studentIdsQuery = studentIdsQuery
                     .gte("created_at", startOfDay.toISOString())
                     .lte("created_at", endOfDay.toISOString());
             }
-
+    
             const { data: allStudentRows, error: countError, count } =
                 await studentIdsQuery;
-
+    
             if (countError) throw new Error(countError.message);
-
+    
             // Deduplicate student IDs
             const uniqueStudentIds = [
                 ...new Set(allStudentRows?.map((r) => r.student_id) ?? []),
             ];
-
+    
             // Step 3: Paginate unique student IDs
             const paginatedStudentIds = uniqueStudentIds.slice(from, to + 1);
-
+    
             if (paginatedStudentIds.length === 0) {
                 return {
                     data: [],
@@ -169,64 +280,94 @@ export const studentsRepository = {
                     },
                 };
             }
-
+    
             // Step 4: Fetch full student + enrollment details for paginated IDs
             let query = supabase
                 .from("enrollments")
                 .select(`
-                id,
-                created_at,
-                course_id,
-                student:profiles!enrollments_student_id_fkey (
                     id,
-                    first_name,
-                    last_name,
-                    email,
-                    avatar_url
-                ),
-                course:courses!enrollments_course_id_fkey (
-                    id,
-                    title,
-                    faculty_id
-                )
-            `)
+                    created_at,
+                    course_id,
+                    student:profiles!enrollments_student_id_fkey (
+                        id,
+                        first_name,
+                        last_name,
+                        email,
+                        avatar_url,
+                        created_at
+                    ),
+                    course:courses!enrollments_course_id_fkey (
+                        id,
+                        title,
+                        faculty_id
+                    )
+                `)
                 .in("course_id", targetCourseIds)
                 .in("student_id", paginatedStudentIds)
                 .order("created_at", { ascending: false });
-
+    
             if (filter.selectedDate) {
                 const startOfDay = new Date(filter.selectedDate);
                 startOfDay.setHours(0, 0, 0, 0);
                 const endOfDay = new Date(filter.selectedDate);
                 endOfDay.setHours(23, 59, 59, 999);
-
+    
                 query = query
                     .gte("created_at", startOfDay.toISOString())
                     .lte("created_at", endOfDay.toISOString());
             }
-
-            if (search) {
-                paginatedStudentIds.filter((id) => id); // already filtered below
-            }
-
+    
             const { data, error } = await query;
-
             if (error) throw new Error(error.message);
-
-            // Step 5: Deduplicate and build student map
+    
+            // Step 5: Fetch latest session for all paginated students in ONE query
+            const { data: sessions, error: sessionError } = await supabase
+                .from("usage_sessions")
+                .select("user_id, started_at, platform, screen_name")
+                .in("user_id", paginatedStudentIds)
+                .order("started_at", { ascending: false });
+    
+            if (sessionError) throw new Error(sessionError.message);
+    
+            // Build user_id → latest session map (first = latest due to desc ordering)
+            const sessionMap: Record<string, {
+                started_at:  string;
+                platform:    string | null;
+                screen_name: string | null;
+            }> = {};
+    
+            sessions?.forEach((s) => {
+                if (!sessionMap[s.user_id]) {
+                    sessionMap[s.user_id] = {
+                        started_at:  s.started_at,
+                        platform:    s.platform,
+                        screen_name: s.screen_name,
+                    };
+                }
+            });
+    
+            // Step 6: Deduplicate and build student map
             const studentMap: Record<string, any> = {};
-
+    
             data?.forEach((item: any) => {
                 const student = item.student;
-                const course = item.course;
-
+                const course  = item.course;
+    
                 if (!student) return;
-
+    
                 if (!studentMap[student.id]) {
+                    const session = sessionMap[student.id] ?? null;
+    
                     studentMap[student.id] = {
                         ...student,
-                        courses: [course],
+                        courses:            [course],
                         latest_enrolled_at: item.created_at,
+                        recentActive: {
+                            display:    formatLastActive(session?.started_at ?? null),
+                            raw:        session?.started_at  ?? null,
+                            platform:   session?.platform    ?? null,
+                            screenName: session?.screen_name ?? null,
+                        },
                     };
                 } else {
                     const alreadyAdded = studentMap[student.id].courses.some(
@@ -237,19 +378,20 @@ export const studentsRepository = {
                     }
                 }
             });
-
-            // Step 6: Search filter on full_name
+    
+            // Step 7: Search filter on name
             let students = Object.values(studentMap);
-
+    
             if (search) {
                 const lowerSearch = search.toLowerCase();
-                students = students.filter((s: any) =>
-                    s.full_name?.toLowerCase().includes(lowerSearch)
-                );
+                students = students.filter((s: any) => {
+                    const fullName = `${s.first_name ?? ''} ${s.last_name ?? ''}`.toLowerCase();
+                    return fullName.includes(lowerSearch);
+                });
             }
-
+    
             const totalUniqueStudents = uniqueStudentIds.length;
-
+    
             return {
                 data: students,
                 pagination: {
@@ -259,6 +401,7 @@ export const studentsRepository = {
                     totalPages: Math.ceil(totalUniqueStudents / limit),
                 },
             };
+    
         } catch (error: any) {
             throw new Error(error.message);
         }
@@ -478,6 +621,7 @@ export const studentsRepository = {
         }
     },
 
+    
     getStudentAnalytics: async ({
         facultyId,
         studentId,
@@ -489,26 +633,53 @@ export const studentsRepository = {
     }) => {
         try {
             const supabase = client ?? anonSupabase;
-
+    
+            // Format: "Today 11:40 PM" or "Yesterday 3:20 PM" or "Jun 1, 9:00 AM"
+            const formatLastActive = (dateStr: string | null): string => {
+                if (!dateStr) return 'Never';
+    
+                const date      = new Date(dateStr);
+                const now       = new Date();
+                const isToday   = date.toDateString() === now.toDateString();
+    
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                const isYesterday = date.toDateString() === yesterday.toDateString();
+    
+                const timeStr = date.toLocaleTimeString('en-US', {
+                    hour:   '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                });
+    
+                if (isToday)     return `Today ${timeStr}`;
+                if (isYesterday) return `Yesterday ${timeStr}`;
+    
+                return date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day:   'numeric',
+                }) + `, ${timeStr}`;
+            };
+    
+            // 1. Student profile
             const { data: student, error: studentError } = await supabase
-                .from("profiles")
-                .select("id, first_name, last_name, avatar_url")
-                .eq("id", studentId)
+                .from('profiles')
+                .select('id, first_name, last_name, avatar_url')
+                .eq('id', studentId)
                 .single();
-
+    
             if (studentError) throw new Error(studentError.message);
     
-            // 1. Direct course enrollments for this faculty
+            // 2. Direct course enrollments for this faculty
             const { data: directEnrollments, error: directError } = await supabase
                 .from('enrollments')
                 .select('id, course_id, amount_paid, is_bundle_enrollment, enrolled_at')
                 .eq('faculty_id', facultyId)
-                .eq('student_id', studentId)
-                
+                .eq('student_id', studentId);
     
             if (directError) throw new Error(directError.message);
     
-            // 2. Bundle enrollments for this faculty
+            // 3. Bundle enrollments for this faculty
             const { data: bundleEnrollments, error: bundleError } = await supabase
                 .from('bundle_enrollments')
                 .select('id, bundle_id, amount_paid, enrolled_at')
@@ -517,17 +688,12 @@ export const studentsRepository = {
     
             if (bundleError) throw new Error(bundleError.message);
     
-            // 3. Count enrolled courses
-            //    - Direct non-bundle enrollments → count each as 1 course
-            //    - Bundle enrollments → count the is_bundle_enrollment rows (amount = 0)
-            //      but revenue comes from bundle_enrollments table
-            const directCourseCount  = directEnrollments?.filter(e => !e.is_bundle_enrollment).length ?? 0;
-            const bundleCourseCount  = directEnrollments?.filter(e => e.is_bundle_enrollment).length ?? 0;
-            const totalCourseCount   = directCourseCount + bundleCourseCount;
+            // 4. Count enrolled courses
+            const directCourseCount = directEnrollments?.filter(e => !e.is_bundle_enrollment).length ?? 0;
+            const bundleCourseCount = directEnrollments?.filter(e => e.is_bundle_enrollment).length ?? 0;
+            const totalCourseCount  = directCourseCount + bundleCourseCount;
     
-            // 4. Total amount spent
-            //    - Direct purchases: sum amount_paid from enrollments (is_bundle_enrollment = false)
-            //    - Bundle purchases: sum amount_paid from bundle_enrollments
+            // 5. Total amount spent
             const directRevenue = directEnrollments
                 ?.filter(e => !e.is_bundle_enrollment)
                 .reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
@@ -537,8 +703,7 @@ export const studentsRepository = {
     
             const totalAmountSpent = directRevenue + bundleRevenue;
     
-            // 5. Test score rate for this faculty's tests
-            //    score rate = (total correct answers / total questions attempted) * 100
+            // 6. Test score rate for this faculty's tests
             const { data: attempts, error: attemptsError } = await supabase
                 .from('test_attempts')
                 .select(`
@@ -551,36 +716,56 @@ export const studentsRepository = {
                 `)
                 .eq('student_id', studentId)
                 .eq('tests.faculty_id', facultyId)
-                .not('submitted_at', 'is', null); // only completed attempts
+                .not('submitted_at', 'is', null);
     
             if (attemptsError) throw new Error(attemptsError.message);
     
-            const totalCorrect   = attempts?.reduce((sum, a) => sum + (a.correct_count   ?? 0), 0) ?? 0;
-            const totalQuestions = attempts?.reduce((sum, a) => sum + (a.total_questions  ?? 0), 0) ?? 0;
+            const totalCorrect   = attempts?.reduce((sum, a) => sum + (a.correct_count  ?? 0), 0) ?? 0;
+            const totalQuestions = attempts?.reduce((sum, a) => sum + (a.total_questions ?? 0), 0) ?? 0;
             const totalAttempts  = attempts?.length ?? 0;
     
             const testScoreRate = totalQuestions > 0
                 ? Math.round((totalCorrect / totalQuestions) * 100)
                 : 0;
     
+            // 7. Recent active time from usage_sessions
+            const { data: lastSession, error: sessionError } = await supabase
+                .from('usage_sessions')
+                .select('started_at, platform, screen_name')
+                .eq('user_id', studentId)
+                .order('started_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+    
+            if (sessionError) throw new Error(sessionError.message);
+    
             return {
+                // Student profile
                 student,
-
+    
+                // Recent activity
+                recentActive: {
+                    display:    formatLastActive(lastSession?.started_at ?? null), // "Today 11:40 PM"
+                    raw:        lastSession?.started_at  ?? null,
+                    platform:   lastSession?.platform    ?? null,
+                    screenName: lastSession?.screen_name ?? null,
+                },
+    
                 // Course enrollment
-                totalCourseCount,       // total courses enrolled under this faculty
-                directCourseCount,      // via direct purchase
-                bundleCourseCount,      // via bundle purchase
+                totalCourseCount,
+                directCourseCount,
+                bundleCourseCount,
     
                 // Revenue
-                totalAmountSpent,       // total ₹ spent with this faculty
-                directRevenue,          // from direct course purchases
-                bundleRevenue,          // from bundle purchases
+                totalAmountSpent,
+                directRevenue,
+                bundleRevenue,
     
                 // Test performance
-                testScoreRate,          // e.g. 78 → "78%"
-                totalAttempts,          // how many tests completed
-                totalCorrect,           // total correct answers
-                totalQuestions,         // total questions attempted
+                testScoreRate,
+                totalAttempts,
+                totalCorrect,
+                totalQuestions,
             };
     
         } catch (error: any) {

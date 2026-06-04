@@ -81,6 +81,28 @@ export const facultyTestService = {
         }
     },
 
+    getAllAttemptsByTestId: async (event: any) => {
+        try {
+
+            const { page, limit } = event.queryStringParameters ?? {};
+
+            const result = await facultyTestRepository.getAllAttemptsByTestId(
+                event.pathParameters.testId,
+                page,
+                limit,
+                event.supabase
+            );
+
+            return result;
+        }
+        catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
+
     getTestById: async (event: any) => {
         try {
 

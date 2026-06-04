@@ -3646,39 +3646,13 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// src/functions/coupon/getAllCoupon.ts
-var getAllCoupon_exports = {};
-__export(getAllCoupon_exports, {
+// src/functions/test/getAllAttemptsByTestId.ts
+var getAllAttemptsByTestId_exports = {};
+__export(getAllAttemptsByTestId_exports, {
   handler: () => handler,
   handlerFun: () => handlerFun
 });
-module.exports = __toCommonJS(getAllCoupon_exports);
-
-// ../../shared/utils/validate.ts
-var validate = (schema, data) => {
-  const result = schema.safeParse(data);
-  if (!result.success) {
-    console.log("result>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", result);
-    const errors = result?.error?.errors?.map((e) => ({
-      field: e.path.join("."),
-      message: e.message
-    }));
-    throw { statusCode: 400, errors };
-  }
-  return result.data;
-};
-
-// ../../shared/validators/coupon.validator.ts
-var import_zod = require("zod");
-var couponValidator = import_zod.z.object({
-  code: import_zod.z.string().min(3, "Coupon title must be at least 3 characters long"),
-  discountType: import_zod.z.string().min(1, "Discount type is required"),
-  discountValue: import_zod.z.number().min(1, "Discount is required"),
-  courses: import_zod.z.array(import_zod.z.string()),
-  expiryDate: import_zod.z.string().min(1, "Expiry date is required"),
-  maxUsage: import_zod.z.number().min(1, "Max usage is required"),
-  usagePerPerson: import_zod.z.number().min(1, "Usage per person is required")
-});
+module.exports = __toCommonJS(getAllAttemptsByTestId_exports);
 
 // ../../shared/config/supabase.ts
 var import_supabase_js = require("@supabase/supabase-js");
@@ -3744,364 +3718,842 @@ var getSupabaseClient = (accessToken) => {
   });
 };
 
-// src/modules/coupon/coupon.repository.ts
-var couponRepository = {
-  getMyCouponsAnalytics: async (facultyId, client) => {
+// src/modules/test/test.repository.ts
+var facultyTestRepository = {
+  createTestBaseDetails: async (data, facultyId, client) => {
     try {
-      const db = client ?? supabase;
-      const now = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace("Z", "+00");
-      const { count: activeCoupons, error: activeCouponsError } = await db.from("coupons").select("*", { count: "exact", head: true }).eq("faculty_id", facultyId).eq("is_deleted", false).eq("is_active", true).eq("is_draft", false).gt("expire_date", now);
-      if (activeCouponsError) throw new Error(activeCouponsError.message);
-      const { data: redemptions, error: redemptionsError } = await db.from("coupon_redemptions").select("student_id, save_amount").eq("faculty_id", facultyId);
-      if (redemptionsError) throw new Error(redemptionsError.message);
-      const totalRedeemedUsers = new Set(redemptions.map((r) => r.student_id)).size;
-      const totalSavingsGenerated = redemptions.reduce(
-        (sum, r) => sum + Number(r.save_amount),
-        0
-      );
+      const supabase2 = client ?? supabase;
+      const { data: course, error } = await supabase2.from("courses").select("*").eq("id", data?.course).eq("faculty_id", facultyId).single();
+      if (error) throw error;
+      if (!course) throw new Error("Course not found");
+      const { data: test, error: testError } = await supabase2.from("tests").insert({
+        faculty_id: facultyId,
+        unique_id: data.unique_id,
+        title: data.title,
+        course_id: data?.course,
+        module_id: data?.module || null,
+        // total_marks: data.totalMarks,
+        duration_minutes: data.duration,
+        instructions: data.instructions,
+        type: data.testType
+      }).select().single();
+      if (testError) throw testError;
+      const nextSortOrder = await getNextSortOrder(data?.course, data?.module && data.module.trim() !== "" ? data.module : null, supabase2);
+      console.log("nextSortOrder", nextSortOrder);
+      const { data: material, error: materialError } = await supabase2.from("course_materials").insert({
+        unique_id: data.unique_id,
+        course_id: data?.course,
+        folder_id: data?.module && data.module.trim() !== "" ? data.module : null,
+        sort_order: nextSortOrder,
+        title: data.title,
+        type: "TEST",
+        material_status: "PENDING"
+      }).select().single();
+      if (materialError) throw new Error(materialError.message);
+      const folderId = data?.module?.trim() ? data.module : null;
+      if (folderId) {
+        const { data: existingFolder, error: fetchError } = await supabase2.from("course_folders").select("total_test").eq("id", folderId).single();
+        if (fetchError) throw new Error(fetchError.message);
+        const currentCount = Number(existingFolder?.total_test ?? 0);
+        const { error: folderError } = await supabase2.from("course_folders").update({ total_test: currentCount + 1 }).eq("id", folderId);
+        if (folderError) throw new Error(folderError.message);
+      }
+      return test;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  // getMyAllTests: async (faculty_id: string, filter: string, page: number, limit: number, search: string) => {
+  //     try {
+  //         const from = (page - 1) * limit;
+  //         const to = from + limit - 1;
+  //         // ✅ No await here — keep it as a query builder
+  //         let query = supabase
+  //             .from("tests")
+  //             .select("*")
+  //             .eq("faculty_id", faculty_id);
+  //         if (filter !== "all") {
+  //             query = query.eq("is_draft", filter);
+  //         }
+  //         if (search) {
+  //             query = query.or(`title.ilike.%${search}%,chapter.ilike.%${search}%`);
+  //         }
+  //         // ✅ Only await at the final execution
+  //         const { data: result, error } = await query
+  //             .range(from, to)
+  //             .order("created_at", { ascending: false });
+  //         if (error) throw error;
+  //         return result;
+  //     } catch (error: any) {
+  //         console.log("error", error);
+  //         throw new Error(error?.message || JSON.stringify(error)); // ✅ also fix error serialization
+  //     }
+  // },
+  getMyAllTests: async (faculty_id, filter, page, limit, search, client) => {
+    const supabase2 = client ?? supabase;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    console.log("filter", filter);
+    console.log("faculty_id", faculty_id);
+    let filterValue = "all";
+    if (filter === "true") {
+      filterValue = true;
+    } else if (filter === "false") {
+      filterValue = false;
+    }
+    let query = supabase2.from("tests").select("*, courses(*), test_attempts(count)", { count: "exact" }).eq("faculty_id", faculty_id).eq("is_deleted", false);
+    if (filterValue !== "all") {
+      console.log("filter)))))))))))))))))))))))))))))))))))))))))", filter);
+      query = query.eq("is_draft", filterValue);
+    }
+    if (search) {
+      query = query.or(`title.ilike.%${search}%`);
+    }
+    const { data, error, count } = await query.range(from, to).order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    const dataWithAttemptCount = (data ?? []).map((test) => {
+      const attempt_count = test.test_attempts?.[0]?.count ?? 0;
+      const { test_attempts: _attempts, ...rest } = test;
+      return { ...rest, attempt_count };
+    });
+    return { data: dataWithAttemptCount, total: count ?? 0 };
+  },
+  getTestsPageAnalytics: async (facultyId, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { count: activeTests, error: activeError } = await supabase2.from("tests").select("*", { count: "exact", head: true }).eq("faculty_id", facultyId).eq("is_draft", false).eq("is_deleted", false);
+      if (activeError) throw new Error(activeError.message);
+      const { count: draftTests, error: draftError } = await supabase2.from("tests").select("*", { count: "exact", head: true }).eq("faculty_id", facultyId).eq("is_draft", true).eq("is_deleted", false);
+      if (draftError) throw new Error(draftError.message);
+      const { count: totalCompletedAttempts, error: attemptError } = await supabase2.from("test_attempts").select("tests!inner(faculty_id)", { count: "exact", head: true }).eq("tests.faculty_id", facultyId).not("submitted_at", "is", null);
+      if (attemptError) throw new Error(attemptError.message);
       return {
-        active_coupons: activeCoupons ?? 0,
-        total_redeemed_users: totalRedeemedUsers,
-        total_savings_generated: totalSavingsGenerated
+        activeTests: activeTests ?? 0,
+        draftTests: draftTests ?? 0,
+        totalCompletedAttempts: totalCompletedAttempts ?? 0
       };
     } catch (error) {
       throw new Error(error.message);
     }
   },
-  // get my all coupon enabled courses
-  createCoupon: async (couponData, facultyId, client) => {
-    const db = client ?? supabase;
-    const isAllCourses = couponData.courses.includes("all");
-    if (!isAllCourses) {
-      const { data: courses, error: coursesError } = await db.from("courses").select("id").in("id", couponData.courses).eq("faculty_id", facultyId).eq("is_deleted", false).eq("enableCoupons", true);
-      if (coursesError) {
-        throw new Error(coursesError.message);
-      }
-      if (!courses || courses.length !== couponData.courses.length) {
-        throw new Error(
-          "One or more selected courses are invalid or do not belong to you."
-        );
-      }
-    }
-    const { data: existingCoupon, error: couponCheckError } = await db.from("coupons").select("id").eq("code", couponData.code).eq("is_deleted", false).maybeSingle();
-    if (couponCheckError) {
-      throw new Error("Coupon code already exists. Please use a different code.");
-    }
-    if (existingCoupon) {
-      throw new Error(
-        "Coupon code already exists. Please use a different code."
-      );
-    }
-    const { data: coupon, error: couponError } = await db.from("coupons").insert({
-      code: couponData.code,
-      discount_type: couponData.discountType,
-      discount: couponData.discountValue,
-      expire_date: couponData.expiryDate,
-      max_usage: couponData.maxUsage,
-      usage_per_person: couponData.usagePerPerson,
-      faculty_id: facultyId,
-      is_active: true,
-      is_all_courses: isAllCourses,
-      is_draft: false
-    }).select().single();
-    if (couponError) {
-      if (couponError.code === "23505") {
-        throw new Error(
-          "Coupon code already exists. Please use a different code."
-        );
-      }
-      throw new Error(couponError.message);
-    }
-    if (!isAllCourses) {
-      const couponCourseRows = couponData.courses.map((courseId) => ({
-        coupon_id: coupon.id,
-        course_id: courseId
-      }));
-      const { error: couponCoursesError } = await db.from("coupon_courses").insert(couponCourseRows);
-      if (couponCoursesError) {
-        throw new Error(couponCoursesError.message);
-      }
-    }
-    return coupon;
-  },
-  getMyCourses: async (facultyId, client) => {
-    console.log("facultyId", facultyId);
-    try {
-      const db = client ?? supabase;
-      const { data: courses, error } = await db.from("courses").select("id, title").eq("faculty_id", facultyId).eq("is_draft", false).eq("enableCoupons", true).order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return courses;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  // getMyCoupons: async (facultyId: string, filter: "active" | "deactivate" | "expired", page: number = 1, limit: number = 10, search: string = "", client?: SupabaseClient) => {
+  // getTestAnalytics: async (testId: string, client?: SupabaseClient) => {
   //     try {
-  //         const db = client ?? anonSupabase;
-  //         // Calculate offset
-  //         const from = (page - 1) * limit;
-  //         const to = from + limit - 1;
-  //         // Base query
-  //         let query = db
-  //             .from("coupons")
+  //         const supabase = client ?? anonSupabase;
+  //         // 1. Get test details (allocated duration)
+  //         const { data: test, error: testError } = await supabase
+  //             .from('tests')
+  //             .select('duration_minutes, title')
+  //             .eq('id', testId)
+  //             .single();
+  //         if (testError) throw new Error(testError.message);
+  //         // 2. Get all attempts for this test
+  //         const { data: attempts, error: attemptsError } = await supabase
+  //             .from('test_attempts')
   //             .select(`
-  //                 *,
-  //                 coupon_courses (
-  //                     course_id,
-  //                     courses (
-  //                         id,
-  //                         title
-  //                     )
+  //                 id,
+  //                 student_id,
+  //                 started_at,
+  //                 submitted_at,
+  //                 correct_count,
+  //                 total_questions,
+  //                 profiles!test_attempts_student_id_fkey (
+  //                     id,
+  //                     first_name,
+  //                     last_name
   //                 )
-  //             `, { count: "exact" })
-  //             .eq("faculty_id", facultyId)
-  //             .eq("is_deleted", false)
-  //             .order("created_at", { ascending: false })
-  //             .range(from, to);
-  //         // Apply filter
-  //         if (filter === "active") {
-  //             query = query.eq("is_active", true);
-  //         } else if (filter === "deactivate") {
-  //             query = query.eq("is_active", false);
-  //         } else if (filter === "expired") {
-  //             const now = new Date().toISOString();
-  //             query = query.lt("expire_date", now).not("expire_date", "is", null);
+  //             `)
+  //             .eq('test_id', testId);
+  //         if (attemptsError) throw new Error(attemptsError.message);
+  //         const totalAttempts     = attempts?.length ?? 0;
+  //         const completedAttempts = attempts?.filter(a => a.submitted_at !== null) ?? [];
+  //         const completedCount    = completedAttempts.length;
+  //         // 3. Completion rate
+  //         const completionRate = totalAttempts > 0
+  //             ? Math.round((completedCount / totalAttempts) * 100)
+  //             : 0;
+  //         // 4. Avg duration (only from completed attempts)
+  //         let avgDurationSeconds = 0;
+  //         if (completedCount > 0) {
+  //             const totalSeconds = completedAttempts.reduce((sum, a) => {
+  //                 const start = new Date(a.started_at).getTime();
+  //                 const end   = new Date(a.submitted_at!).getTime();
+  //                 return sum + Math.floor((end - start) / 1000);
+  //             }, 0);
+  //             avgDurationSeconds = Math.floor(totalSeconds / completedCount);
   //         }
-  //         // Apply search
-  //         if (search.trim()) {
-  //             query = query.or(`code.ilike.%${search}%,title.ilike.%${search}%`);
-  //         }
-  //         const { data: coupons, error, count } = await query;
-  //         if (error) throw new Error(error.message);
-  //         // Calculate pagination meta
-  //         const totalPages = Math.ceil((count ?? 0) / limit);
-  //         const hasNextPage = page < totalPages;
-  //         const hasPrevPage = page > 1;
-  //         return {
-  //             coupons,
-  //             pagination: {
-  //                 total: count ?? 0,
-  //                 total_pages: totalPages,
-  //                 current_page: page,
-  //                 limit,
-  //                 has_next: hasNextPage,
-  //                 has_prev: hasPrevPage,
+  //         const avgHours   = Math.floor(avgDurationSeconds / 3600);
+  //         const avgMinutes = Math.floor((avgDurationSeconds % 3600) / 60);
+  //         // 5. Top student — highest correct_count among completed attempts
+  //         //    tie-break: whoever took less time
+  //         let topStudent: {
+  //             name: string;
+  //             score: number;
+  //             totalQuestions: number;
+  //         } | null = null;
+  //         if (completedCount > 0) {
+  //             const top = completedAttempts.reduce((best, current) => {
+  //                 if (!best) return current;
+  //                 const bestScore    = best.correct_count    ?? 0;
+  //                 const currentScore = current.correct_count ?? 0;
+  //                 if (currentScore > bestScore) return current;
+  //                 // tie-break: less time taken wins
+  //                 if (currentScore === bestScore) {
+  //                     const bestTime    = new Date(best.submitted_at!).getTime()    - new Date(best.started_at).getTime();
+  //                     const currentTime = new Date(current.submitted_at!).getTime() - new Date(current.started_at).getTime();
+  //                     return currentTime < bestTime ? current : best;
+  //                 }
+  //                 return best;
+  //             }, null as typeof completedAttempts[0] | null);
+  //             if (top) {
+  //                 topStudent = {
+  //                     name:           `${(top.profiles as any)?.first_name ?? ''} ${(top.profiles as any)?.last_name ?? ''}`.trim() || 'Unknown',
+  //                     score:          top.correct_count    ?? 0,
+  //                     totalQuestions: top.total_questions  ?? 0,
+  //                 };
   //             }
+  //         }
+  //         return {
+  //             // Completion rate card
+  //             completedCount,                        // 6
+  //             totalAttempts,                         // 6
+  //             completionRate,                        // 100
+  //             // Avg duration card
+  //             avgDuration: {
+  //                 hours:   avgHours,                 // 1
+  //                 minutes: avgMinutes,               // 42
+  //                 display: avgHours > 0             
+  //                     ? `${avgHours}h ${avgMinutes}m`
+  //                     : `${avgMinutes}m`,            // "1h 42m"
+  //             },
+  //             // Allocated duration from test table
+  //             allocatedDuration: {
+  //                 raw:     test.duration_minutes,    // "120"
+  //                 display: (() => {
+  //                     const mins = parseInt(test.duration_minutes);
+  //                     const h    = Math.floor(mins / 60);
+  //                     const m    = mins % 60;
+  //                     return h > 0 ? `${h}h ${m.toString().padStart(2,'0')}m` : `${m}m`;
+  //                 })(),                              // "2h 00m"
+  //             },
+  //             // Top student card
+  //             topStudent,                            // { name, score, totalQuestions }
   //         };
   //     } catch (error: any) {
   //         throw new Error(error.message);
   //     }
   // },
-  getMyCoupons: async (facultyId, filter, page = 1, limit = 10, search = "", client) => {
+  getTestAnalytics: async (testId, client) => {
     try {
-      const db = client ?? supabase;
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const { error: deactivateError } = await db.from("coupons").update({ is_active: false }).eq("faculty_id", facultyId).eq("is_active", true).eq("is_deleted", false).lt("expire_date", now);
-      if (deactivateError) throw new Error(deactivateError.message);
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
-      let query = db.from("coupons").select(`
-                    *,
-                    coupon_courses (
-                        course_id,
-                        courses (
-                            id,
-                            title
-                        )
+      const supabase2 = client ?? supabase;
+      const { data: test, error: testError } = await supabase2.from("tests").select("duration_minutes, title, question_count").eq("id", testId).single();
+      if (testError) throw new Error(testError.message);
+      const { data: attempts, error: attemptsError } = await supabase2.from("test_attempts").select(`
+                    id,
+                    student_id,
+                    started_at,
+                    submitted_at,
+                    correct_count,
+                    total_questions,
+                    profiles!test_attempts_student_id_fkey (
+                        id,
+                        first_name,
+                        last_name
                     )
-                `, { count: "exact" }).eq("faculty_id", facultyId).eq("is_deleted", false).order("created_at", { ascending: false }).range(from, to);
-      if (filter === "active") {
-        query = query.eq("is_active", true).gt("expire_date", now);
-      } else if (filter === "deactivate") {
-        query = query.eq("is_active", false);
-      } else if (filter === "expired") {
-        query = query.lt("expire_date", now).not("expire_date", "is", null);
+                `).eq("test_id", testId);
+      if (attemptsError) throw new Error(attemptsError.message);
+      const totalAttempts = attempts?.length ?? 0;
+      const completedAttempts = attempts?.filter((a) => a.submitted_at !== null) ?? [];
+      const completedCount = completedAttempts.length;
+      const completionRate = totalAttempts > 0 ? Math.round(completedCount / totalAttempts * 100) : 0;
+      let avgDurationSeconds = 0;
+      if (completedCount > 0) {
+        const totalSeconds = completedAttempts.reduce((sum, a) => {
+          const start = new Date(a.started_at).getTime();
+          const end = new Date(a.submitted_at).getTime();
+          return sum + Math.floor((end - start) / 1e3);
+        }, 0);
+        avgDurationSeconds = Math.floor(totalSeconds / completedCount);
       }
-      if (search.trim()) {
-        query = query.or(`code.ilike.%${search}%,description.ilike.%${search}%`);
+      const avgHours = Math.floor(avgDurationSeconds / 3600);
+      const avgMinutes = Math.floor(avgDurationSeconds % 3600 / 60);
+      let topStudent = null;
+      if (completedCount > 0) {
+        const top = completedAttempts.reduce((best, current) => {
+          if (!best) return current;
+          const bestScore = best.correct_count ?? 0;
+          const currentScore = current.correct_count ?? 0;
+          if (currentScore > bestScore) return current;
+          if (currentScore === bestScore) {
+            const bestTime = new Date(best.submitted_at).getTime() - new Date(best.started_at).getTime();
+            const currentTime = new Date(current.submitted_at).getTime() - new Date(current.started_at).getTime();
+            return currentTime < bestTime ? current : best;
+          }
+          return best;
+        }, null);
+        if (top) {
+          topStudent = {
+            name: `${top.profiles?.first_name ?? ""} ${top.profiles?.last_name ?? ""}`.trim() || "Unknown",
+            score: top.correct_count ?? 0,
+            totalQuestions: top.total_questions ?? 0
+          };
+        }
       }
-      const { data: coupons, error, count } = await query;
-      if (error) throw new Error(error.message);
-      const totalPages = Math.ceil((count ?? 0) / limit);
-      const hasNextPage = page < totalPages;
-      const hasPrevPage = page > 1;
       return {
-        coupons,
-        pagination: {
-          total: count ?? 0,
-          total_pages: totalPages,
-          current_page: page,
-          limit,
-          has_next: hasNextPage,
-          has_prev: hasPrevPage
+        // Completion rate card
+        completedCount,
+        totalAttempts,
+        completionRate,
+        // Avg duration card
+        avgDuration: {
+          hours: avgHours,
+          minutes: avgMinutes,
+          display: avgHours > 0 ? `${avgHours}h ${avgMinutes}m` : `${avgMinutes}m`
+        },
+        // Allocated duration from test table
+        allocatedDuration: {
+          raw: test.duration_minutes,
+          display: (() => {
+            const mins = parseInt(test.duration_minutes);
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            return h > 0 ? `${h}h ${m.toString().padStart(2, "0")}m` : `${m}m`;
+          })()
+        },
+        // Top student card — default values when no attempts yet
+        topStudent: topStudent ?? {
+          name: "No attempts yet",
+          score: 0,
+          totalQuestions: test.question_count ?? 0
         }
       };
     } catch (error) {
       throw new Error(error.message);
     }
   },
-  updateCouponStatus: async (facultyId, couponId, status, client) => {
+  getAllAttemptsByTestId: async (test_id, page, limit, client) => {
     try {
-      console.log("facultyId", facultyId);
-      console.log("couponId", couponId);
-      console.log("status", status);
-      const db = client ?? supabase;
-      const { data: coupon, error } = await db.from("coupons").update({
-        is_active: status
-      }).eq("id", couponId).eq("faculty_id", facultyId).select().single();
-      if (error) throw new Error(error.message);
-      return coupon;
+      const supabase2 = client ?? supabase;
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      const { data: attempts, error: attemptsError, count } = await supabase2.from("test_attempts").select(`
+                    id,
+                    test_id,
+                    student_id,
+                    attempt_number,
+                    started_at,
+                    submitted_at,
+                    total_questions,
+                    attempted_count,
+                    correct_count,
+                    created_at,
+                    profiles!test_attempts_student_id_fkey (
+                        id,
+                        first_name,
+                        last_name
+                    )
+                `, { count: "exact" }).eq("test_id", test_id).order("submitted_at", { ascending: false, nullsFirst: false }).order("started_at", { ascending: false }).range(from, to);
+      if (attemptsError) throw new Error(attemptsError.message);
+      const PASS_THRESHOLD_PERCENT = 50;
+      const data = (attempts ?? []).map((attempt) => {
+        const profile = attempt.profiles;
+        const firstName = profile?.first_name ?? "";
+        const lastName = profile?.last_name ?? "";
+        const correct = attempt.correct_count ?? 0;
+        const total = attempt.total_questions ?? 0;
+        const isCompleted = attempt.submitted_at !== null;
+        const percentage = total > 0 ? Math.round(correct / total * 100) : 0;
+        let resultStatus;
+        let resultDisplay;
+        if (!isCompleted) {
+          resultStatus = "IN_PROGRESS";
+          resultDisplay = "In progress";
+        } else if (percentage >= PASS_THRESHOLD_PERCENT) {
+          resultStatus = "PASS";
+          resultDisplay = `PASS \u2022 ${percentage}%`;
+        } else {
+          resultStatus = "FAIL";
+          resultDisplay = `FAIL \u2022 ${percentage}%`;
+        }
+        const timing = formatAttemptTiming(
+          attempt.started_at,
+          attempt.submitted_at
+        );
+        return {
+          id: attempt.id,
+          test_id: attempt.test_id,
+          student_id: attempt.student_id,
+          attempt_number: attempt.attempt_number,
+          first_name: firstName,
+          last_name: lastName,
+          studentName: `${firstName} ${lastName}`.trim() || "Unknown",
+          started_at: attempt.started_at,
+          submitted_at: attempt.submitted_at,
+          total_questions: attempt.total_questions,
+          attempted_count: attempt.attempted_count,
+          correct_count: attempt.correct_count,
+          isCompleted,
+          timing,
+          score: {
+            correct,
+            total,
+            display: `${correct} / ${total}`
+          },
+          result: {
+            status: resultStatus,
+            percentage: isCompleted ? percentage : null,
+            display: resultDisplay
+          }
+        };
+      });
+      return { data, total: count ?? 0 };
     } catch (error) {
       throw new Error(error.message);
     }
   },
-  updateCoupon: async (facultyId, couponId, couponData, client) => {
+  getTestById: async (test_id, client) => {
     try {
-      const db = client ?? supabase;
-      const isAllCourses = couponData.courses.includes("all");
-      if (!isAllCourses) {
-        const { data: courses, error: coursesError } = await db.from("courses").select("id").in("id", couponData.courses).eq("faculty_id", facultyId).eq("is_deleted", false).eq("enableCoupons", true);
-        if (coursesError) {
-          throw new Error(coursesError.message);
-        }
-        if (!courses || courses.length !== couponData.courses.length) {
-          throw new Error(
-            "One or more selected courses are invalid or do not belong to you."
-          );
-        }
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("tests").select("*").eq("id", test_id).single();
+      if (error) throw error;
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  updateTest: async (test_id, data, facultyId, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      console.log("data", data);
+      if (data.course) {
+        const { data: course, error: error2 } = await supabase2.from("courses").select("*").eq("id", data.course).eq("faculty_id", facultyId).single();
+        if (error2) throw error2;
+        if (!course) throw new Error("Course not found");
       }
-      const { data: coupon, error } = await db.from("coupons").update({
-        expire_date: couponData.expiryDate,
-        max_usage: couponData.maxUsage,
-        usage_per_person: couponData.usagePerPerson,
-        is_all_courses: isAllCourses
-      }).eq("id", couponId).eq("faculty_id", facultyId).select().single();
-      if (error) throw new Error(error.message);
-      const { data: existingCouponCourses, error: fetchExistingError } = await db.from("coupon_courses").select("course_id").eq("coupon_id", couponId);
-      if (fetchExistingError) {
-        throw new Error(fetchExistingError.message);
+      console.log("test_id", test_id);
+      const { data: result, error } = await supabase2.from("tests").update({
+        course_id: data.course,
+        module_id: data.module,
+        title: data.title,
+        total_marks: data.totalMarks,
+        duration_minutes: data.duration,
+        instructions: data.instructions,
+        type: data.testType
+      }).eq("id", test_id).select().single();
+      if (error) throw error;
+      console.log("result", result);
+      const { data: material, error: materialError } = await supabase2.from("course_materials").update({
+        title: data.title
+      }).eq("unique_id", result.unique_id).select().single();
+      if (materialError) throw materialError;
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  deleteTest: async (test_id, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("tests").update({ is_deleted: true }).eq("id", test_id).select().single();
+      if (error) throw error;
+      const { data: module2, error: moduleError } = await supabase2.from("course_materials").update({ is_deleted: true }).eq("unique_id", result.unique_id).select().single();
+      if (moduleError) throw moduleError;
+      if (module2?.folder_id) {
+        const { data: existingFolder, error: fetchError } = await supabase2.from("course_folders").select("total_test").eq("id", module2.folder_id).single();
+        if (fetchError) throw new Error(fetchError.message);
+        const currentCount = Number(existingFolder?.total_test ?? 0);
+        const { error: folderError } = await supabase2.from("course_folders").update({ total_test: Math.max(0, currentCount - 1) }).eq("id", module2.folder_id);
+        if (folderError) throw new Error(folderError.message);
       }
-      const existingCourseIds = (existingCouponCourses ?? []).map(
-        (row) => row.course_id
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  createTestQuestion: async (data, test_id, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { data: lastQuestion, error: countError } = await supabase2.from("questions").select("question_number").eq("test_id", test_id).order("question_number", { ascending: false }).limit(1).maybeSingle();
+      if (countError) throw countError;
+      const nextQuestionNumber = (lastQuestion?.question_number ?? 0) + 1;
+      const { data: result, error } = await supabase2.from("questions").insert({
+        test_id,
+        question: data.question,
+        material_id: data.material_id,
+        material_title: data.material_title,
+        question_number: nextQuestionNumber
+        // ✅
+      }).select().single();
+      const { data: testResult, error: testError } = await supabase2.from("tests").update({
+        question_count: nextQuestionNumber
+      }).eq("id", test_id).select().single();
+      if (testError) throw testError;
+      if (error) throw error;
+      if (data.options && data.options.length > 0) {
+        data.options.forEach(async (option) => {
+          const { data: optionResult, error: optionError } = await supabase2.from("options").insert({
+            question_id: result.id,
+            option_text: option.text,
+            is_correct: option.is_correct,
+            label: option.label
+          }).select().single();
+          if (optionError) throw optionError;
+        });
+      }
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  // getTestQuestionByTestId: async (test_id: string) => {
+  //     try {
+  //         const { data: result, error } = await supabase.from("questions")
+  //             .select(`
+  //             *,
+  //             options (
+  //                 id,
+  //                 option_text,
+  //                 is_correct,
+  //                 label
+  //             )
+  //         `)
+  //             .eq("test_id", test_id)
+  //             .order("question_number", { ascending: true }); // ✅ order by question_number not created_at
+  //         if (error) throw error;
+  //         console.log("result", result);
+  //         // map result: only MCQ questions get options, others get empty array
+  //         const mapped = result.map((question: any) => ({
+  //             ...question,
+  //             options: question.type === 'mcq' ? (question.options ?? []) : [],
+  //         }));
+  //         return mapped;
+  //     } catch (error: any) {
+  //         console.log("error", error);
+  //         throw new Error(error?.message ?? JSON.stringify(error));
+  //     }
+  // },
+  getTestQuestionByTestId: async (test_id, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      if (!test_id || test_id.trim() === "") {
+        throw new Error("test_id is required");
+      }
+      const { data: result, error } = await supabase2.from("questions").select(`
+                *,
+                options (
+                    id,
+                    option_text,
+                    is_correct,
+                    label
+                )
+            `).eq("test_id", test_id).order("question_number", { ascending: true });
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(error.message);
+      }
+      if (!result) {
+        console.warn("No questions found for test_id:", test_id);
+        return [];
+      }
+      return result;
+    } catch (error) {
+      console.error("Error in getTestQuestionByTestId:", error);
+      return {
+        success: false,
+        error: error?.message ?? "Unknown error occurred",
+        data: null
+      };
+    }
+  },
+  updateTestQuestion: async (data, question_id, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("questions").update({
+        question: data.question
+        // type: data.type,
+        // marks: data.marks,
+      }).eq("id", question_id).select().single();
+      if (error) throw error;
+      if (data.options && data.options.length > 0) {
+        data.options.forEach(async (option) => {
+          const { data: optionResult, error: optionError } = await supabase2.from("options").upsert({
+            question_id: result.id,
+            option_text: option.text,
+            is_correct: option.is_correct,
+            label: option.label
+          }).eq("question_id", question_id).eq("label", option.label).select().single();
+          if (optionError) throw optionError;
+        });
+      }
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  deleteTestQuestion: async (question_id, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("questions").delete().eq("id", question_id).select().single();
+      if (error) throw error;
+      const { data: deleteResult, error: deleteError } = await supabase2.from("options").delete().eq("question_id", question_id);
+      if (deleteError) throw deleteError;
+      const { error: testError } = await supabase2.rpc(
+        "decrement_question_count",
+        {
+          test_id: result.test_id
+        }
       );
-      if (isAllCourses) {
-        if (existingCourseIds.length > 0) {
-          const { error: deleteError } = await db.from("coupon_courses").delete().eq("coupon_id", couponId);
-          if (deleteError) {
-            throw new Error(deleteError.message);
-          }
-        }
-      } else {
-        const newCourseIds = couponData.courses;
-        const toRemove = existingCourseIds.filter(
-          (id) => !newCourseIds.includes(id)
-        );
-        const toAdd = newCourseIds.filter(
-          (id) => !existingCourseIds.includes(id)
-        );
-        if (toRemove.length > 0) {
-          const { error: deleteError } = await db.from("coupon_courses").delete().eq("coupon_id", couponId).in("course_id", toRemove);
-          if (deleteError) {
-            throw new Error(deleteError.message);
-          }
-        }
-        if (toAdd.length > 0) {
-          const couponCourseRows = toAdd.map((courseId) => ({
-            coupon_id: couponId,
-            course_id: courseId
-          }));
-          const { error: couponCoursesError } = await db.from("coupon_courses").insert(couponCourseRows);
-          if (couponCoursesError) {
-            throw new Error(couponCoursesError.message);
-          }
-        }
-      }
-      return coupon;
+      if (testError) throw testError;
+      return result;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   },
-  deleteCoupon: async (facultyId, couponId, client) => {
+  publishTest: async (test_id, client) => {
     try {
-      const db = client ?? supabase;
-      const { data: coupon, error } = await db.from("coupons").update({
-        is_deleted: true
-      }).eq("id", couponId).eq("faculty_id", facultyId).select().single();
-      if (error) throw new Error(error.message);
-      return coupon;
+      const supabase2 = client ?? supabase;
+      const { data: result, error } = await supabase2.from("tests").update({
+        is_draft: false
+      }).eq("id", test_id).select().single();
+      const { data: materialResult, error: materialError } = await supabase2.from("course_materials").update({
+        material_status: "READY" /* READY */
+      }).eq("unique_id", result.unique_id).select().single();
+      if (materialError) throw materialError;
+      if (error) throw error;
+      return result;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   }
 };
+function formatTime12h(iso) {
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+function formatDurationDisplay(totalSeconds) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor(totalSeconds % 3600 / 60);
+  return hours > 0 ? `${hours}h ${minutes}m total` : `${minutes}m total`;
+}
+function formatAttemptTiming(startedAt, submittedAt) {
+  const start = formatTime12h(startedAt);
+  if (!submittedAt) {
+    return {
+      start,
+      end: null,
+      rangeDisplay: start,
+      durationSeconds: null,
+      durationDisplay: null
+    };
+  }
+  const end = formatTime12h(submittedAt);
+  const durationSeconds = Math.max(
+    0,
+    Math.floor(
+      (new Date(submittedAt).getTime() - new Date(startedAt).getTime()) / 1e3
+    )
+  );
+  return {
+    start,
+    end,
+    rangeDisplay: `${start} \u2013 ${end}`,
+    durationSeconds,
+    durationDisplay: formatDurationDisplay(durationSeconds)
+  };
+}
+async function getNextSortOrder(courseId, parentId, client) {
+  const supabase2 = client ?? supabase;
+  let folderQuery = supabase2.from("course_folders").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
+  let materialQuery = supabase2.from("course_materials").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
+  if (parentId === null) {
+    folderQuery = folderQuery.is("parent_id", null);
+    materialQuery = materialQuery.is("folder_id", null);
+  } else {
+    folderQuery = folderQuery.eq("parent_id", parentId);
+    materialQuery = materialQuery.eq("folder_id", parentId);
+  }
+  const [{ data: lastFolder }, { data: lastMaterial }] = await Promise.all([folderQuery, materialQuery]);
+  const lastFolderOrder = lastFolder?.[0]?.sort_order ?? 0;
+  const lastMaterialOrder = lastMaterial?.[0]?.sort_order ?? 0;
+  return Math.max(lastFolderOrder, lastMaterialOrder) + 1;
+}
 
-// src/modules/coupon/coupon.service.ts
-var couponService = {
-  getMyCouponsAnalytics: async (event) => {
+// ../../shared/validators/test.validator.ts
+var import_zod = require("zod");
+var createTestBaseDetailsSchema = import_zod.z.object({
+  unique_id: import_zod.z.string().min(1, "Unique ID is required"),
+  title: import_zod.z.string().min(1, "Title is required"),
+  module: import_zod.z.string().optional(),
+  course: import_zod.z.string().min(1, "Course ID is required"),
+  // totalMarks: z.string().min(1, "Total marks is required"),
+  duration: import_zod.z.string().min(1, "Duration is required"),
+  instructions: import_zod.z.string().optional(),
+  testType: import_zod.z.string()
+});
+var createTestQuestionSchema = import_zod.z.object({
+  // test_id: z.string().min(1, "Test ID is required"),
+  question: import_zod.z.string().min(1, "Question is required"),
+  type: import_zod.z.string().min(1, "Type is required"),
+  marks: import_zod.z.number().min(1, "Marks is required")
+});
+
+// ../../shared/utils/validate.ts
+var validate = (schema, data) => {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.log("result>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", result);
+    const errors = result?.error?.errors?.map((e) => ({
+      field: e.path.join("."),
+      message: e.message
+    }));
+    throw { statusCode: 400, errors };
+  }
+  return result.data;
+};
+
+// src/modules/test/test.service.ts
+var facultyTestService = {
+  createTestBaseDetails: async (event) => {
     try {
-      const analytics = await couponRepository.getMyCouponsAnalytics(event.user.id, event.supabase);
-      return analytics;
+      console.log("event%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%", JSON.parse(event.body));
+      const validatedData = validate(createTestBaseDetailsSchema, JSON.parse(event.body));
+      const result = await facultyTestRepository.createTestBaseDetails(validatedData, event.user.id, event.supabase);
+      return result;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   },
-  createCoupon: async (event) => {
+  getMyAllTests: async (event) => {
     try {
-      const validatedData = validate(couponValidator, JSON.parse(event.body));
-      const coupon = await couponRepository.createCoupon(validatedData, event.user.id, event.supabase);
-      return coupon;
+      const { filter, page, limit, search } = event.queryStringParameters;
+      const result = await facultyTestRepository.getMyAllTests(
+        event.user.id,
+        filter,
+        page,
+        limit,
+        search,
+        event.supabase
+      );
+      return result;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   },
-  getMyCourses: async (event) => {
+  getTestsPageAnalytics: async (event) => {
     try {
-      const courses = await couponRepository.getMyCourses(event.user.id, event.supabase);
-      return courses;
+      const result = await facultyTestRepository.getTestsPageAnalytics(event.user.id, event.supabase);
+      return result;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   },
-  getMyCoupons: async (event) => {
+  getTestAnalytics: async (event) => {
     try {
-      const filter = event.queryStringParameters?.filter || "active";
-      const page = event.queryStringParameters?.page || 1;
-      const limit = event.queryStringParameters?.limit || 10;
-      const search = event.queryStringParameters?.search || "";
-      const coupons = await couponRepository.getMyCoupons(event.user.id, filter, page, limit, search, event.supabase);
-      return coupons;
+      const result = await facultyTestRepository.getTestAnalytics(event.pathParameters.testId, event.supabase);
+      return result;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   },
-  updateCouponStatus: async (event) => {
+  getAllAttemptsByTestId: async (event) => {
     try {
-      const couponId = event.pathParameters?.couponId;
-      console.log("body", JSON.parse(event.body));
-      const status = JSON.parse(event.body).status;
-      const coupon = await couponRepository.updateCouponStatus(event.user.id, couponId, status, event.supabase);
-      return coupon;
+      const { page, limit } = event.queryStringParameters ?? {};
+      const result = await facultyTestRepository.getAllAttemptsByTestId(
+        event.pathParameters.testId,
+        page,
+        limit,
+        event.supabase
+      );
+      return result;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   },
-  updateCoupon: async (event) => {
+  getTestById: async (event) => {
     try {
-      const couponId = event.pathParameters?.couponId;
-      const couponData = JSON.parse(event.body);
-      const coupon = await couponRepository.updateCoupon(event.user.id, couponId, couponData, event.supabase);
-      return coupon;
+      const result = await facultyTestRepository.getTestById(event.pathParameters.testId, event.supabase);
+      return result;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
     }
   },
-  deleteCoupon: async (event) => {
+  updateTest: async (event) => {
     try {
-      const couponId = event.pathParameters?.couponId;
-      const coupon = await couponRepository.deleteCoupon(event.user.id, couponId, event.supabase);
-      return coupon;
+      const result = await facultyTestRepository.updateTest(event.pathParameters.testId, JSON.parse(event.body), event.user.id, event.supabase);
+      return result;
     } catch (error) {
-      throw new Error(error.message);
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  deleteTest: async (event) => {
+    try {
+      const result = await facultyTestRepository.deleteTest(event.pathParameters.testId, event.supabase);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  createTestQuestion: async (event) => {
+    try {
+      const result = await facultyTestRepository.createTestQuestion(JSON.parse(event.body), event.pathParameters.testId, event.supabase);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getTestQuestionByTestId: async (event) => {
+    try {
+      const result = await facultyTestRepository.getTestQuestionByTestId(event.pathParameters.testId, event.supabase);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw error;
+    }
+  },
+  updateTestQuestion: async (event) => {
+    try {
+      const result = await facultyTestRepository.updateTestQuestion(JSON.parse(event.body), event.pathParameters.questionId, event.supabase);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  deleteTestQuestion: async (event) => {
+    try {
+      const result = await facultyTestRepository.deleteTestQuestion(event.pathParameters.questionId, event.supabase);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  publishTest: async (event) => {
+    try {
+      const result = await facultyTestRepository.publishTest(event.pathParameters.testId, event.supabase);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
     }
   }
 };
@@ -4178,13 +4630,13 @@ var compose = (...middlewares) => (handler2) => {
   return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
 };
 
-// src/functions/coupon/getAllCoupon.ts
+// src/functions/test/getAllAttemptsByTestId.ts
 var handlerFun = async (event) => {
   try {
-    const coupons = await couponService.getMyCoupons(event);
-    return handleResponse.success(coupons, "Coupons fetched successfully", 200);
+    const test = await facultyTestService.getAllAttemptsByTestId(event);
+    return handleResponse.success(test, "All attempts by test id fetched successfully", 200);
   } catch (err) {
-    return handleResponse.error(err, "Error fetching coupons", 400);
+    return handleResponse.error(err, "Error fetching all attempts by test id", 400);
   }
 };
 var handler = compose(
@@ -4197,4 +4649,4 @@ var handler = compose(
   handler,
   handlerFun
 });
-//# sourceMappingURL=getAllCoupon.js.map
+//# sourceMappingURL=getAllAttemptsByTestId.js.map

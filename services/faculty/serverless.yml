@@ -776,6 +776,14 @@ functions:
           method: get
           cors:   true
 
+  getAllAttemptsByTestId:
+    handler: src/functions/test/getAllAttemptsByTestId.handler
+    events:
+      - http:
+          path:   faculty/test/{testId}/attempts
+          method: get
+          cors:   true
+
   getTestById:
     handler: src/functions/test/getTestById.handler
     events:
@@ -905,6 +913,25 @@ functions:
           path:   faculty/coupon/{couponId}
           method: delete
           cors:   true
+
+
+  # ── Bank ─────────────────────────────────────────────────────
+  saveBankDetails:
+    handler: src/functions/bank/saveBankDetails.handler
+    events:
+      - http:
+          path:   faculty/bank/details
+          method: post
+          cors:   true
+  
+  getBankDetails:
+    handler: src/functions/bank/getBankDetails.handler
+    events:
+      - http:
+          path:   faculty/bank/details
+          method: get
+          cors:   true
+  
 
   # ── Video ─────────────────────────────────────────────────────
   createVideoUploadProgress:

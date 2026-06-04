@@ -144,7 +144,7 @@ export const facultyTestRepository = {
 
         let query = supabase
             .from("tests")
-            .select("*, courses(*)", { count: "exact" }) // ✅ get total count
+            .select("*, courses(*), test_attempts(count)", { count: "exact" })
             .eq("faculty_id", faculty_id)
             .eq("is_deleted", false);
 
@@ -164,7 +164,13 @@ export const facultyTestRepository = {
 
         if (error) throw new Error(error.message);
 
-        return { data, total: count ?? 0 }; // ✅ return both
+        const dataWithAttemptCount = (data ?? []).map((test: { test_attempts?: { count: number }[] }) => {
+            const attempt_count = test.test_attempts?.[0]?.count ?? 0;
+            const { test_attempts: _attempts, ...rest } = test;
+            return { ...rest, attempt_count };
+        });
+
+        return { data: dataWithAttemptCount, total: count ?? 0 };
     },
 
     getTestsPageAnalytics: async (facultyId: string, client?: SupabaseClient) => {
@@ -470,6 +476,115 @@ export const facultyTestRepository = {
         }
     },
 
+    getAllAttemptsByTestId: async (
+        test_id: string,
+        page: number,
+        limit: number,
+        client?: SupabaseClient
+    ) => {
+        try {
+            const supabase = client ?? anonSupabase;
+            const from = (page - 1) * limit;
+            const to = from + limit - 1;
+
+            const { data: attempts, error: attemptsError, count } = await supabase
+                .from('test_attempts')
+                .select(`
+                    id,
+                    test_id,
+                    student_id,
+                    attempt_number,
+                    started_at,
+                    submitted_at,
+                    total_questions,
+                    attempted_count,
+                    correct_count,
+                    created_at,
+                    profiles!test_attempts_student_id_fkey (
+                        id,
+                        first_name,
+                        last_name
+                    )
+                `, { count: 'exact' })
+                .eq('test_id', test_id)
+                .order('submitted_at', { ascending: false, nullsFirst: false })
+                .order('started_at', { ascending: false })
+                .range(from, to);
+
+            if (attemptsError) throw new Error(attemptsError.message);
+
+            const PASS_THRESHOLD_PERCENT = 50;
+
+            const data = (attempts ?? []).map((attempt) => {
+                const profile = attempt.profiles as {
+                    first_name?: string | null;
+                    last_name?:  string | null;
+                } | null;
+
+                const firstName = profile?.first_name ?? '';
+                const lastName  = profile?.last_name  ?? '';
+                const correct   = attempt.correct_count    ?? 0;
+                const total     = attempt.total_questions  ?? 0;
+                const isCompleted = attempt.submitted_at !== null;
+
+                const percentage = total > 0
+                    ? Math.round((correct / total) * 100)
+                    : 0;
+
+                let resultStatus: 'PASS' | 'FAIL' | 'IN_PROGRESS';
+                let resultDisplay: string;
+
+                if (!isCompleted) {
+                    resultStatus  = 'IN_PROGRESS';
+                    resultDisplay = 'In progress';
+                } else if (percentage >= PASS_THRESHOLD_PERCENT) {
+                    resultStatus  = 'PASS';
+                    resultDisplay = `PASS • ${percentage}%`;
+                } else {
+                    resultStatus  = 'FAIL';
+                    resultDisplay = `FAIL • ${percentage}%`;
+                }
+
+                const timing = formatAttemptTiming(
+                    attempt.started_at,
+                    attempt.submitted_at
+                );
+
+                return {
+                    id:             attempt.id,
+                    test_id:        attempt.test_id,
+                    student_id:     attempt.student_id,
+                    attempt_number: attempt.attempt_number,
+                    first_name:     firstName,
+                    last_name:      lastName,
+                    studentName:    `${firstName} ${lastName}`.trim() || 'Unknown',
+                    started_at:     attempt.started_at,
+                    submitted_at:   attempt.submitted_at,
+                    total_questions: attempt.total_questions,
+                    attempted_count: attempt.attempted_count,
+                    correct_count:   attempt.correct_count,
+                    isCompleted,
+                    timing,
+                    score: {
+                        correct,
+                        total,
+                        display: `${correct} / ${total}`,
+                    },
+                    result: {
+                        status:     resultStatus,
+                        percentage: isCompleted ? percentage : null,
+                        display:    resultDisplay,
+                    },
+                };
+            });
+
+            return { data, total: count ?? 0 };
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
 
     getTestById: async (test_id: string, client?: SupabaseClient) => {
         try {
@@ -738,15 +853,7 @@ export const facultyTestRepository = {
                 return [];
             }
 
-            console.log("result", result);
-
-            // ✅ Safe mapping with type safety
-            const mapped = result.map((question: any) => ({
-                ...question,
-                options: question.type === 'mcq' ? (question.options ?? []) : [],
-            }));
-
-            return mapped;
+            return result;
 
         } catch (error: any) {
             console.error("Error in getTestQuestionByTestId:", error);
@@ -767,8 +874,8 @@ export const facultyTestRepository = {
             const { data: result, error } = await supabase.from("questions")
                 .update({
                     question: data.question,
-                    type: data.type,
-                    marks: data.marks,
+                    // type: data.type,
+                    // marks: data.marks,
 
                 })
                 .eq("id", question_id)
@@ -883,6 +990,59 @@ export const facultyTestRepository = {
 
 
 // ── helpers ──────────────────────────────────────────────────────────────────
+
+function formatTime12h(iso: string): string {
+    return new Date(iso).toLocaleTimeString('en-US', {
+        hour:   '2-digit',
+        minute: '2-digit',
+        hour12: true,
+    });
+}
+
+function formatDurationDisplay(totalSeconds: number): string {
+    const hours   = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    return hours > 0 ? `${hours}h ${minutes}m total` : `${minutes}m total`;
+}
+
+function formatAttemptTiming(
+    startedAt: string,
+    submittedAt: string | null
+): {
+    start:          string;
+    end:            string | null;
+    rangeDisplay:   string;
+    durationSeconds: number | null;
+    durationDisplay: string | null;
+} {
+    const start = formatTime12h(startedAt);
+
+    if (!submittedAt) {
+        return {
+            start,
+            end:             null,
+            rangeDisplay:    start,
+            durationSeconds: null,
+            durationDisplay: null,
+        };
+    }
+
+    const end = formatTime12h(submittedAt);
+    const durationSeconds = Math.max(
+        0,
+        Math.floor(
+            (new Date(submittedAt).getTime() - new Date(startedAt).getTime()) / 1000
+        )
+    );
+
+    return {
+        start,
+        end,
+        rangeDisplay:    `${start} – ${end}`,
+        durationSeconds,
+        durationDisplay: formatDurationDisplay(durationSeconds),
+    };
+}
 
 async function getNextSortOrder(courseId: string, parentId: string | null, client?: SupabaseClient): Promise<number> {
     const supabase = client ?? anonSupabase;

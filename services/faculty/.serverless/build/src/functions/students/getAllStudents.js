@@ -3720,72 +3720,167 @@ var getSupabaseClient = (accessToken) => {
 
 // src/modules/students/students.repository.ts
 var studentsRepository = {
-  // getAllMyStudents: async ({ facultyId, filter, page, limit, search }: Arggu) => {
+  // getAllMyStudents: async ({ facultyId, filter, page, limit, search, client }: Arggu) => {
   //     try {
+  //         const supabase = client ?? anonSupabase;
+  //         console.log("filter", filter);
   //         const from = (page - 1) * limit;
   //         const to = from + limit - 1;
+  //         // Step 1: Get faculty course IDs
+  //         const { data: facultyCourses, error: courseError } = await supabase
+  //             .from("courses")
+  //             .select("id")
+  //             .eq("faculty_id", facultyId);
+  //         if (courseError) throw new Error(courseError.message);
+  //         const courseIds = facultyCourses?.map((c) => c.id) ?? [];
+  //         if (courseIds.length === 0) {
+  //             return {
+  //                 data: [],
+  //                 pagination: { page, limit, total: 0, totalPages: 0 },
+  //             };
+  //         }
+  //         const targetCourseIds =
+  //             filter.selectedCourse !== "all" ? [filter.selectedCourse] : courseIds;
+  //         // Step 2: Get distinct student_ids with latest enrollment (for pagination)
+  //         let studentIdsQuery = supabase
+  //             .from("enrollments")
+  //             .select("student_id", { count: "exact" })
+  //             .in("course_id", targetCourseIds);
+  //         if (filter.selectedDate) {
+  //             const startOfDay = new Date(filter.selectedDate);
+  //             startOfDay.setHours(0, 0, 0, 0);
+  //             const endOfDay = new Date(filter.selectedDate);
+  //             endOfDay.setHours(23, 59, 59, 999);
+  //             studentIdsQuery = studentIdsQuery
+  //                 .gte("created_at", startOfDay.toISOString())
+  //                 .lte("created_at", endOfDay.toISOString());
+  //         }
+  //         const { data: allStudentRows, error: countError, count } =
+  //             await studentIdsQuery;
+  //         if (countError) throw new Error(countError.message);
+  //         // Deduplicate student IDs
+  //         const uniqueStudentIds = [
+  //             ...new Set(allStudentRows?.map((r) => r.student_id) ?? []),
+  //         ];
+  //         // Step 3: Paginate unique student IDs
+  //         const paginatedStudentIds = uniqueStudentIds.slice(from, to + 1);
+  //         if (paginatedStudentIds.length === 0) {
+  //             return {
+  //                 data: [],
+  //                 pagination: {
+  //                     page,
+  //                     limit,
+  //                     total: uniqueStudentIds.length,
+  //                     totalPages: Math.ceil(uniqueStudentIds.length / limit),
+  //                 },
+  //             };
+  //         }
+  //         // Step 4: Fetch full student + enrollment details for paginated IDs
   //         let query = supabase
   //             .from("enrollments")
   //             .select(`
-  //     id,
-  //     created_at,
-  //     student:profiles!enrollments_student_id_fkey (
-  //       id,
-  //       full_name
-  //     ),
-  //     course:courses!enrollments_course_id_fkey (
-  //       id,
-  //       title,
-  //       faculty_id
-  //     )
-  //   `, { count: "exact" })
-  //             .eq("course.faculty_id", facultyId)
-  //             .order("created_at", { ascending: false })
-  //             .range(from, to);
-  //         if (filter.selectedCourse !== "all") {
-  //             query = query.eq("course_id", filter.selectedCourse);
+  //             id,
+  //             created_at,
+  //             course_id,
+  //             student:profiles!enrollments_student_id_fkey (
+  //                 id,
+  //                 first_name,
+  //                 last_name,
+  //                 email,
+  //                 avatar_url,
+  //                 created_at
+  //             ),
+  //             course:courses!enrollments_course_id_fkey (
+  //                 id,
+  //                 title,
+  //                 faculty_id
+  //             )
+  //         `)
+  //             .in("course_id", targetCourseIds)
+  //             .in("student_id", paginatedStudentIds)
+  //             .order("created_at", { ascending: false });
+  //         if (filter.selectedDate) {
+  //             const startOfDay = new Date(filter.selectedDate);
+  //             startOfDay.setHours(0, 0, 0, 0);
+  //             const endOfDay = new Date(filter.selectedDate);
+  //             endOfDay.setHours(23, 59, 59, 999);
+  //             query = query
+  //                 .gte("created_at", startOfDay.toISOString())
+  //                 .lte("created_at", endOfDay.toISOString());
   //         }
   //         if (search) {
-  //             query = query.ilike(
-  //                 "profiles.full_name",
-  //                 `%${search}%`
-  //             );
+  //             paginatedStudentIds.filter((id) => id); // already filtered below
   //         }
-  //         const { data, error, count } = await query;
+  //         const { data, error } = await query;
   //         if (error) throw new Error(error.message);
+  //         // Step 5: Deduplicate and build student map
   //         const studentMap: Record<string, any> = {};
   //         data?.forEach((item: any) => {
   //             const student = item.student;
   //             const course = item.course;
+  //             if (!student) return;
   //             if (!studentMap[student.id]) {
   //                 studentMap[student.id] = {
   //                     ...student,
-  //                     courses: [],
-  //                     enrolled_at: item.created_at
+  //                     courses: [course],
+  //                     latest_enrolled_at: item.created_at,
   //                 };
+  //             } else {
+  //                 const alreadyAdded = studentMap[student.id].courses.some(
+  //                     (c: any) => c.id === course.id
+  //                 );
+  //                 if (!alreadyAdded) {
+  //                     studentMap[student.id].courses.push(course);
+  //                 }
   //             }
-  //             studentMap[student.id].courses.push(course);
   //         });
-  //         const final = Object.values(studentMap);
+  //         // Step 6: Search filter on full_name
+  //         let students = Object.values(studentMap);
+  //         if (search) {
+  //             const lowerSearch = search.toLowerCase();
+  //             students = students.filter((s: any) =>
+  //                 s.full_name?.toLowerCase().includes(lowerSearch)
+  //             );
+  //         }
+  //         const totalUniqueStudents = uniqueStudentIds.length;
   //         return {
-  //             data: final,
+  //             data: students,
   //             pagination: {
   //                 page,
   //                 limit,
-  //                 total: count,
-  //                 totalPages: Math.ceil((count || 0) / limit)
-  //             }
+  //                 total: totalUniqueStudents,
+  //                 totalPages: Math.ceil(totalUniqueStudents / limit),
+  //             },
   //         };
   //     } catch (error: any) {
-  //         throw new Error(error.message)
+  //         throw new Error(error.message);
   //     }
   // },
   getAllMyStudents: async ({ facultyId, filter, page, limit, search, client }) => {
     try {
       const supabase2 = client ?? supabase;
-      console.log("filter", filter);
       const from = (page - 1) * limit;
       const to = from + limit - 1;
+      const formatLastActive = (dateStr) => {
+        if (!dateStr) return "Never";
+        const date = new Date(dateStr);
+        const now = /* @__PURE__ */ new Date();
+        const isToday = date.toDateString() === now.toDateString();
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        const isYesterday = date.toDateString() === yesterday.toDateString();
+        const timeStr = date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
+        if (isToday) return `Today ${timeStr}`;
+        if (isYesterday) return `Yesterday ${timeStr}`;
+        return date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric"
+        }) + `, ${timeStr}`;
+      };
       const { data: facultyCourses, error: courseError } = await supabase2.from("courses").select("id").eq("faculty_id", facultyId);
       if (courseError) throw new Error(courseError.message);
       const courseIds = facultyCourses?.map((c) => c.id) ?? [];
@@ -3822,22 +3917,23 @@ var studentsRepository = {
         };
       }
       let query = supabase2.from("enrollments").select(`
-                id,
-                created_at,
-                course_id,
-                student:profiles!enrollments_student_id_fkey (
                     id,
-                    first_name,
-                    last_name,
-                    email,
-                    avatar_url
-                ),
-                course:courses!enrollments_course_id_fkey (
-                    id,
-                    title,
-                    faculty_id
-                )
-            `).in("course_id", targetCourseIds).in("student_id", paginatedStudentIds).order("created_at", { ascending: false });
+                    created_at,
+                    course_id,
+                    student:profiles!enrollments_student_id_fkey (
+                        id,
+                        first_name,
+                        last_name,
+                        email,
+                        avatar_url,
+                        created_at
+                    ),
+                    course:courses!enrollments_course_id_fkey (
+                        id,
+                        title,
+                        faculty_id
+                    )
+                `).in("course_id", targetCourseIds).in("student_id", paginatedStudentIds).order("created_at", { ascending: false });
       if (filter.selectedDate) {
         const startOfDay = new Date(filter.selectedDate);
         startOfDay.setHours(0, 0, 0, 0);
@@ -3845,21 +3941,37 @@ var studentsRepository = {
         endOfDay.setHours(23, 59, 59, 999);
         query = query.gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString());
       }
-      if (search) {
-        paginatedStudentIds.filter((id) => id);
-      }
       const { data, error } = await query;
       if (error) throw new Error(error.message);
+      const { data: sessions, error: sessionError } = await supabase2.from("usage_sessions").select("user_id, started_at, platform, screen_name").in("user_id", paginatedStudentIds).order("started_at", { ascending: false });
+      if (sessionError) throw new Error(sessionError.message);
+      const sessionMap = {};
+      sessions?.forEach((s) => {
+        if (!sessionMap[s.user_id]) {
+          sessionMap[s.user_id] = {
+            started_at: s.started_at,
+            platform: s.platform,
+            screen_name: s.screen_name
+          };
+        }
+      });
       const studentMap = {};
       data?.forEach((item) => {
         const student = item.student;
         const course = item.course;
         if (!student) return;
         if (!studentMap[student.id]) {
+          const session = sessionMap[student.id] ?? null;
           studentMap[student.id] = {
             ...student,
             courses: [course],
-            latest_enrolled_at: item.created_at
+            latest_enrolled_at: item.created_at,
+            recentActive: {
+              display: formatLastActive(session?.started_at ?? null),
+              raw: session?.started_at ?? null,
+              platform: session?.platform ?? null,
+              screenName: session?.screen_name ?? null
+            }
           };
         } else {
           const alreadyAdded = studentMap[student.id].courses.some(
@@ -3873,9 +3985,10 @@ var studentsRepository = {
       let students = Object.values(studentMap);
       if (search) {
         const lowerSearch = search.toLowerCase();
-        students = students.filter(
-          (s) => s.full_name?.toLowerCase().includes(lowerSearch)
-        );
+        students = students.filter((s) => {
+          const fullName = `${s.first_name ?? ""} ${s.last_name ?? ""}`.toLowerCase();
+          return fullName.includes(lowerSearch);
+        });
       }
       const totalUniqueStudents = uniqueStudentIds.length;
       return {
@@ -4027,6 +4140,26 @@ var studentsRepository = {
   }) => {
     try {
       const supabase2 = client ?? supabase;
+      const formatLastActive = (dateStr) => {
+        if (!dateStr) return "Never";
+        const date = new Date(dateStr);
+        const now = /* @__PURE__ */ new Date();
+        const isToday = date.toDateString() === now.toDateString();
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        const isYesterday = date.toDateString() === yesterday.toDateString();
+        const timeStr = date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
+        if (isToday) return `Today ${timeStr}`;
+        if (isYesterday) return `Yesterday ${timeStr}`;
+        return date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric"
+        }) + `, ${timeStr}`;
+      };
       const { data: student, error: studentError } = await supabase2.from("profiles").select("id, first_name, last_name, avatar_url").eq("id", studentId).single();
       if (studentError) throw new Error(studentError.message);
       const { data: directEnrollments, error: directError } = await supabase2.from("enrollments").select("id, course_id, amount_paid, is_bundle_enrollment, enrolled_at").eq("faculty_id", facultyId).eq("student_id", studentId);
@@ -4052,31 +4185,32 @@ var studentsRepository = {
       const totalQuestions = attempts?.reduce((sum, a) => sum + (a.total_questions ?? 0), 0) ?? 0;
       const totalAttempts = attempts?.length ?? 0;
       const testScoreRate = totalQuestions > 0 ? Math.round(totalCorrect / totalQuestions * 100) : 0;
+      const { data: lastSession, error: sessionError } = await supabase2.from("usage_sessions").select("started_at, platform, screen_name").eq("user_id", studentId).order("started_at", { ascending: false }).limit(1).maybeSingle();
+      if (sessionError) throw new Error(sessionError.message);
       return {
+        // Student profile
         student,
+        // Recent activity
+        recentActive: {
+          display: formatLastActive(lastSession?.started_at ?? null),
+          // "Today 11:40 PM"
+          raw: lastSession?.started_at ?? null,
+          platform: lastSession?.platform ?? null,
+          screenName: lastSession?.screen_name ?? null
+        },
         // Course enrollment
         totalCourseCount,
-        // total courses enrolled under this faculty
         directCourseCount,
-        // via direct purchase
         bundleCourseCount,
-        // via bundle purchase
         // Revenue
         totalAmountSpent,
-        // total ₹ spent with this faculty
         directRevenue,
-        // from direct course purchases
         bundleRevenue,
-        // from bundle purchases
         // Test performance
         testScoreRate,
-        // e.g. 78 → "78%"
         totalAttempts,
-        // how many tests completed
         totalCorrect,
-        // total correct answers
         totalQuestions
-        // total questions attempted
       };
     } catch (error) {
       throw new Error(error.message);
