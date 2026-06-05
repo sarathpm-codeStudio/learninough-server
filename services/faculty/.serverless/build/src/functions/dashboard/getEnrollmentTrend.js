@@ -3718,7 +3718,114 @@ var getSupabaseClient = (accessToken) => {
   });
 };
 
+// src/utils/chartPeriod.ts
+var WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+function startOfLocalDay(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function endOfLocalDay(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+}
+function startOfLocalWeekMonday(d) {
+  const day = d.getDay();
+  const daysFromMonday = day === 0 ? 6 : day - 1;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - daysFromMonday);
+}
+function toLocalDateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function toLocalMonthKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function weekdayLabel(d) {
+  const index = d.getDay() === 0 ? 6 : d.getDay() - 1;
+  return WEEKDAY_LABELS[index];
+}
+function isSameLocalMonth(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+function calendarMonthWeekNumber(dayOfMonth) {
+  if (dayOfMonth <= 7) return 1;
+  if (dayOfMonth <= 14) return 2;
+  if (dayOfMonth <= 21) return 3;
+  return 4;
+}
+function getChartPeriodBounds(period, ref = /* @__PURE__ */ new Date()) {
+  const today = startOfLocalDay(ref);
+  let fromDate;
+  if (period === "week") {
+    fromDate = startOfLocalWeekMonday(today);
+  } else if (period === "month") {
+    fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  } else {
+    fromDate = new Date(today.getFullYear(), 0, 1);
+  }
+  return { today, fromDate, rangeEnd: endOfLocalDay(today) };
+}
+function buildChartPeriodSlots(period, bounds) {
+  const { today, fromDate } = bounds;
+  if (period === "week") {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + i);
+      return {
+        label: weekdayLabel(d),
+        group: toLocalDateKey(d),
+        dayOfMonth: String(d.getDate()).padStart(2, "0")
+      };
+    });
+  }
+  if (period === "month") {
+    return Array.from({ length: 4 }, (_, i) => ({
+      label: `Wk ${i + 1}`,
+      group: `week_${i + 1}`
+    }));
+  }
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(today.getFullYear(), i, 1);
+    return {
+      label: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+      group: toLocalMonthKey(d)
+    };
+  });
+}
+function groupTimestampForChartPeriod(dateStr, period, bounds) {
+  const { today, fromDate } = bounds;
+  const local = startOfLocalDay(new Date(dateStr));
+  if (period === "week") {
+    const weekEnd = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + 6);
+    if (local < fromDate || local > weekEnd) return null;
+    return { label: weekdayLabel(local), group: toLocalDateKey(local) };
+  }
+  if (period === "month") {
+    if (!isSameLocalMonth(local, today)) return null;
+    const weekNum = calendarMonthWeekNumber(local.getDate());
+    return { label: `Wk ${weekNum}`, group: `week_${weekNum}` };
+  }
+  if (local.getFullYear() !== today.getFullYear()) return null;
+  return {
+    label: local.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+    group: toLocalMonthKey(local)
+  };
+}
+
 // src/modules/dashboard/dashboard.repository.ts
+var ENROLLMENT_YEAR_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+];
 var facultyDashboardRepository = {
   getFacultyDashboardAnalytics: async (facultyId, client) => {
     try {
@@ -3754,81 +3861,39 @@ var facultyDashboardRepository = {
   getEnrollmentTrend: async (facultyId, period, client) => {
     try {
       const db = client ?? supabase;
-      const { data: courses, error: coursesError } = await db.from("courses").select("id").eq("faculty_id", facultyId).eq("is_deleted", false);
+      const { data: courses, error: coursesError } = await db.from("courses").select("id").eq("faculty_id", facultyId).eq("is_draft", false).eq("is_deleted", false);
       if (coursesError) throw new Error(coursesError.message);
       const courseIds = courses.map((c) => c.id);
-      const now = /* @__PURE__ */ new Date();
-      let startDate;
-      if (period === "week") {
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 6);
-      } else if (period === "month") {
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      } else {
-        startDate = new Date(now.getFullYear(), 0, 1);
-      }
-      let enrollments = [];
+      const bounds = getChartPeriodBounds(period);
+      const slots = buildChartPeriodSlots(period, bounds);
+      const counts = new Map(slots.map((s) => [s.group, 0]));
       if (courseIds.length > 0) {
-        const { data, error: enrollmentsError } = await db.from("enrollments").select("enrolled_at").in("course_id", courseIds).gte("enrolled_at", startDate.toISOString()).lte("enrolled_at", now.toISOString());
+        const { data, error: enrollmentsError } = await db.from("enrollments").select("enrolled_at").in("course_id", courseIds).gte("enrolled_at", bounds.fromDate.toISOString()).lte("enrolled_at", bounds.rangeEnd.toISOString());
         if (enrollmentsError) throw new Error(enrollmentsError.message);
-        enrollments = data ?? [];
+        for (const e of data ?? []) {
+          if (!e.enrolled_at) continue;
+          const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
+          if (!grouped) continue;
+          counts.set(grouped.group, (counts.get(grouped.group) ?? 0) + 1);
+        }
       }
       if (period === "week") {
-        const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-        const result = {};
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date(now);
-          d.setDate(now.getDate() - i);
-          const dayName = days[d.getDay()];
-          const dayNum = String(d.getDate()).padStart(2, "0");
-          const key = d.toISOString().split("T")[0];
-          result[key] = { primary: dayName, secondary: dayNum, value: 0 };
-        }
-        enrollments.forEach((e) => {
-          const key = e.enrolled_at?.split("T")[0];
-          if (key && result[key]) result[key].value += 1;
-        });
-        return Object.values(result);
-      } else if (period === "month") {
-        const result = {
-          "Week 1": { primary: "Week 1", value: 0 },
-          "Week 2": { primary: "Week 2", value: 0 },
-          "Week 3": { primary: "Week 3", value: 0 },
-          "Week 4": { primary: "Week 4", value: 0 }
-        };
-        enrollments.forEach((e) => {
-          const day = new Date(e.enrolled_at).getDate();
-          if (day <= 7) result["Week 1"].value += 1;
-          else if (day <= 14) result["Week 2"].value += 1;
-          else if (day <= 21) result["Week 3"].value += 1;
-          else result["Week 4"].value += 1;
-        });
-        return Object.values(result);
-      } else {
-        const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec"
-        ];
-        const result = {};
-        months.forEach((m, i) => {
-          result[i] = { primary: m, value: 0 };
-        });
-        enrollments.forEach((e) => {
-          const month = new Date(e.enrolled_at).getMonth();
-          result[month].value += 1;
-        });
-        return Object.values(result);
+        return slots.map((s) => ({
+          primary: s.label,
+          secondary: s.dayOfMonth,
+          value: counts.get(s.group) ?? 0
+        }));
       }
+      if (period === "month") {
+        return slots.map((s) => ({
+          primary: s.label.replace("Wk", "Week"),
+          value: counts.get(s.group) ?? 0
+        }));
+      }
+      return slots.map((s, i) => ({
+        primary: ENROLLMENT_YEAR_LABELS[i],
+        value: counts.get(s.group) ?? 0
+      }));
     } catch (error) {
       throw new Error(error.message);
     }
@@ -3839,29 +3904,38 @@ var facultyDashboardRepository = {
       const { data: courses, error: coursesError } = await db.from("courses").select("id").eq("faculty_id", facultyId).eq("is_deleted", false);
       if (coursesError) throw new Error(coursesError.message);
       const courseIds = courses.map((c) => c.id);
-      const now = /* @__PURE__ */ new Date();
-      let currentStart;
+      const bounds = getChartPeriodBounds(period);
+      const slots = buildChartPeriodSlots(period, bounds);
+      const today = bounds.today;
       let previousStart;
       let previousEnd;
       if (period === "week") {
-        currentStart = new Date(now);
-        currentStart.setDate(now.getDate() - 6);
-        previousEnd = new Date(currentStart);
-        previousStart = new Date(previousEnd);
-        previousStart.setDate(previousEnd.getDate() - 7);
+        const prevWeekMonday = new Date(
+          bounds.fromDate.getFullYear(),
+          bounds.fromDate.getMonth(),
+          bounds.fromDate.getDate() - 7
+        );
+        previousStart = prevWeekMonday;
+        previousEnd = endOfLocalDay(
+          new Date(
+            bounds.fromDate.getFullYear(),
+            bounds.fromDate.getMonth(),
+            bounds.fromDate.getDate() - 1
+          )
+        );
       } else if (period === "month") {
-        currentStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        previousEnd = new Date(currentStart);
-        previousStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        previousStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        previousEnd = endOfLocalDay(
+          new Date(today.getFullYear(), today.getMonth(), 0)
+        );
       } else {
-        currentStart = new Date(now.getFullYear(), 0, 1);
-        previousEnd = new Date(currentStart);
-        previousStart = new Date(now.getFullYear() - 1, 0, 1);
+        previousStart = new Date(today.getFullYear() - 1, 0, 1);
+        previousEnd = endOfLocalDay(new Date(today.getFullYear() - 1, 11, 31));
       }
       let currentEnrollments = [];
       let previousEnrollments = [];
       if (courseIds.length > 0) {
-        const { data: current, error: currentError } = await db.from("enrollments").select("enrolled_at, amount_paid").in("course_id", courseIds).gte("enrolled_at", currentStart.toISOString()).lte("enrolled_at", now.toISOString());
+        const { data: current, error: currentError } = await db.from("enrollments").select("enrolled_at, amount_paid").in("course_id", courseIds).gte("enrolled_at", bounds.fromDate.toISOString()).lte("enrolled_at", bounds.rangeEnd.toISOString());
         if (currentError) throw new Error(currentError.message);
         currentEnrollments = current ?? [];
         const { data: previous, error: previousError } = await db.from("enrollments").select("amount_paid").in("course_id", courseIds).gte("enrolled_at", previousStart.toISOString()).lte("enrolled_at", previousEnd.toISOString());
@@ -3877,61 +3951,20 @@ var facultyDashboardRepository = {
         const periodLabel = period === "week" ? "last week" : period === "month" ? "last month" : "last year";
         trendText = `${Math.abs(change).toFixed(1)}% ${direction} from ${periodLabel}`;
       }
-      let chartData = [];
-      if (period === "week") {
-        const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-        const result = {};
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date(now);
-          d.setDate(now.getDate() - i);
-          const key = d.toISOString().split("T")[0];
-          result[key] = { label: days[d.getDay()], value: 0 };
-        }
-        currentEnrollments.forEach((e) => {
-          const key = e.enrolled_at?.split("T")[0];
-          if (key && result[key]) result[key].value += Number(e.amount_paid);
-        });
-        chartData = Object.values(result);
-      } else if (period === "month") {
-        const result = {
-          "Wk 1": { label: "Wk 1", value: 0 },
-          "Wk 2": { label: "Wk 2", value: 0 },
-          "Wk 3": { label: "Wk 3", value: 0 },
-          "Wk 4": { label: "Wk 4", value: 0 }
-        };
-        currentEnrollments.forEach((e) => {
-          const day = new Date(e.enrolled_at).getDate();
-          if (day <= 7) result["Wk 1"].value += Number(e.amount_paid);
-          else if (day <= 14) result["Wk 2"].value += Number(e.amount_paid);
-          else if (day <= 21) result["Wk 3"].value += Number(e.amount_paid);
-          else result["Wk 4"].value += Number(e.amount_paid);
-        });
-        chartData = Object.values(result);
-      } else {
-        const months = [
-          "JAN",
-          "FEB",
-          "MAR",
-          "APR",
-          "MAY",
-          "JUN",
-          "JUL",
-          "AUG",
-          "SEP",
-          "OCT",
-          "NOV",
-          "DEC"
-        ];
-        const result = {};
-        months.forEach((m, i) => {
-          result[i] = { label: m, value: 0 };
-        });
-        currentEnrollments.forEach((e) => {
-          const month = new Date(e.enrolled_at).getMonth();
-          result[month].value += Number(e.amount_paid);
-        });
-        chartData = Object.values(result);
+      const revenueByGroup = new Map(slots.map((s) => [s.group, 0]));
+      for (const e of currentEnrollments) {
+        if (!e.enrolled_at) continue;
+        const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
+        if (!grouped) continue;
+        revenueByGroup.set(
+          grouped.group,
+          (revenueByGroup.get(grouped.group) ?? 0) + Number(e.amount_paid)
+        );
       }
+      const chartData = slots.map((s) => ({
+        label: s.label,
+        value: revenueByGroup.get(s.group) ?? 0
+      }));
       return { data: chartData, trend: trendText };
     } catch (error) {
       throw new Error(error.message);

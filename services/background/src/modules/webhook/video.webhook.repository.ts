@@ -17,7 +17,7 @@ export const videoWebhookRepository = {
                     data?.video?.status === "Error" ? MaterialStatus.FAILED :
                         MaterialStatus.TRANSCODING;
 
-            const materialStatus = videoStatus === MaterialStatus.COMPLETED ? MaterialStatus.COMPLETED : MaterialStatus.PENDING;
+            const materialStatus = videoStatus === MaterialStatus.COMPLETED ? MaterialStatus.READY : videoStatus === MaterialStatus.TRANSCODING ? MaterialStatus.PROCESSING : videoStatus === MaterialStatus.FAILED ? MaterialStatus.FAILED : MaterialStatus.PENDING;
 
             const { data: updatedUploadProgress, error: uploadProgressError } = await supabase
                 .from("video_upload_progress")

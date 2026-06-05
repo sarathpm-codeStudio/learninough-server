@@ -71,10 +71,14 @@ export const facultyCourseService = {
 
         try {
 
-            console.log("event.queryStringParameters", event.queryStringParameters);
-            const filter = event.queryStringParameters.filter === "true"
+            const filter = event.queryStringParameters?.filter ?? "all";
 
-            const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, event.queryStringParameters.search, event.supabase);
+            const courses = await facultyCourseRepository.getMyCourses(
+                event.user.id,
+                filter,
+                event.queryStringParameters?.search,
+                event.supabase
+            );
 
             return courses;
 
@@ -310,7 +314,8 @@ export const facultyCourseService = {
         try {
 
             const courseId = event.pathParameters.courseId;
-            const { page, limit } = event.queryStringParameters;
+            const page = Number(event.queryStringParameters?.page ?? 1);
+            const limit = Number(event.queryStringParameters?.limit ?? 10);
 
             const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit, event.supabase);
 
@@ -353,6 +358,62 @@ export const facultyCourseService = {
             console.log("error", error);
 
             throw new Error(error)
+        }
+    },
+
+    getAllMaterialModule: async (event: any) => {
+        try {
+            const contents = await facultyCourseRepository.getAllMaterialModule(event.pathParameters.materialId, event.supabase);
+            return contents;
+        } catch (error: any) {
+            console.log("error", error);
+            throw new Error(error)
+        }
+    },
+
+    getCourseAnalytics: async (event: any) => {
+        try {
+            const analytics = await facultyCourseRepository.getCourseAnalytics(event.pathParameters.courseId, event.supabase);
+            return analytics;
+        } catch (error: any) {
+            console.log("error", error);
+            throw new Error(error)
+        }
+    },
+
+
+    getCourseEnrollmentVsCompletionChart: async (event: any) => {
+        try {
+            const chart = await facultyCourseRepository.getCourseEnrollmentVsCompletionChart(event.pathParameters.courseId, event.queryStringParameters.period as "week" | "month" | "year", event.supabase);
+            return chart;
+        } catch (error: any) {
+            console.log("error", error);
+            throw new Error(error)
+        }
+    },
+
+    getCourseRevenueTrend: async (event: any) => {
+        try {
+            const period = (event.queryStringParameters?.period || "week") as "week" | "month" | "year";
+            const trend = await facultyCourseRepository.getCourseRevenueTrend(
+                event.pathParameters.courseId,
+                period,
+                event.supabase
+            );
+            return trend;
+        } catch (error: any) {
+            console.log("error", error);
+            throw new Error(error);
+        }
+    },
+
+    deleteCourse: async (event: any) => {
+        try {
+            const course = await facultyCourseRepository.deleteCourse(event.pathParameters.courseId, event.supabase);
+            return course;
+        } catch (error: any) {
+            console.log("error", error);
+            throw new Error(error);
         }
     },
 

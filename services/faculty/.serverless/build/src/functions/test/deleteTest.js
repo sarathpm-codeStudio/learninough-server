@@ -3732,7 +3732,7 @@ var facultyTestRepository = {
         title: data.title,
         course_id: data?.course,
         module_id: data?.module || null,
-        total_marks: data.totalMarks,
+        // total_marks: data.totalMarks,
         duration_minutes: data.duration,
         instructions: data.instructions,
         type: data.testType
@@ -3750,6 +3750,14 @@ var facultyTestRepository = {
         material_status: "PENDING"
       }).select().single();
       if (materialError) throw new Error(materialError.message);
+      const folderId = data?.module?.trim() ? data.module : null;
+      if (folderId) {
+        const { data: existingFolder, error: fetchError } = await supabase2.from("course_folders").select("total_test").eq("id", folderId).single();
+        if (fetchError) throw new Error(fetchError.message);
+        const currentCount = Number(existingFolder?.total_test ?? 0);
+        const { error: folderError } = await supabase2.from("course_folders").update({ total_test: currentCount + 1 }).eq("id", folderId);
+        if (folderError) throw new Error(folderError.message);
+      }
       return test;
     } catch (error) {
       console.log("error", error);
@@ -3786,16 +3794,322 @@ var facultyTestRepository = {
     const supabase2 = client ?? supabase;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
-    let query = supabase2.from("tests").select("*, courses(*)", { count: "exact" }).eq("faculty_id", faculty_id).eq("is_deleted", false);
-    if (filter !== "all") {
-      query = query.eq("is_draft", filter);
+    console.log("filter", filter);
+    console.log("faculty_id", faculty_id);
+    let filterValue = "all";
+    if (filter === "true") {
+      filterValue = true;
+    } else if (filter === "false") {
+      filterValue = false;
+    }
+    let query = supabase2.from("tests").select("*, courses(*), test_attempts(count)", { count: "exact" }).eq("faculty_id", faculty_id).eq("is_deleted", false);
+    if (filterValue !== "all") {
+      console.log("filter)))))))))))))))))))))))))))))))))))))))))", filter);
+      query = query.eq("is_draft", filterValue);
     }
     if (search) {
       query = query.or(`title.ilike.%${search}%`);
     }
     const { data, error, count } = await query.range(from, to).order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return { data, total: count ?? 0 };
+    const dataWithAttemptCount = (data ?? []).map((test) => {
+      const attempt_count = test.test_attempts?.[0]?.count ?? 0;
+      const { test_attempts: _attempts, ...rest } = test;
+      return { ...rest, attempt_count };
+    });
+    return { data: dataWithAttemptCount, total: count ?? 0 };
+  },
+  getTestsPageAnalytics: async (facultyId, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { count: activeTests, error: activeError } = await supabase2.from("tests").select("*", { count: "exact", head: true }).eq("faculty_id", facultyId).eq("is_draft", false).eq("is_deleted", false);
+      if (activeError) throw new Error(activeError.message);
+      const { count: draftTests, error: draftError } = await supabase2.from("tests").select("*", { count: "exact", head: true }).eq("faculty_id", facultyId).eq("is_draft", true).eq("is_deleted", false);
+      if (draftError) throw new Error(draftError.message);
+      const { count: totalCompletedAttempts, error: attemptError } = await supabase2.from("test_attempts").select("tests!inner(faculty_id)", { count: "exact", head: true }).eq("tests.faculty_id", facultyId).not("submitted_at", "is", null);
+      if (attemptError) throw new Error(attemptError.message);
+      return {
+        activeTests: activeTests ?? 0,
+        draftTests: draftTests ?? 0,
+        totalCompletedAttempts: totalCompletedAttempts ?? 0
+      };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  // getTestAnalytics: async (testId: string, client?: SupabaseClient) => {
+  //     try {
+  //         const supabase = client ?? anonSupabase;
+  //         // 1. Get test details (allocated duration)
+  //         const { data: test, error: testError } = await supabase
+  //             .from('tests')
+  //             .select('duration_minutes, title')
+  //             .eq('id', testId)
+  //             .single();
+  //         if (testError) throw new Error(testError.message);
+  //         // 2. Get all attempts for this test
+  //         const { data: attempts, error: attemptsError } = await supabase
+  //             .from('test_attempts')
+  //             .select(`
+  //                 id,
+  //                 student_id,
+  //                 started_at,
+  //                 submitted_at,
+  //                 correct_count,
+  //                 total_questions,
+  //                 profiles!test_attempts_student_id_fkey (
+  //                     id,
+  //                     first_name,
+  //                     last_name
+  //                 )
+  //             `)
+  //             .eq('test_id', testId);
+  //         if (attemptsError) throw new Error(attemptsError.message);
+  //         const totalAttempts     = attempts?.length ?? 0;
+  //         const completedAttempts = attempts?.filter(a => a.submitted_at !== null) ?? [];
+  //         const completedCount    = completedAttempts.length;
+  //         // 3. Completion rate
+  //         const completionRate = totalAttempts > 0
+  //             ? Math.round((completedCount / totalAttempts) * 100)
+  //             : 0;
+  //         // 4. Avg duration (only from completed attempts)
+  //         let avgDurationSeconds = 0;
+  //         if (completedCount > 0) {
+  //             const totalSeconds = completedAttempts.reduce((sum, a) => {
+  //                 const start = new Date(a.started_at).getTime();
+  //                 const end   = new Date(a.submitted_at!).getTime();
+  //                 return sum + Math.floor((end - start) / 1000);
+  //             }, 0);
+  //             avgDurationSeconds = Math.floor(totalSeconds / completedCount);
+  //         }
+  //         const avgHours   = Math.floor(avgDurationSeconds / 3600);
+  //         const avgMinutes = Math.floor((avgDurationSeconds % 3600) / 60);
+  //         // 5. Top student — highest correct_count among completed attempts
+  //         //    tie-break: whoever took less time
+  //         let topStudent: {
+  //             name: string;
+  //             score: number;
+  //             totalQuestions: number;
+  //         } | null = null;
+  //         if (completedCount > 0) {
+  //             const top = completedAttempts.reduce((best, current) => {
+  //                 if (!best) return current;
+  //                 const bestScore    = best.correct_count    ?? 0;
+  //                 const currentScore = current.correct_count ?? 0;
+  //                 if (currentScore > bestScore) return current;
+  //                 // tie-break: less time taken wins
+  //                 if (currentScore === bestScore) {
+  //                     const bestTime    = new Date(best.submitted_at!).getTime()    - new Date(best.started_at).getTime();
+  //                     const currentTime = new Date(current.submitted_at!).getTime() - new Date(current.started_at).getTime();
+  //                     return currentTime < bestTime ? current : best;
+  //                 }
+  //                 return best;
+  //             }, null as typeof completedAttempts[0] | null);
+  //             if (top) {
+  //                 topStudent = {
+  //                     name:           `${(top.profiles as any)?.first_name ?? ''} ${(top.profiles as any)?.last_name ?? ''}`.trim() || 'Unknown',
+  //                     score:          top.correct_count    ?? 0,
+  //                     totalQuestions: top.total_questions  ?? 0,
+  //                 };
+  //             }
+  //         }
+  //         return {
+  //             // Completion rate card
+  //             completedCount,                        // 6
+  //             totalAttempts,                         // 6
+  //             completionRate,                        // 100
+  //             // Avg duration card
+  //             avgDuration: {
+  //                 hours:   avgHours,                 // 1
+  //                 minutes: avgMinutes,               // 42
+  //                 display: avgHours > 0             
+  //                     ? `${avgHours}h ${avgMinutes}m`
+  //                     : `${avgMinutes}m`,            // "1h 42m"
+  //             },
+  //             // Allocated duration from test table
+  //             allocatedDuration: {
+  //                 raw:     test.duration_minutes,    // "120"
+  //                 display: (() => {
+  //                     const mins = parseInt(test.duration_minutes);
+  //                     const h    = Math.floor(mins / 60);
+  //                     const m    = mins % 60;
+  //                     return h > 0 ? `${h}h ${m.toString().padStart(2,'0')}m` : `${m}m`;
+  //                 })(),                              // "2h 00m"
+  //             },
+  //             // Top student card
+  //             topStudent,                            // { name, score, totalQuestions }
+  //         };
+  //     } catch (error: any) {
+  //         throw new Error(error.message);
+  //     }
+  // },
+  getTestAnalytics: async (testId, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { data: test, error: testError } = await supabase2.from("tests").select("duration_minutes, title, question_count").eq("id", testId).single();
+      if (testError) throw new Error(testError.message);
+      const { data: attempts, error: attemptsError } = await supabase2.from("test_attempts").select(`
+                    id,
+                    student_id,
+                    started_at,
+                    submitted_at,
+                    correct_count,
+                    total_questions,
+                    profiles!test_attempts_student_id_fkey (
+                        id,
+                        first_name,
+                        last_name
+                    )
+                `).eq("test_id", testId);
+      if (attemptsError) throw new Error(attemptsError.message);
+      const totalAttempts = attempts?.length ?? 0;
+      const completedAttempts = attempts?.filter((a) => a.submitted_at !== null) ?? [];
+      const completedCount = completedAttempts.length;
+      const completionRate = totalAttempts > 0 ? Math.round(completedCount / totalAttempts * 100) : 0;
+      let avgDurationSeconds = 0;
+      if (completedCount > 0) {
+        const totalSeconds = completedAttempts.reduce((sum, a) => {
+          const start = new Date(a.started_at).getTime();
+          const end = new Date(a.submitted_at).getTime();
+          return sum + Math.floor((end - start) / 1e3);
+        }, 0);
+        avgDurationSeconds = Math.floor(totalSeconds / completedCount);
+      }
+      const avgHours = Math.floor(avgDurationSeconds / 3600);
+      const avgMinutes = Math.floor(avgDurationSeconds % 3600 / 60);
+      let topStudent = null;
+      if (completedCount > 0) {
+        const top = completedAttempts.reduce((best, current) => {
+          if (!best) return current;
+          const bestScore = best.correct_count ?? 0;
+          const currentScore = current.correct_count ?? 0;
+          if (currentScore > bestScore) return current;
+          if (currentScore === bestScore) {
+            const bestTime = new Date(best.submitted_at).getTime() - new Date(best.started_at).getTime();
+            const currentTime = new Date(current.submitted_at).getTime() - new Date(current.started_at).getTime();
+            return currentTime < bestTime ? current : best;
+          }
+          return best;
+        }, null);
+        if (top) {
+          topStudent = {
+            name: `${top.profiles?.first_name ?? ""} ${top.profiles?.last_name ?? ""}`.trim() || "Unknown",
+            score: top.correct_count ?? 0,
+            totalQuestions: top.total_questions ?? 0
+          };
+        }
+      }
+      return {
+        // Completion rate card
+        completedCount,
+        totalAttempts,
+        completionRate,
+        // Avg duration card
+        avgDuration: {
+          hours: avgHours,
+          minutes: avgMinutes,
+          display: avgHours > 0 ? `${avgHours}h ${avgMinutes}m` : `${avgMinutes}m`
+        },
+        // Allocated duration from test table
+        allocatedDuration: {
+          raw: test.duration_minutes,
+          display: (() => {
+            const mins = parseInt(test.duration_minutes);
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            return h > 0 ? `${h}h ${m.toString().padStart(2, "0")}m` : `${m}m`;
+          })()
+        },
+        // Top student card — default values when no attempts yet
+        topStudent: topStudent ?? {
+          name: "No attempts yet",
+          score: 0,
+          totalQuestions: test.question_count ?? 0
+        }
+      };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  getAllAttemptsByTestId: async (test_id, page, limit, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      const { data: attempts, error: attemptsError, count } = await supabase2.from("test_attempts").select(`
+                    id,
+                    test_id,
+                    student_id,
+                    attempt_number,
+                    started_at,
+                    submitted_at,
+                    total_questions,
+                    attempted_count,
+                    correct_count,
+                    created_at,
+                    profiles!test_attempts_student_id_fkey (
+                        id,
+                        first_name,
+                        last_name
+                    )
+                `, { count: "exact" }).eq("test_id", test_id).order("submitted_at", { ascending: false, nullsFirst: false }).order("started_at", { ascending: false }).range(from, to);
+      if (attemptsError) throw new Error(attemptsError.message);
+      const PASS_THRESHOLD_PERCENT = 50;
+      const data = (attempts ?? []).map((attempt) => {
+        const profile = attempt.profiles;
+        const firstName = profile?.first_name ?? "";
+        const lastName = profile?.last_name ?? "";
+        const correct = attempt.correct_count ?? 0;
+        const total = attempt.total_questions ?? 0;
+        const isCompleted = attempt.submitted_at !== null;
+        const percentage = total > 0 ? Math.round(correct / total * 100) : 0;
+        let resultStatus;
+        let resultDisplay;
+        if (!isCompleted) {
+          resultStatus = "IN_PROGRESS";
+          resultDisplay = "In progress";
+        } else if (percentage >= PASS_THRESHOLD_PERCENT) {
+          resultStatus = "PASS";
+          resultDisplay = `PASS \u2022 ${percentage}%`;
+        } else {
+          resultStatus = "FAIL";
+          resultDisplay = `FAIL \u2022 ${percentage}%`;
+        }
+        const timing = formatAttemptTiming(
+          attempt.started_at,
+          attempt.submitted_at
+        );
+        return {
+          id: attempt.id,
+          test_id: attempt.test_id,
+          student_id: attempt.student_id,
+          attempt_number: attempt.attempt_number,
+          first_name: firstName,
+          last_name: lastName,
+          studentName: `${firstName} ${lastName}`.trim() || "Unknown",
+          started_at: attempt.started_at,
+          submitted_at: attempt.submitted_at,
+          total_questions: attempt.total_questions,
+          attempted_count: attempt.attempted_count,
+          correct_count: attempt.correct_count,
+          isCompleted,
+          timing,
+          score: {
+            correct,
+            total,
+            display: `${correct} / ${total}`
+          },
+          result: {
+            status: resultStatus,
+            percentage: isCompleted ? percentage : null,
+            display: resultDisplay
+          }
+        };
+      });
+      return { data, total: count ?? 0 };
+    } catch (error) {
+      throw new Error(error.message);
+    }
   },
   getTestById: async (test_id, client) => {
     try {
@@ -3846,6 +4160,13 @@ var facultyTestRepository = {
       if (error) throw error;
       const { data: module2, error: moduleError } = await supabase2.from("course_materials").update({ is_deleted: true }).eq("unique_id", result.unique_id).select().single();
       if (moduleError) throw moduleError;
+      if (module2?.folder_id) {
+        const { data: existingFolder, error: fetchError } = await supabase2.from("course_folders").select("total_test").eq("id", module2.folder_id).single();
+        if (fetchError) throw new Error(fetchError.message);
+        const currentCount = Number(existingFolder?.total_test ?? 0);
+        const { error: folderError } = await supabase2.from("course_folders").update({ total_test: Math.max(0, currentCount - 1) }).eq("id", module2.folder_id);
+        if (folderError) throw new Error(folderError.message);
+      }
       return result;
     } catch (error) {
       console.log("error", error);
@@ -3861,8 +4182,8 @@ var facultyTestRepository = {
       const { data: result, error } = await supabase2.from("questions").insert({
         test_id,
         question: data.question,
-        type: data.type,
-        marks: data.marks,
+        material_id: data.material_id,
+        material_title: data.material_title,
         question_number: nextQuestionNumber
         // ✅
       }).select().single();
@@ -3938,12 +4259,7 @@ var facultyTestRepository = {
         console.warn("No questions found for test_id:", test_id);
         return [];
       }
-      console.log("result", result);
-      const mapped = result.map((question) => ({
-        ...question,
-        options: question.type === "mcq" ? question.options ?? [] : []
-      }));
-      return mapped;
+      return result;
     } catch (error) {
       console.error("Error in getTestQuestionByTestId:", error);
       return {
@@ -3957,9 +4273,9 @@ var facultyTestRepository = {
     try {
       const supabase2 = client ?? supabase;
       const { data: result, error } = await supabase2.from("questions").update({
-        question: data.question,
-        type: data.type,
-        marks: data.marks
+        question: data.question
+        // type: data.type,
+        // marks: data.marks,
       }).eq("id", question_id).select().single();
       if (error) throw error;
       if (data.options && data.options.length > 0) {
@@ -4006,7 +4322,7 @@ var facultyTestRepository = {
         is_draft: false
       }).eq("id", test_id).select().single();
       const { data: materialResult, error: materialError } = await supabase2.from("course_materials").update({
-        material_status: "COMPLETED"
+        material_status: "READY" /* READY */
       }).eq("unique_id", result.unique_id).select().single();
       if (materialError) throw materialError;
       if (error) throw error;
@@ -4017,6 +4333,44 @@ var facultyTestRepository = {
     }
   }
 };
+function formatTime12h(iso) {
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+function formatDurationDisplay(totalSeconds) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor(totalSeconds % 3600 / 60);
+  return hours > 0 ? `${hours}h ${minutes}m total` : `${minutes}m total`;
+}
+function formatAttemptTiming(startedAt, submittedAt) {
+  const start = formatTime12h(startedAt);
+  if (!submittedAt) {
+    return {
+      start,
+      end: null,
+      rangeDisplay: start,
+      durationSeconds: null,
+      durationDisplay: null
+    };
+  }
+  const end = formatTime12h(submittedAt);
+  const durationSeconds = Math.max(
+    0,
+    Math.floor(
+      (new Date(submittedAt).getTime() - new Date(startedAt).getTime()) / 1e3
+    )
+  );
+  return {
+    start,
+    end,
+    rangeDisplay: `${start} \u2013 ${end}`,
+    durationSeconds,
+    durationDisplay: formatDurationDisplay(durationSeconds)
+  };
+}
 async function getNextSortOrder(courseId, parentId, client) {
   const supabase2 = client ?? supabase;
   let folderQuery = supabase2.from("course_folders").select("sort_order").eq("course_id", courseId).order("sort_order", { ascending: false }).limit(1);
@@ -4041,7 +4395,7 @@ var createTestBaseDetailsSchema = import_zod.z.object({
   title: import_zod.z.string().min(1, "Title is required"),
   module: import_zod.z.string().optional(),
   course: import_zod.z.string().min(1, "Course ID is required"),
-  totalMarks: import_zod.z.string().min(1, "Total marks is required"),
+  // totalMarks: z.string().min(1, "Total marks is required"),
   duration: import_zod.z.string().min(1, "Duration is required"),
   instructions: import_zod.z.string().optional(),
   testType: import_zod.z.string()
@@ -4089,6 +4443,39 @@ var facultyTestService = {
         page,
         limit,
         search,
+        event.supabase
+      );
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getTestsPageAnalytics: async (event) => {
+    try {
+      const result = await facultyTestRepository.getTestsPageAnalytics(event.user.id, event.supabase);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getTestAnalytics: async (event) => {
+    try {
+      const result = await facultyTestRepository.getTestAnalytics(event.pathParameters.testId, event.supabase);
+      return result;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getAllAttemptsByTestId: async (event) => {
+    try {
+      const { page, limit } = event.queryStringParameters ?? {};
+      const result = await facultyTestRepository.getAllAttemptsByTestId(
+        event.pathParameters.testId,
+        page,
+        limit,
         event.supabase
       );
       return result;

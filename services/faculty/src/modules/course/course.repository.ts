@@ -3,6 +3,13 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { supabase as anonSupabase } from "../../../../../shared/config/supabase";
 import { MaterialData, MaterialType, MaterialStatus } from "../../../../../shared/constants/types";
 import { pushToQueue } from "../../../../../shared/utils/queue";
+import {
+    buildChartPeriodSlots,
+    endOfLocalDay,
+    getChartPeriodBounds,
+    groupTimestampForChartPeriod,
+    type ChartPeriod,
+} from "../../utils/chartPeriod";
 
 
 export const facultyCourseRepository = {
@@ -118,65 +125,78 @@ export const facultyCourseRepository = {
         }
     },
 
-    getMyCourses: async (facultyId: string, filter: boolean, search: string, client?: SupabaseClient) => {
-      
-        console.log("search", search);
-        console.log("filter", filter);
-        console.log("facultyId**********************************************************************", facultyId);
-
-        try {
-            const supabase = client ?? anonSupabase;
-            const { data: courses, error } = await supabase
-                .from("courses")
-                .select(`*`)
-                .eq("faculty_id", facultyId)
-                .eq("is_draft", filter)
-                // .ilike("title", `%${search}%`)
-                .order("created_at", { ascending: false });
-
-                // console.log("courses %%%%%%", courses);
-
-            if (error) throw new Error(error.message);
-            return courses;
-
-        } catch (error: any) {
-            throw new Error(error.message);
-        }
-    },
-
-    // addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
+    // getMyCourses: async (facultyId: string, filter: string, search: string, client?: SupabaseClient) => {
     //     try {
-
     //         const supabase = client ?? anonSupabase;
 
-    //         console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data)
-
-
-
-    //         const { data: course, error } = await supabase
+    //         let query = supabase
     //             .from("courses")
-    //             .update({
-    //                 validity: data.validity,
-    //                 price: data.price,
-    //                 discount: data.discount,
-    //                 discount_type: data.discount_type,
-    //                 final_price: data.final_price,
-    //                 enableCoupons: data.enableCoupons,
+    //             .select(`*`)
+    //             .eq("faculty_id", facultyId);
 
-    //             })
-    //             .eq("id", courseId)
-    //             .select()
-    //             .single();
-                
+    //         if (filter !== "all") {
+    //             const isDraft = filter === "true";
+    //             query = query.eq("is_draft", isDraft);
+    //         }
+
+    //         if (search?.trim()) {
+    //             query = query.ilike("title", `%${search.trim()}%`);
+    //         }
+
+    //         const { data: courses, error } = await query.order("created_at", { ascending: false });
 
     //         if (error) throw new Error(error.message);
-    //         return course;
+    //         return courses;
 
     //     } catch (error: any) {
     //         throw new Error(error.message);
     //     }
     // },
 
+    getMyCourses: async (facultyId: string, filter: string, search: string, client?: SupabaseClient) => {
+        try {
+            const supabase = client ?? anonSupabase;
+
+            let query = supabase
+                .from("courses")
+                .select(`
+                    id,
+                    title,
+                    category,
+                    price,
+                    final_price,
+                    validity,
+                    languages,
+                    cover_image,
+                  enrollments(count)
+                `)
+                .eq("faculty_id", facultyId)
+                .eq("is_deleted", false)
+                .order("created_at", { ascending: false });
+
+            if (filter !== "all") {
+                const isDraft = filter === "true";
+                query = query.eq("is_draft", isDraft);
+            }
+
+            if (search?.trim()) {
+                query = query.ilike("title", `%${search.trim()}%`);
+            }
+
+            const { data: courses, error } = await query.order("created_at", { ascending: false });
+
+            if (error) throw new Error(error.message);
+
+            // ✅ Flatten enrollment count into each course
+            return courses?.map(course => ({
+                ...course,
+                total_enrolled: course.enrollments[0]?.count ?? 0
+            }));
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
 
     addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
@@ -191,7 +211,7 @@ export const facultyCourseRepository = {
                     validity: data.validity,
                     price: data.price,
                     discount: data.discount,
-                    discount_type: data.discount_type,
+                    discount_type: data.discount_type === "" ? null : data.discount_type,
                     final_price: data.final_price,
                     enableCoupons: data.enableCoupons,
                 })
@@ -301,23 +321,77 @@ export const facultyCourseRepository = {
     },
 
 
+    // getCourseById: async (courseId: string, client?: SupabaseClient) => {
+    //     try {
+    //         const supabase = client ?? anonSupabase;
+    //         const { data: course, error } = await supabase
+    //             .from("courses")
+    //             .select("*")
+    //             .eq("id", courseId)
+    //             .single();
+
+    //         if (error) throw new Error(error.message);
+    //         if (!course) throw new Error("Course not found");
+    //         return course;
+
+    //     } catch (error: any) {
+    //         throw new Error(error.message);
+    //     }
+    // },
+
+    
     getCourseById: async (courseId: string, client?: SupabaseClient) => {
         try {
             const supabase = client ?? anonSupabase;
-            const { data: course, error } = await supabase
-                .from("courses")
-                .select("*")
-                .eq("id", courseId)
-                .single();
+
+            const [
+                { data: course, error },
+                { data: enrollments },
+            ] = await Promise.all([
+                supabase
+                    .from("courses")
+                    .select(`
+                        *,
+                        enrollments(count),
+                        course_folders(count),
+                        course_materials(count)
+                    `)
+                    .eq("id", courseId)
+                    .single(),
+
+                // ✅ Separate query only for revenue calculation
+                supabase
+                    .from("enrollments")
+                    .select("amount_paid")
+                    .eq("course_id", courseId),
+            ]);
 
             if (error) throw new Error(error.message);
             if (!course) throw new Error("Course not found");
-            return course;
+
+            // ✅ Calculate total revenue from separate query
+            const totalRevenue = enrollments?.reduce(
+                (sum, e: any) => sum + (e.amount_paid ?? 0), 0
+            ) ?? 0;
+
+            return {
+                ...course,
+                total_enrolled : course.enrollments[0]?.count    ?? 0,
+                total_revenue  : totalRevenue,
+                total_folders  : course.course_folders[0]?.count  ?? 0,
+                total_materials: course.course_materials[0]?.count ?? 0,
+
+                // cleanup raw nested data
+                enrollments     : undefined,
+                course_folders  : undefined,
+                course_materials: undefined,
+            };
 
         } catch (error: any) {
             throw new Error(error.message);
         }
     },
+
 
     updateCourseDetails: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
@@ -595,6 +669,7 @@ console.log("videoUploadProgress",videoUploadProgress);
                     parent_id: data.parent_id ?? null,
                     sort_order: nextSortOrder,
                     title: data.title || "Untitled Folder",
+                    description: data.description ?? "",
                 })
                 .select()
                 .single();
@@ -687,7 +762,7 @@ console.log("videoUploadProgress",videoUploadProgress);
             if (data?.type === "VIDEO" || data?.type === "TEST") {
                 materialStatus = MaterialStatus.PENDING;
             } else {
-                materialStatus = MaterialStatus.COMPLETED;
+                materialStatus = MaterialStatus.READY;
             }
 
             const { data: material, error } = await supabase
@@ -707,6 +782,7 @@ console.log("videoUploadProgress",videoUploadProgress);
                     video_uploading_status: videoUploadProgress?.uploading_status,
                     video_upload_progress: videoUploadProgress?.upload_progress,
                     video_transcoding_progress: videoUploadProgress?.transcoding_progress,
+                    video_cover_img: data.video_cover_img ?? null,
 
                 })
                 .select()
@@ -715,7 +791,32 @@ console.log("videoUploadProgress",videoUploadProgress);
             if (error) throw new Error(error.message);
             if (!material) throw new Error("Material not created");
 
+          // update folder content counts
+          if (data.parent_id) {
+              const folderCountField =
+                  data.type === MaterialType.VIDEO ? "total_video" :
+                  data.type === MaterialType.TEST ? "total_test" :
+                  data.type === MaterialType.PDF ? "total_notes" :
+                  null;
 
+              if (folderCountField) {
+                  const { data: existingFolder, error: fetchError } = await supabase
+                      .from("course_folders")
+                      .select("total_video, total_test, total_notes")
+                      .eq("id", data.parent_id)
+                      .single();
+
+                  if (fetchError) throw new Error(fetchError.message);
+
+                  const currentCount = Number(existingFolder[folderCountField] ?? 0);
+                  const { error: folderError } = await supabase
+                      .from("course_folders")
+                      .update({ [folderCountField]: currentCount + 1 })
+                      .eq("id", data.parent_id);
+
+                  if (folderError) throw new Error(folderError.message);
+              }
+          }
 
             return material;
 
@@ -750,6 +851,7 @@ console.log("videoUploadProgress",videoUploadProgress);
                     video_uploading_status: videoUploadProgress?.uploading_status,
                     video_upload_progress: videoUploadProgress?.upload_progress,
                     video_transcoding_progress: videoUploadProgress?.transcoding_progress,
+                    video_cover_img: data.video_cover_img ?? null,
 
                 })
                 .eq("id", materialId)
@@ -821,6 +923,32 @@ console.log("videoUploadProgress",videoUploadProgress);
                 if (testError) throw new Error(testError.message);
             }
 
+            if (material?.folder_id) {
+                const folderCountField =
+                    material.type === MaterialType.VIDEO ? "total_video" :
+                    material.type === MaterialType.TEST ? "total_test" :
+                    material.type === MaterialType.PDF ? "total_notes" :
+                    null;
+
+                if (folderCountField) {
+                    const { data: existingFolder, error: folderFetchError } = await supabase
+                        .from("course_folders")
+                        .select("total_video, total_test, total_notes")
+                        .eq("id", material.folder_id)
+                        .single();
+
+                    if (folderFetchError) throw new Error(folderFetchError.message);
+
+                    const currentCount = Number(existingFolder[folderCountField] ?? 0);
+                    const { error: folderUpdateError } = await supabase
+                        .from("course_folders")
+                        .update({ [folderCountField]: Math.max(0, currentCount - 1) })
+                        .eq("id", material.folder_id);
+
+                    if (folderUpdateError) throw new Error(folderUpdateError.message);
+                }
+            }
+
             return material;
 
         } catch (error: any) {
@@ -884,27 +1012,15 @@ console.log("videoUploadProgress",videoUploadProgress);
                 .select(`
                 *,
                 student:profiles!reviews_student_id_fkey (
-                    id, name, avatar_url
-                ),
-                review_replies (
-                    id,
-                    reply,
-                    created_at,
-                    updated_at,
-                    is_deleted,
-                    faculty:profiles!review_replies_faculty_id_fkey (
-                        id, name, avatar_url
-                    )
+                    id, first_name, last_name, avatar_url
+                )
                 )
             `, { count: "exact" })
                 .eq("course_id", courseId)
-                .eq("is_approved", true)
-                .eq("review_replies.is_deleted", false)
                 .order("created_at", { ascending: false })
                 .range(from, to);
 
             if (error) throw new Error(error.message);
-            if (!reviews) throw new Error("Reviews not found");
 
             // 2. Get ALL ratings for accurate average
             // (not just current page)
@@ -912,7 +1028,7 @@ console.log("videoUploadProgress",videoUploadProgress);
                 .from("reviews")
                 .select("rating")
                 .eq("course_id", courseId)
-                .eq("is_approved", true);
+                
 
             if (ratingError) throw new Error(ratingError.message);
 
@@ -935,7 +1051,7 @@ console.log("videoUploadProgress",videoUploadProgress);
             const totalPages = Math.ceil((count ?? 0) / limit);
 
             return {
-                reviews,
+                reviews: reviews ?? [],
                 average_rating: averageRating,
                 total_reviews: allRatings?.length ?? 0,
                 rating_breakdown: ratingBreakdown,
@@ -1028,7 +1144,243 @@ console.log("videoUploadProgress",videoUploadProgress);
 
             throw new Error(error.message);
         }
-    }
+    },
+    getAllMaterialModule: async (materialId: string, client?: SupabaseClient) => {
+        try {
+            const supabase = client ?? anonSupabase;
+            const { data: contents, error } = await supabase
+                .from("course_materials")
+                .select("id,title,type")
+                .eq("id", materialId)
+                .eq("is_deleted", false)
+                .neq("type", "TEST")
+                .order("sort_order", { ascending: true });
+
+
+            if (error) throw new Error(error.message);
+            if (!contents) throw new Error("Contents not found");
+            return contents;
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
+    getCourseAnalytics: async (courseId: string, client?: SupabaseClient) => {
+        try {
+            const supabase = client ?? anonSupabase;
+    
+            // 1. Total Revenue + Active Students count
+            const { data: enrollments, error: enrollmentError } = await supabase
+                .from("enrollments")
+                .select("amount_paid, student_id")
+                .eq("course_id", courseId);
+    
+            if (enrollmentError) throw new Error(enrollmentError.message);
+    
+            const totalRevenue = enrollments?.reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
+            const activeStudents = enrollments?.length ?? 0;
+    
+            // 2. Completion Rate — avg completion_pct across all students in this course
+            const { data: progressData, error: progressError } = await supabase
+                .from("course_progress")
+                .select("completion_pct, is_completed")
+                .eq("course_id", courseId);
+    
+            if (progressError) throw new Error(progressError.message);
+    
+            const completionRate =
+                progressData && progressData.length > 0
+                    ? Math.round(
+                          progressData.reduce((sum, p) => sum + Number(p.completion_pct), 0) /
+                              progressData.length
+                      )
+                    : 0;
+    
+            // 3. Fully completed students count (optional — useful for future)
+            const completedStudents = progressData?.filter((p) => p.is_completed).length ?? 0;
+    
+            return {
+                totalRevenue,       // sum of amount_paid
+                activeStudents,     // total enrolled students
+                completionRate,     // average completion % (0-100)
+                completedStudents,  // count of fully completed
+                testScore: null,    // plug in your rating/quiz table later
+            };
+    
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+
+    getCourseEnrollmentVsCompletionChart: async (
+        courseId: string,
+        period: ChartPeriod,
+        client?: SupabaseClient
+    ): Promise<{ label: string; enrollments: number; completions: number }[]> => {
+        try {
+            const supabase = client ?? anonSupabase;
+            const bounds = getChartPeriodBounds(period);
+            const slots = buildChartPeriodSlots(period, bounds);
+
+            const { data: enrollments, error: enrollmentError } = await supabase
+                .from('enrollments')
+                .select('enrolled_at')
+                .eq('course_id', courseId)
+                .gte('enrolled_at', bounds.fromDate.toISOString())
+                .lte('enrolled_at', bounds.rangeEnd.toISOString());
+
+            if (enrollmentError) throw new Error(enrollmentError.message);
+
+            const { data: completions, error: completionError } = await supabase
+                .from('course_progress')
+                .select('completed_at')
+                .eq('course_id', courseId)
+                .eq('is_completed', true)
+                .gte('completed_at', bounds.fromDate.toISOString())
+                .lte('completed_at', bounds.rangeEnd.toISOString());
+
+            if (completionError) throw new Error(completionError.message);
+
+            const enrollmentMap = new Map<string, { label: string; count: number }>();
+            const completionMap = new Map<string, number>();
+
+            for (const e of enrollments ?? []) {
+                if (!e.enrolled_at) continue;
+                const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
+                if (!grouped) continue;
+                const { label, group } = grouped;
+                const existing = enrollmentMap.get(group);
+                enrollmentMap.set(group, { label, count: (existing?.count ?? 0) + 1 });
+            }
+
+            for (const c of completions ?? []) {
+                if (!c.completed_at) continue;
+                const grouped = groupTimestampForChartPeriod(c.completed_at, period, bounds);
+                if (!grouped) continue;
+                const { group } = grouped;
+                completionMap.set(group, (completionMap.get(group) ?? 0) + 1);
+            }
+
+            return slots.map(({ label, group }) => ({
+                label,
+                enrollments: enrollmentMap.get(group)?.count ?? 0,
+                completions: completionMap.get(group) ?? 0,
+            }));
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+    getCourseRevenueTrend: async (
+        courseId: string,
+        period: ChartPeriod,
+        client?: SupabaseClient
+    ): Promise<{ data: { label: string; value: number }[]; trend: string }> => {
+        try {
+            const db = client ?? anonSupabase;
+
+            const bounds = getChartPeriodBounds(period);
+            const slots = buildChartPeriodSlots(period, bounds);
+            const today = bounds.today;
+
+            let previousStart: Date;
+            let previousEnd: Date;
+
+            if (period === "week") {
+                previousStart = new Date(
+                    bounds.fromDate.getFullYear(),
+                    bounds.fromDate.getMonth(),
+                    bounds.fromDate.getDate() - 7
+                );
+                previousEnd = endOfLocalDay(
+                    new Date(
+                        bounds.fromDate.getFullYear(),
+                        bounds.fromDate.getMonth(),
+                        bounds.fromDate.getDate() - 1
+                    )
+                );
+            } else if (period === "month") {
+                previousStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                previousEnd = endOfLocalDay(
+                    new Date(today.getFullYear(), today.getMonth(), 0)
+                );
+            } else {
+                previousStart = new Date(today.getFullYear() - 1, 0, 1);
+                previousEnd = endOfLocalDay(new Date(today.getFullYear() - 1, 11, 31));
+            }
+
+            const { data: current, error: currentError } = await db
+                .from("enrollments")
+                .select("enrolled_at, amount_paid")
+                .eq("course_id", courseId)
+                .gte("enrolled_at", bounds.fromDate.toISOString())
+                .lte("enrolled_at", bounds.rangeEnd.toISOString());
+
+            if (currentError) throw new Error(currentError.message);
+            const currentEnrollments = current ?? [];
+
+            const { data: previous, error: previousError } = await db
+                .from("enrollments")
+                .select("amount_paid")
+                .eq("course_id", courseId)
+                .gte("enrolled_at", previousStart.toISOString())
+                .lte("enrolled_at", previousEnd.toISOString());
+
+            if (previousError) throw new Error(previousError.message);
+            const previousEnrollments = previous ?? [];
+    
+            const currentTotal = currentEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
+            const previousTotal = previousEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
+    
+            let trendText = "0% no change";
+            if (previousTotal > 0) {
+                const change = ((currentTotal - previousTotal) / previousTotal) * 100;
+                const direction = change >= 0 ? "increase" : "decrease";
+                const periodLabel = period === "week" ? "last week" : period === "month" ? "last month" : "last year";
+                trendText = `${Math.abs(change).toFixed(1)}% ${direction} from ${periodLabel}`;
+            }
+    
+            const revenueByGroup = new Map(slots.map((s) => [s.group, 0]));
+    
+            for (const e of currentEnrollments) {
+                if (!e.enrolled_at) continue;
+                const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
+                if (!grouped) continue;
+                revenueByGroup.set(
+                    grouped.group,
+                    (revenueByGroup.get(grouped.group) ?? 0) + Number(e.amount_paid)
+                );
+            }
+    
+            const chartData = slots.map((s) => ({
+                label: s.label,
+                value: revenueByGroup.get(s.group) ?? 0,
+            }));
+    
+            return { data: chartData, trend: trendText };
+    
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
+    deleteCourse: async (courseId: string, client?: SupabaseClient) => {
+        try {
+            const supabase = client ?? anonSupabase;
+            const { data: course, error } = await supabase
+                .from("courses")
+                .update({ is_deleted: true })
+                .eq("id", courseId)
+                .select()
+                .single();
+
+            if (error) throw new Error(error.message);
+            if (!course) throw new Error("Course not found");
+            return course;
+
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    },
 
 };
 

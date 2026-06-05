@@ -37,10 +37,10 @@ export const videoRepository = {
 
     // },
 
-    createVideoUploadProgress: async (uniqueId: string, facultyId: string, assetId: string, type: string, client?: SupabaseClient) => {
+    createVideoUploadProgress: async (uniqueId: string, facultyId: string, assetId: string, type: string, status: string, client?: SupabaseClient) => {
         try {
             const supabase = client ?? anonSupabase;
-            console.log(">>>>>>>>>>>>>>>>>>", uniqueId, facultyId, assetId, type)
+            console.log(">>>>>>>>>>>>>>>>>>", uniqueId, facultyId, assetId, type, status)
 
             // upsert = insert if not exists, update if exists ✅
             const { error } = await supabase
@@ -50,7 +50,7 @@ export const videoRepository = {
                     unique_id: uniqueId,
                     type: type,
                     asset_id: assetId,
-                    uploading_status: 'uploaded',
+                    uploading_status: status,
                     upload_progress: 0,
                     transcoding_progress: 0,
                 }, {
@@ -96,7 +96,7 @@ export const videoRepository = {
                         .from("course_materials")
                         .update({
                             video_asset_id: assetId,
-                            video_uploading_status: 'uploaded',
+                            video_uploading_status: status,
                             video_upload_progress: 0,
                             video_transcoding_progress: 0,
 

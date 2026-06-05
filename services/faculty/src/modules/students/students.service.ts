@@ -37,6 +37,42 @@ export const studentsService = {
         }
     },
 
+    getStudentCourses: async (event: any) => {
+        try {
+            const { studentId } = event.pathParameters;
+            const { page, limit, search } = event.queryStringParameters;
 
+            const result = await studentsRepository.getStudentCourses({
+                facultyId: event.user.id,
+                studentId,
+                page,
+                limit,
+                search,
+                client: event.supabase,
+            });
+
+            return result;
+        } catch (error: any) {
+            console.log("error", error);
+            throw new Error(error)
+        }
+    },
+
+    getStudentAnalytics: async (event: any) => {
+        try {
+            const { studentId } = event.pathParameters;
+            const studentAnalytics = await studentsRepository.getStudentAnalytics({
+                facultyId: event.user.id,
+                studentId,
+                client: event.supabase
+            });
+            return studentAnalytics;
+        } catch (error: any) {
+            console.log("error", error);
+            throw new Error(error)
+        }
+    },
+
+    
 
 }

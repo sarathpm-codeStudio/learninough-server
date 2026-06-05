@@ -3719,15 +3719,108 @@ var getSupabaseClient = (accessToken) => {
 };
 
 // ../../shared/constants/types.ts
-var MaterialType = /* @__PURE__ */ ((MaterialType3) => {
-  MaterialType3["VIDEO"] = "VIDEO";
-  MaterialType3["PDF"] = "PDF";
-  MaterialType3["LINK"] = "LINK";
-  MaterialType3["NOTES"] = "NOTES";
-  MaterialType3["IMAGE"] = "IMAGE";
-  MaterialType3["TEST"] = "TEST";
-  return MaterialType3;
+var MaterialType = /* @__PURE__ */ ((MaterialType2) => {
+  MaterialType2["VIDEO"] = "VIDEO";
+  MaterialType2["PDF"] = "PDF";
+  MaterialType2["LINK"] = "LINK";
+  MaterialType2["NOTES"] = "NOTES";
+  MaterialType2["IMAGE"] = "IMAGE";
+  MaterialType2["TEST"] = "TEST";
+  return MaterialType2;
 })(MaterialType || {});
+
+// src/utils/chartPeriod.ts
+var WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+function startOfLocalDay(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function endOfLocalDay(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+}
+function startOfLocalWeekMonday(d) {
+  const day = d.getDay();
+  const daysFromMonday = day === 0 ? 6 : day - 1;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - daysFromMonday);
+}
+function toLocalDateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function toLocalMonthKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function weekdayLabel(d) {
+  const index = d.getDay() === 0 ? 6 : d.getDay() - 1;
+  return WEEKDAY_LABELS[index];
+}
+function isSameLocalMonth(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+function calendarMonthWeekNumber(dayOfMonth) {
+  if (dayOfMonth <= 7) return 1;
+  if (dayOfMonth <= 14) return 2;
+  if (dayOfMonth <= 21) return 3;
+  return 4;
+}
+function getChartPeriodBounds(period, ref = /* @__PURE__ */ new Date()) {
+  const today = startOfLocalDay(ref);
+  let fromDate;
+  if (period === "week") {
+    fromDate = startOfLocalWeekMonday(today);
+  } else if (period === "month") {
+    fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  } else {
+    fromDate = new Date(today.getFullYear(), 0, 1);
+  }
+  return { today, fromDate, rangeEnd: endOfLocalDay(today) };
+}
+function buildChartPeriodSlots(period, bounds) {
+  const { today, fromDate } = bounds;
+  if (period === "week") {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + i);
+      return {
+        label: weekdayLabel(d),
+        group: toLocalDateKey(d),
+        dayOfMonth: String(d.getDate()).padStart(2, "0")
+      };
+    });
+  }
+  if (period === "month") {
+    return Array.from({ length: 4 }, (_, i) => ({
+      label: `Wk ${i + 1}`,
+      group: `week_${i + 1}`
+    }));
+  }
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(today.getFullYear(), i, 1);
+    return {
+      label: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+      group: toLocalMonthKey(d)
+    };
+  });
+}
+function groupTimestampForChartPeriod(dateStr, period, bounds) {
+  const { today, fromDate } = bounds;
+  const local = startOfLocalDay(new Date(dateStr));
+  if (period === "week") {
+    const weekEnd = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + 6);
+    if (local < fromDate || local > weekEnd) return null;
+    return { label: weekdayLabel(local), group: toLocalDateKey(local) };
+  }
+  if (period === "month") {
+    if (!isSameLocalMonth(local, today)) return null;
+    const weekNum = calendarMonthWeekNumber(local.getDate());
+    return { label: `Wk ${weekNum}`, group: `week_${weekNum}` };
+  }
+  if (local.getFullYear() !== today.getFullYear()) return null;
+  return {
+    label: local.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+    group: toLocalMonthKey(local)
+  };
+}
 
 // src/modules/course/course.repository.ts
 var facultyCourseRepository = {
@@ -3771,42 +3864,58 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
-  getMyCourses: async (facultyId, filter, search, client) => {
-    console.log("search", search);
-    console.log("filter", filter);
-    console.log("facultyId**********************************************************************", facultyId);
-    try {
-      const supabase2 = client ?? supabase;
-      const { data: courses, error } = await supabase2.from("courses").select(`*`).eq("faculty_id", facultyId).eq("is_draft", filter).order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return courses;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  },
-  // addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
+  // getMyCourses: async (facultyId: string, filter: string, search: string, client?: SupabaseClient) => {
   //     try {
   //         const supabase = client ?? anonSupabase;
-  //         console.log("peicing data^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", data)
-  //         const { data: course, error } = await supabase
+  //         let query = supabase
   //             .from("courses")
-  //             .update({
-  //                 validity: data.validity,
-  //                 price: data.price,
-  //                 discount: data.discount,
-  //                 discount_type: data.discount_type,
-  //                 final_price: data.final_price,
-  //                 enableCoupons: data.enableCoupons,
-  //             })
-  //             .eq("id", courseId)
-  //             .select()
-  //             .single();
+  //             .select(`*`)
+  //             .eq("faculty_id", facultyId);
+  //         if (filter !== "all") {
+  //             const isDraft = filter === "true";
+  //             query = query.eq("is_draft", isDraft);
+  //         }
+  //         if (search?.trim()) {
+  //             query = query.ilike("title", `%${search.trim()}%`);
+  //         }
+  //         const { data: courses, error } = await query.order("created_at", { ascending: false });
   //         if (error) throw new Error(error.message);
-  //         return course;
+  //         return courses;
   //     } catch (error: any) {
   //         throw new Error(error.message);
   //     }
   // },
+  getMyCourses: async (facultyId, filter, search, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      let query = supabase2.from("courses").select(`
+                    id,
+                    title,
+                    category,
+                    price,
+                    final_price,
+                    validity,
+                    languages,
+                    cover_image,
+                  enrollments(count)
+                `).eq("faculty_id", facultyId).eq("is_deleted", false).order("created_at", { ascending: false });
+      if (filter !== "all") {
+        const isDraft = filter === "true";
+        query = query.eq("is_draft", isDraft);
+      }
+      if (search?.trim()) {
+        query = query.ilike("title", `%${search.trim()}%`);
+      }
+      const { data: courses, error } = await query.order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return courses?.map((course) => ({
+        ...course,
+        total_enrolled: course.enrollments[0]?.count ?? 0
+      }));
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
   addCoursePricing: async (data, courseId, facultyId, client) => {
     try {
       const supabase2 = client ?? supabase;
@@ -3815,7 +3924,7 @@ var facultyCourseRepository = {
         validity: data.validity,
         price: data.price,
         discount: data.discount,
-        discount_type: data.discount_type,
+        discount_type: data.discount_type === "" ? null : data.discount_type,
         final_price: data.final_price,
         enableCoupons: data.enableCoupons
       }).eq("id", courseId).select();
@@ -3883,13 +3992,54 @@ var facultyCourseRepository = {
       throw new Error(error.message);
     }
   },
+  // getCourseById: async (courseId: string, client?: SupabaseClient) => {
+  //     try {
+  //         const supabase = client ?? anonSupabase;
+  //         const { data: course, error } = await supabase
+  //             .from("courses")
+  //             .select("*")
+  //             .eq("id", courseId)
+  //             .single();
+  //         if (error) throw new Error(error.message);
+  //         if (!course) throw new Error("Course not found");
+  //         return course;
+  //     } catch (error: any) {
+  //         throw new Error(error.message);
+  //     }
+  // },
   getCourseById: async (courseId, client) => {
     try {
       const supabase2 = client ?? supabase;
-      const { data: course, error } = await supabase2.from("courses").select("*").eq("id", courseId).single();
+      const [
+        { data: course, error },
+        { data: enrollments }
+      ] = await Promise.all([
+        supabase2.from("courses").select(`
+                        *,
+                        enrollments(count),
+                        course_folders(count),
+                        course_materials(count)
+                    `).eq("id", courseId).single(),
+        // ✅ Separate query only for revenue calculation
+        supabase2.from("enrollments").select("amount_paid").eq("course_id", courseId)
+      ]);
       if (error) throw new Error(error.message);
       if (!course) throw new Error("Course not found");
-      return course;
+      const totalRevenue = enrollments?.reduce(
+        (sum, e) => sum + (e.amount_paid ?? 0),
+        0
+      ) ?? 0;
+      return {
+        ...course,
+        total_enrolled: course.enrollments[0]?.count ?? 0,
+        total_revenue: totalRevenue,
+        total_folders: course.course_folders[0]?.count ?? 0,
+        total_materials: course.course_materials[0]?.count ?? 0,
+        // cleanup raw nested data
+        enrollments: void 0,
+        course_folders: void 0,
+        course_materials: void 0
+      };
     } catch (error) {
       throw new Error(error.message);
     }
@@ -4068,7 +4218,8 @@ var facultyCourseRepository = {
         course_id: courseId,
         parent_id: data.parent_id ?? null,
         sort_order: nextSortOrder,
-        title: data.title || "Untitled Folder"
+        title: data.title || "Untitled Folder",
+        description: data.description ?? ""
       }).select().single();
       if (error) throw new Error(error.message);
       if (!folder) throw new Error("Folder not created");
@@ -4116,7 +4267,7 @@ var facultyCourseRepository = {
       if (data?.type === "VIDEO" || data?.type === "TEST") {
         materialStatus = "PENDING" /* PENDING */;
       } else {
-        materialStatus = "COMPLETED" /* COMPLETED */;
+        materialStatus = "READY" /* READY */;
       }
       const { data: material, error } = await supabase2.from("course_materials").insert({
         unique_id: data.unique_id,
@@ -4132,10 +4283,21 @@ var facultyCourseRepository = {
         video_asset_id: videoUploadProgress?.asset_id,
         video_uploading_status: videoUploadProgress?.uploading_status,
         video_upload_progress: videoUploadProgress?.upload_progress,
-        video_transcoding_progress: videoUploadProgress?.transcoding_progress
+        video_transcoding_progress: videoUploadProgress?.transcoding_progress,
+        video_cover_img: data.video_cover_img ?? null
       }).select().single();
       if (error) throw new Error(error.message);
       if (!material) throw new Error("Material not created");
+      if (data.parent_id) {
+        const folderCountField = data.type === "VIDEO" /* VIDEO */ ? "total_video" : data.type === "TEST" /* TEST */ ? "total_test" : data.type === "PDF" /* PDF */ ? "total_notes" : null;
+        if (folderCountField) {
+          const { data: existingFolder, error: fetchError } = await supabase2.from("course_folders").select("total_video, total_test, total_notes").eq("id", data.parent_id).single();
+          if (fetchError) throw new Error(fetchError.message);
+          const currentCount = Number(existingFolder[folderCountField] ?? 0);
+          const { error: folderError } = await supabase2.from("course_folders").update({ [folderCountField]: currentCount + 1 }).eq("id", data.parent_id);
+          if (folderError) throw new Error(folderError.message);
+        }
+      }
       return material;
     } catch (error) {
       throw new Error(error.message);
@@ -4154,7 +4316,8 @@ var facultyCourseRepository = {
         video_asset_id: videoUploadProgress?.asset_id,
         video_uploading_status: videoUploadProgress?.uploading_status,
         video_upload_progress: videoUploadProgress?.upload_progress,
-        video_transcoding_progress: videoUploadProgress?.transcoding_progress
+        video_transcoding_progress: videoUploadProgress?.transcoding_progress,
+        video_cover_img: data.video_cover_img ?? null
       }).eq("id", materialId).select().single();
       if (error) throw new Error(error.message);
       if (!material) throw new Error("Material not created");
@@ -4187,6 +4350,16 @@ var facultyCourseRepository = {
       if (material?.type === "TEST") {
         const { error: testError } = await supabase2.from("tests").update({ is_deleted: true }).eq("unique_id", material.unique_id).select().single();
         if (testError) throw new Error(testError.message);
+      }
+      if (material?.folder_id) {
+        const folderCountField = material.type === "VIDEO" /* VIDEO */ ? "total_video" : material.type === "TEST" /* TEST */ ? "total_test" : material.type === "PDF" /* PDF */ ? "total_notes" : null;
+        if (folderCountField) {
+          const { data: existingFolder, error: folderFetchError } = await supabase2.from("course_folders").select("total_video, total_test, total_notes").eq("id", material.folder_id).single();
+          if (folderFetchError) throw new Error(folderFetchError.message);
+          const currentCount = Number(existingFolder[folderCountField] ?? 0);
+          const { error: folderUpdateError } = await supabase2.from("course_folders").update({ [folderCountField]: Math.max(0, currentCount - 1) }).eq("id", material.folder_id);
+          if (folderUpdateError) throw new Error(folderUpdateError.message);
+        }
       }
       return material;
     } catch (error) {
@@ -4224,22 +4397,12 @@ var facultyCourseRepository = {
       const { data: reviews, error, count } = await supabase2.from("reviews").select(`
                 *,
                 student:profiles!reviews_student_id_fkey (
-                    id, name, avatar_url
-                ),
-                review_replies (
-                    id,
-                    reply,
-                    created_at,
-                    updated_at,
-                    is_deleted,
-                    faculty:profiles!review_replies_faculty_id_fkey (
-                        id, name, avatar_url
-                    )
+                    id, first_name, last_name, avatar_url
                 )
-            `, { count: "exact" }).eq("course_id", courseId).eq("is_approved", true).eq("review_replies.is_deleted", false).order("created_at", { ascending: false }).range(from, to);
+                )
+            `, { count: "exact" }).eq("course_id", courseId).order("created_at", { ascending: false }).range(from, to);
       if (error) throw new Error(error.message);
-      if (!reviews) throw new Error("Reviews not found");
-      const { data: allRatings, error: ratingError } = await supabase2.from("reviews").select("rating").eq("course_id", courseId).eq("is_approved", true);
+      const { data: allRatings, error: ratingError } = await supabase2.from("reviews").select("rating").eq("course_id", courseId);
       if (ratingError) throw new Error(ratingError.message);
       const averageRating = allRatings && allRatings.length > 0 ? Math.round(
         allRatings.reduce((sum, r) => sum + (r.rating ?? 0), 0) / allRatings.length * 10
@@ -4252,7 +4415,7 @@ var facultyCourseRepository = {
       });
       const totalPages = Math.ceil((count ?? 0) / limit);
       return {
-        reviews,
+        reviews: reviews ?? [],
         average_rating: averageRating,
         total_reviews: allRatings?.length ?? 0,
         rating_breakdown: ratingBreakdown,
@@ -4295,6 +4458,156 @@ var facultyCourseRepository = {
       const { data: folders } = await supabase2.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false);
       if (!folders) throw new Error("No folders found");
       return folders;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  getAllMaterialModule: async (materialId, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { data: contents, error } = await supabase2.from("course_materials").select("id,title,type").eq("id", materialId).eq("is_deleted", false).neq("type", "TEST").order("sort_order", { ascending: true });
+      if (error) throw new Error(error.message);
+      if (!contents) throw new Error("Contents not found");
+      return contents;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  getCourseAnalytics: async (courseId, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { data: enrollments, error: enrollmentError } = await supabase2.from("enrollments").select("amount_paid, student_id").eq("course_id", courseId);
+      if (enrollmentError) throw new Error(enrollmentError.message);
+      const totalRevenue = enrollments?.reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
+      const activeStudents = enrollments?.length ?? 0;
+      const { data: progressData, error: progressError } = await supabase2.from("course_progress").select("completion_pct, is_completed").eq("course_id", courseId);
+      if (progressError) throw new Error(progressError.message);
+      const completionRate = progressData && progressData.length > 0 ? Math.round(
+        progressData.reduce((sum, p) => sum + Number(p.completion_pct), 0) / progressData.length
+      ) : 0;
+      const completedStudents = progressData?.filter((p) => p.is_completed).length ?? 0;
+      return {
+        totalRevenue,
+        // sum of amount_paid
+        activeStudents,
+        // total enrolled students
+        completionRate,
+        // average completion % (0-100)
+        completedStudents,
+        // count of fully completed
+        testScore: null
+        // plug in your rating/quiz table later
+      };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  getCourseEnrollmentVsCompletionChart: async (courseId, period, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const bounds = getChartPeriodBounds(period);
+      const slots = buildChartPeriodSlots(period, bounds);
+      const { data: enrollments, error: enrollmentError } = await supabase2.from("enrollments").select("enrolled_at").eq("course_id", courseId).gte("enrolled_at", bounds.fromDate.toISOString()).lte("enrolled_at", bounds.rangeEnd.toISOString());
+      if (enrollmentError) throw new Error(enrollmentError.message);
+      const { data: completions, error: completionError } = await supabase2.from("course_progress").select("completed_at").eq("course_id", courseId).eq("is_completed", true).gte("completed_at", bounds.fromDate.toISOString()).lte("completed_at", bounds.rangeEnd.toISOString());
+      if (completionError) throw new Error(completionError.message);
+      const enrollmentMap = /* @__PURE__ */ new Map();
+      const completionMap = /* @__PURE__ */ new Map();
+      for (const e of enrollments ?? []) {
+        if (!e.enrolled_at) continue;
+        const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
+        if (!grouped) continue;
+        const { label, group } = grouped;
+        const existing = enrollmentMap.get(group);
+        enrollmentMap.set(group, { label, count: (existing?.count ?? 0) + 1 });
+      }
+      for (const c of completions ?? []) {
+        if (!c.completed_at) continue;
+        const grouped = groupTimestampForChartPeriod(c.completed_at, period, bounds);
+        if (!grouped) continue;
+        const { group } = grouped;
+        completionMap.set(group, (completionMap.get(group) ?? 0) + 1);
+      }
+      return slots.map(({ label, group }) => ({
+        label,
+        enrollments: enrollmentMap.get(group)?.count ?? 0,
+        completions: completionMap.get(group) ?? 0
+      }));
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  getCourseRevenueTrend: async (courseId, period, client) => {
+    try {
+      const db = client ?? supabase;
+      const bounds = getChartPeriodBounds(period);
+      const slots = buildChartPeriodSlots(period, bounds);
+      const today = bounds.today;
+      let previousStart;
+      let previousEnd;
+      if (period === "week") {
+        previousStart = new Date(
+          bounds.fromDate.getFullYear(),
+          bounds.fromDate.getMonth(),
+          bounds.fromDate.getDate() - 7
+        );
+        previousEnd = endOfLocalDay(
+          new Date(
+            bounds.fromDate.getFullYear(),
+            bounds.fromDate.getMonth(),
+            bounds.fromDate.getDate() - 1
+          )
+        );
+      } else if (period === "month") {
+        previousStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        previousEnd = endOfLocalDay(
+          new Date(today.getFullYear(), today.getMonth(), 0)
+        );
+      } else {
+        previousStart = new Date(today.getFullYear() - 1, 0, 1);
+        previousEnd = endOfLocalDay(new Date(today.getFullYear() - 1, 11, 31));
+      }
+      const { data: current, error: currentError } = await db.from("enrollments").select("enrolled_at, amount_paid").eq("course_id", courseId).gte("enrolled_at", bounds.fromDate.toISOString()).lte("enrolled_at", bounds.rangeEnd.toISOString());
+      if (currentError) throw new Error(currentError.message);
+      const currentEnrollments = current ?? [];
+      const { data: previous, error: previousError } = await db.from("enrollments").select("amount_paid").eq("course_id", courseId).gte("enrolled_at", previousStart.toISOString()).lte("enrolled_at", previousEnd.toISOString());
+      if (previousError) throw new Error(previousError.message);
+      const previousEnrollments = previous ?? [];
+      const currentTotal = currentEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
+      const previousTotal = previousEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
+      let trendText = "0% no change";
+      if (previousTotal > 0) {
+        const change = (currentTotal - previousTotal) / previousTotal * 100;
+        const direction = change >= 0 ? "increase" : "decrease";
+        const periodLabel = period === "week" ? "last week" : period === "month" ? "last month" : "last year";
+        trendText = `${Math.abs(change).toFixed(1)}% ${direction} from ${periodLabel}`;
+      }
+      const revenueByGroup = new Map(slots.map((s) => [s.group, 0]));
+      for (const e of currentEnrollments) {
+        if (!e.enrolled_at) continue;
+        const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
+        if (!grouped) continue;
+        revenueByGroup.set(
+          grouped.group,
+          (revenueByGroup.get(grouped.group) ?? 0) + Number(e.amount_paid)
+        );
+      }
+      const chartData = slots.map((s) => ({
+        label: s.label,
+        value: revenueByGroup.get(s.group) ?? 0
+      }));
+      return { data: chartData, trend: trendText };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+  deleteCourse: async (courseId, client) => {
+    try {
+      const supabase2 = client ?? supabase;
+      const { data: course, error } = await supabase2.from("courses").update({ is_deleted: true }).eq("id", courseId).select().single();
+      if (error) throw new Error(error.message);
+      if (!course) throw new Error("Course not found");
+      return course;
     } catch (error) {
       throw new Error(error.message);
     }
@@ -4352,11 +4665,13 @@ var updateCourseSchema = import_zod.z.object({
 });
 var createFolderSchema = import_zod.z.object({
   title: import_zod.z.string(),
+  description: import_zod.z.string().optional(),
   parent_id: import_zod.z.string().optional()
 });
 var uploadMaterialSchema = import_zod.z.object({
   title: import_zod.z.string(),
-  type: import_zod.z.nativeEnum(MaterialType)
+  type: import_zod.z.nativeEnum(MaterialType),
+  video_cover_img: import_zod.z.string().optional()
 });
 var createCourseBundleSchema = import_zod.z.object({
   title: import_zod.z.string(),
@@ -4413,9 +4728,13 @@ var facultyCourseService = {
   },
   getMyCourses: async (event) => {
     try {
-      console.log("event.queryStringParameters", event.queryStringParameters);
-      const filter = event.queryStringParameters.filter === "true";
-      const courses = await facultyCourseRepository.getMyCourses(event.user.id, filter, event.queryStringParameters.search, event.supabase);
+      const filter = event.queryStringParameters?.filter ?? "all";
+      const courses = await facultyCourseRepository.getMyCourses(
+        event.user.id,
+        filter,
+        event.queryStringParameters?.search,
+        event.supabase
+      );
       return courses;
     } catch (error) {
       console.log("error", error);
@@ -4539,7 +4858,8 @@ var facultyCourseService = {
   getCourseReviews: async (event) => {
     try {
       const courseId = event.pathParameters.courseId;
-      const { page, limit } = event.queryStringParameters;
+      const page = Number(event.queryStringParameters?.page ?? 1);
+      const limit = Number(event.queryStringParameters?.limit ?? 10);
       const reviews = await facultyCourseRepository.getCourseReviews(courseId, page, limit, event.supabase);
       return reviews;
     } catch (error) {
@@ -4560,6 +4880,56 @@ var facultyCourseService = {
     try {
       const folders = await facultyCourseRepository.getFullFoldersInCourse(event.pathParameters.courseId, event.user.id, event.supabase);
       return folders;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getAllMaterialModule: async (event) => {
+    try {
+      const contents = await facultyCourseRepository.getAllMaterialModule(event.pathParameters.materialId, event.supabase);
+      return contents;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getCourseAnalytics: async (event) => {
+    try {
+      const analytics = await facultyCourseRepository.getCourseAnalytics(event.pathParameters.courseId, event.supabase);
+      return analytics;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getCourseEnrollmentVsCompletionChart: async (event) => {
+    try {
+      const chart = await facultyCourseRepository.getCourseEnrollmentVsCompletionChart(event.pathParameters.courseId, event.queryStringParameters.period, event.supabase);
+      return chart;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  getCourseRevenueTrend: async (event) => {
+    try {
+      const period = event.queryStringParameters?.period || "week";
+      const trend = await facultyCourseRepository.getCourseRevenueTrend(
+        event.pathParameters.courseId,
+        period,
+        event.supabase
+      );
+      return trend;
+    } catch (error) {
+      console.log("error", error);
+      throw new Error(error);
+    }
+  },
+  deleteCourse: async (event) => {
+    try {
+      const course = await facultyCourseRepository.deleteCourse(event.pathParameters.courseId, event.supabase);
+      return course;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);

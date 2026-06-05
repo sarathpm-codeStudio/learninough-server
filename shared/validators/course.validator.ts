@@ -30,6 +30,7 @@ export const updateCourseSchema = z.object({
 export const createFolderSchema = z.object({
 
     title: z.string(),
+    description: z.string().optional(),
     parent_id: z.string().optional(),
 
 });
@@ -38,6 +39,7 @@ export const createFolderSchema = z.object({
 export const uploadMaterialSchema = z.object({
     title: z.string(),
     type: z.nativeEnum(MaterialType),
+    video_cover_img: z.string().optional(),
 });
 
 

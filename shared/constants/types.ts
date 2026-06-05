@@ -2,7 +2,7 @@ export type Role = "STUDENT" | "FACULTY" | "ADMIN";
 
 export enum AccountStatus { PENDING = "PENDING", APPROVED = "APPROVED", REJECTED = "REJECTED" }
 
-export enum MaterialStatus { PENDING = "PENDING", TRANSCODING = "TRANSCODING", COMPLETED = "COMPLETED", FAILED = "FAILED" }
+export enum MaterialStatus { PENDING = "PENDING", TRANSCODING = "TRANSCODING", COMPLETED = "COMPLETED", FAILED = "FAILED" ,READY = "READY" , PROCESSING = "PROCESSING"}
 
 export enum MaterialType { VIDEO = "VIDEO", PDF = "PDF", LINK = "LINK", NOTES = "NOTES", IMAGE = "IMAGE", TEST = "TEST" }
 
@@ -22,6 +22,7 @@ export type MaterialData = {
     external_url?: string,
     video_data?: any,
     file_name?: string,
+    video_cover_img?: string,
 }
 
 export type CourseBundleData = {
@@ -81,8 +82,8 @@ export type QuestionData = {
             label: string,
         }
     ],
-
-
+    material_id: string,
+    material_title: string,
 }
 
 
