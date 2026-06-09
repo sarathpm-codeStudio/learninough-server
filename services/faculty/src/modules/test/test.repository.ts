@@ -28,11 +28,11 @@ export const facultyTestRepository = {
             const { data: test, error: testError } = await supabase.from("tests")
                 .insert({
                     faculty_id: facultyId,
-                    unique_id: data.unique_id,
+                    unique_id: data.unique_id || null,
                     title: data.title,
                     course_id: data?.course,
-                    module_id: data?.module || null,
-                    // total_marks: data.totalMarks,
+                    folder_id: data?.module || null,
+                    material_id: data.material || null,
                     duration_minutes: data.duration,
                     instructions: data.instructions,
                     type: data.testType,
@@ -41,45 +41,49 @@ export const facultyTestRepository = {
                 .single();
             if (testError) throw testError;
 
-            // add  this test in course metirial 
+             // add  this test in course metirial table if material_id is not provided
+            if(!data?.material){
 
-            const nextSortOrder = await getNextSortOrder(data?.course, data?.module && data.module.trim() !== '' ? data.module : null, supabase);
-            console.log("nextSortOrder", nextSortOrder);
-            const { data: material, error: materialError } = await supabase
-                .from("course_materials")
-                .insert({
-
-                    unique_id: data.unique_id,
-                    course_id: data?.course,
-                    folder_id: data?.module && data.module.trim() !== '' ? data.module : null,
-                    sort_order: nextSortOrder,
-                    title: data.title,
-                    type: "TEST",
-                    material_status: "PENDING",
-                })
-                .select()
-                .single();
-            if (materialError) throw new Error(materialError.message);
-
-            const folderId = data?.module?.trim() ? data.module : null;
-            if (folderId) {
-                const { data: existingFolder, error: fetchError } = await supabase
-                    .from("course_folders")
-                    .select("total_test")
-                    .eq("id", folderId)
+                const nextSortOrder = await getNextSortOrder(data?.course, data?.module && data.module.trim() !== '' ? data.module : null, supabase);
+                console.log("nextSortOrder", nextSortOrder);
+                const { data: material, error: materialError } = await supabase
+                    .from("course_materials")
+                    .insert({
+    
+                        unique_id: data.unique_id,
+                        course_id: data?.course,
+                        folder_id: data?.module && data.module.trim() !== '' ? data.module : null,
+                        sort_order: nextSortOrder,
+                        title: data.title,
+                        type: "TEST",
+                        material_status: "PENDING",
+                    })
+                    .select()
                     .single();
+                if (materialError) throw new Error(materialError.message);
+    
+                const folderId = data?.module?.trim() ? data.module : null;
+                if (folderId) {
+                    const { data: existingFolder, error: fetchError } = await supabase
+                        .from("course_folders")
+                        .select("total_test")
+                        .eq("id", folderId)
+                        .single();
+    
+                    if (fetchError) throw new Error(fetchError.message);
+    
+                    const currentCount = Number(existingFolder?.total_test ?? 0);
+                    const { error: folderError } = await supabase
+                        .from("course_folders")
+                        .update({ total_test: currentCount + 1 })
+                        .eq("id", folderId);
+    
+                    if (folderError) throw new Error(folderError.message);
+                }
+    
 
-                if (fetchError) throw new Error(fetchError.message);
-
-                const currentCount = Number(existingFolder?.total_test ?? 0);
-                const { error: folderError } = await supabase
-                    .from("course_folders")
-                    .update({ total_test: currentCount + 1 })
-                    .eq("id", folderId);
-
-                if (folderError) throw new Error(folderError.message);
             }
-
+            
             return test;
 
         } catch (error: any) {
@@ -677,30 +681,33 @@ export const facultyTestRepository = {
 
             if (error) throw error;
 
-            // delete course module
+             // delete course material if material_id is not provided
+            if(!result?.material_id){
+               
             const { data: module, error: moduleError } = await supabase.from("course_materials")
-                .update({ is_deleted: true })
-                .eq("unique_id", result.unique_id)
-                .select()
+            .update({ is_deleted: true })
+            .eq("unique_id", result.unique_id)
+            .select()
+            .single();
+        if (moduleError) throw moduleError;
+
+        if (module?.folder_id) {
+            const { data: existingFolder, error: fetchError } = await supabase
+                .from("course_folders")
+                .select("total_test")
+                .eq("id", module.folder_id)
                 .single();
-            if (moduleError) throw moduleError;
 
-            if (module?.folder_id) {
-                const { data: existingFolder, error: fetchError } = await supabase
-                    .from("course_folders")
-                    .select("total_test")
-                    .eq("id", module.folder_id)
-                    .single();
+            if (fetchError) throw new Error(fetchError.message);
 
-                if (fetchError) throw new Error(fetchError.message);
+            const currentCount = Number(existingFolder?.total_test ?? 0);
+            const { error: folderError } = await supabase
+                .from("course_folders")
+                .update({ total_test: Math.max(0, currentCount - 1) })
+                .eq("id", module.folder_id);
 
-                const currentCount = Number(existingFolder?.total_test ?? 0);
-                const { error: folderError } = await supabase
-                    .from("course_folders")
-                    .update({ total_test: Math.max(0, currentCount - 1) })
-                    .eq("id", module.folder_id);
-
-                if (folderError) throw new Error(folderError.message);
+            if (folderError) throw new Error(folderError.message);
+        }
             }
 
             return result;
@@ -738,6 +745,7 @@ export const facultyTestRepository = {
                     question: data.question,
                     material_id: data.material_id,
                     material_title: data.material_title,
+                    folder_id: data.module_id,
                     question_number: nextQuestionNumber, // ✅
                 })
                 .select()

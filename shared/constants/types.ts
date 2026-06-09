@@ -57,6 +57,7 @@ export type TestBaseDetailsData = {
     chapter?: string,
     course: string,
     module?: string,
+    material?: string,
     totalMarks: number,
     isDraft: boolean,
     isDeleted: boolean,
@@ -84,6 +85,7 @@ export type QuestionData = {
     ],
     material_id: string,
     material_title: string,
+    module_id: string,
 }
 
 
