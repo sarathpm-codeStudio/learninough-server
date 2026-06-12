@@ -35,7 +35,7 @@ plugins:
 
 custom:
   serverless-offline:
-    httpPort: 3002
+    httpPort: 3000
     lambdaPort: 3003
 
 resources:
@@ -70,6 +70,24 @@ functions:
       - http:
           path: /video/create-upload-progress
           method: post
+
+  
+  saveBankDetails:
+    handler: src/functions/bank/saveBankDetails.handler
+    events:
+      - http:
+          path:   faculty/bank/details
+          method: post
+          cors:   true
+  
+  getBankDetails:
+    handler: src/functions/bank/getBankDetails.handler
+    events:
+      - http:
+          path:   faculty/bank/details
+          method: get
+          cors:   true
+  
           
 
 

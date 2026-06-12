@@ -201,10 +201,10 @@ export const facultyCourseRepository = {
     addCoursePricing: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
             const supabase = client ?? anonSupabase;
-    
+
             // ← add this to debug
-            console.log("pricing data",data)
-    
+            console.log("pricing data", data)
+
             const { data: course, error } = await supabase
                 .from("courses")
                 .update({
@@ -217,18 +217,18 @@ export const facultyCourseRepository = {
                 })
                 .eq("id", courseId)
                 .select()
-                
-    
+
+
             if (error) throw new Error(error.message);
             if (!course) throw new Error(`Course not found for id: ${courseId}`);
-    
+
             return course;
-    
+
         } catch (error: any) {
             throw new Error(error.message);
         }
     },
-   
+
 
     getPreviewCourse: async (courseId: string, client?: SupabaseClient) => {
         try {
@@ -339,7 +339,7 @@ export const facultyCourseRepository = {
     //     }
     // },
 
-    
+
     getCourseById: async (courseId: string, client?: SupabaseClient) => {
         try {
             const supabase = client ?? anonSupabase;
@@ -376,14 +376,14 @@ export const facultyCourseRepository = {
 
             return {
                 ...course,
-                total_enrolled : course.enrollments[0]?.count    ?? 0,
-                total_revenue  : totalRevenue,
-                total_folders  : course.course_folders[0]?.count  ?? 0,
+                total_enrolled: course.enrollments[0]?.count ?? 0,
+                total_revenue: totalRevenue,
+                total_folders: course.course_folders[0]?.count ?? 0,
                 total_materials: course.course_materials[0]?.count ?? 0,
 
                 // cleanup raw nested data
-                enrollments     : undefined,
-                course_folders  : undefined,
+                enrollments: undefined,
+                course_folders: undefined,
                 course_materials: undefined,
             };
 
@@ -396,9 +396,9 @@ export const facultyCourseRepository = {
     updateCourseDetails: async (data: any, courseId: string, facultyId: string, client?: SupabaseClient) => {
         try {
 
-            console.log("course id",courseId);
-            console.log("faculty id",facultyId);
-            console.log("data",data);
+            console.log("course id", courseId);
+            console.log("faculty id", facultyId);
+            console.log("data", data);
 
             const supabase = client ?? anonSupabase;
             // check this course have intro video
@@ -409,7 +409,7 @@ export const facultyCourseRepository = {
                 .eq("type", "intro")
                 .maybeSingle();
 
-console.log("videoUploadProgress",videoUploadProgress);
+            console.log("videoUploadProgress", videoUploadProgress);
 
             const { data: course, error } = await supabase
                 .from("courses")
@@ -791,32 +791,32 @@ console.log("videoUploadProgress",videoUploadProgress);
             if (error) throw new Error(error.message);
             if (!material) throw new Error("Material not created");
 
-          // update folder content counts
-          if (data.parent_id) {
-              const folderCountField =
-                  data.type === MaterialType.VIDEO ? "total_video" :
-                  data.type === MaterialType.TEST ? "total_test" :
-                  data.type === MaterialType.PDF ? "total_notes" :
-                  null;
+            // update folder content counts
+            if (data.parent_id) {
+                const folderCountField =
+                    data.type === MaterialType.VIDEO ? "total_video" :
+                        data.type === MaterialType.TEST ? "total_test" :
+                            data.type === MaterialType.PDF ? "total_notes" :
+                                null;
 
-              if (folderCountField) {
-                  const { data: existingFolder, error: fetchError } = await supabase
-                      .from("course_folders")
-                      .select("total_video, total_test, total_notes")
-                      .eq("id", data.parent_id)
-                      .single();
+                if (folderCountField) {
+                    const { data: existingFolder, error: fetchError } = await supabase
+                        .from("course_folders")
+                        .select("total_video, total_test, total_notes")
+                        .eq("id", data.parent_id)
+                        .single();
 
-                  if (fetchError) throw new Error(fetchError.message);
+                    if (fetchError) throw new Error(fetchError.message);
 
-                  const currentCount = Number(existingFolder[folderCountField] ?? 0);
-                  const { error: folderError } = await supabase
-                      .from("course_folders")
-                      .update({ [folderCountField]: currentCount + 1 })
-                      .eq("id", data.parent_id);
+                    const currentCount = Number(existingFolder[folderCountField] ?? 0);
+                    const { error: folderError } = await supabase
+                        .from("course_folders")
+                        .update({ [folderCountField]: currentCount + 1 })
+                        .eq("id", data.parent_id);
 
-                  if (folderError) throw new Error(folderError.message);
-              }
-          }
+                    if (folderError) throw new Error(folderError.message);
+                }
+            }
 
             return material;
 
@@ -926,9 +926,9 @@ console.log("videoUploadProgress",videoUploadProgress);
             if (material?.folder_id) {
                 const folderCountField =
                     material.type === MaterialType.VIDEO ? "total_video" :
-                    material.type === MaterialType.TEST ? "total_test" :
-                    material.type === MaterialType.PDF ? "total_notes" :
-                    null;
+                        material.type === MaterialType.TEST ? "total_test" :
+                            material.type === MaterialType.PDF ? "total_notes" :
+                                null;
 
                 if (folderCountField) {
                     const { data: existingFolder, error: folderFetchError } = await supabase
@@ -958,7 +958,7 @@ console.log("videoUploadProgress",videoUploadProgress);
 
     getCourseContent: async (courseId: string, parentId: string | null, client?: SupabaseClient) => {
 
-        console.log("content data $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        console.log("content data $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", courseId, parentId)
         try {
             const supabase = client ?? anonSupabase;
             let folderQuery = supabase
@@ -1028,7 +1028,7 @@ console.log("videoUploadProgress",videoUploadProgress);
                 .from("reviews")
                 .select("rating")
                 .eq("course_id", courseId)
-                
+
 
             if (ratingError) throw new Error(ratingError.message);
 
@@ -1147,6 +1147,7 @@ console.log("videoUploadProgress",videoUploadProgress);
     },
     getAllMaterialModule: async (materialId: string, client?: SupabaseClient) => {
         try {
+            console.log("materialId>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", materialId);
             const supabase = client ?? anonSupabase;
             const { data: contents, error } = await supabase
                 .from("course_materials")
@@ -1169,37 +1170,37 @@ console.log("videoUploadProgress",videoUploadProgress);
     getCourseAnalytics: async (courseId: string, client?: SupabaseClient) => {
         try {
             const supabase = client ?? anonSupabase;
-    
+
             // 1. Total Revenue + Active Students count
             const { data: enrollments, error: enrollmentError } = await supabase
                 .from("enrollments")
                 .select("amount_paid, student_id")
                 .eq("course_id", courseId);
-    
+
             if (enrollmentError) throw new Error(enrollmentError.message);
-    
+
             const totalRevenue = enrollments?.reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
             const activeStudents = enrollments?.length ?? 0;
-    
+
             // 2. Completion Rate — avg completion_pct across all students in this course
             const { data: progressData, error: progressError } = await supabase
                 .from("course_progress")
                 .select("completion_pct, is_completed")
                 .eq("course_id", courseId);
-    
+
             if (progressError) throw new Error(progressError.message);
-    
+
             const completionRate =
                 progressData && progressData.length > 0
                     ? Math.round(
-                          progressData.reduce((sum, p) => sum + Number(p.completion_pct), 0) /
-                              progressData.length
-                      )
+                        progressData.reduce((sum, p) => sum + Number(p.completion_pct), 0) /
+                        progressData.length
+                    )
                     : 0;
-    
+
             // 3. Fully completed students count (optional — useful for future)
             const completedStudents = progressData?.filter((p) => p.is_completed).length ?? 0;
-    
+
             return {
                 totalRevenue,       // sum of amount_paid
                 activeStudents,     // total enrolled students
@@ -1207,7 +1208,7 @@ console.log("videoUploadProgress",videoUploadProgress);
                 completedStudents,  // count of fully completed
                 testScore: null,    // plug in your rating/quiz table later
             };
-    
+
         } catch (error: any) {
             throw new Error(error.message);
         }
@@ -1328,10 +1329,10 @@ console.log("videoUploadProgress",videoUploadProgress);
 
             if (previousError) throw new Error(previousError.message);
             const previousEnrollments = previous ?? [];
-    
+
             const currentTotal = currentEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
             const previousTotal = previousEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
-    
+
             let trendText = "0% no change";
             if (previousTotal > 0) {
                 const change = ((currentTotal - previousTotal) / previousTotal) * 100;
@@ -1339,9 +1340,9 @@ console.log("videoUploadProgress",videoUploadProgress);
                 const periodLabel = period === "week" ? "last week" : period === "month" ? "last month" : "last year";
                 trendText = `${Math.abs(change).toFixed(1)}% ${direction} from ${periodLabel}`;
             }
-    
+
             const revenueByGroup = new Map(slots.map((s) => [s.group, 0]));
-    
+
             for (const e of currentEnrollments) {
                 if (!e.enrolled_at) continue;
                 const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
@@ -1351,14 +1352,14 @@ console.log("videoUploadProgress",videoUploadProgress);
                     (revenueByGroup.get(grouped.group) ?? 0) + Number(e.amount_paid)
                 );
             }
-    
+
             const chartData = slots.map((s) => ({
                 label: s.label,
                 value: revenueByGroup.get(s.group) ?? 0,
             }));
-    
+
             return { data: chartData, trend: trendText };
-    
+
         } catch (error: any) {
             throw new Error(error.message);
         }

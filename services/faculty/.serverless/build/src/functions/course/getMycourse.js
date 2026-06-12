@@ -4367,7 +4367,7 @@ var facultyCourseRepository = {
     }
   },
   getCourseContent: async (courseId, parentId, client) => {
-    console.log("content data $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+    console.log("content data $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", courseId, parentId);
     try {
       const supabase2 = client ?? supabase;
       let folderQuery = supabase2.from("course_folders").select("*").eq("course_id", courseId).eq("is_deleted", false).order("sort_order", { ascending: true });
@@ -4464,6 +4464,7 @@ var facultyCourseRepository = {
   },
   getAllMaterialModule: async (materialId, client) => {
     try {
+      console.log("materialId>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", materialId);
       const supabase2 = client ?? supabase;
       const { data: contents, error } = await supabase2.from("course_materials").select("id,title,type").eq("id", materialId).eq("is_deleted", false).neq("type", "TEST").order("sort_order", { ascending: true });
       if (error) throw new Error(error.message);
@@ -4888,7 +4889,6 @@ var facultyCourseService = {
   getAllMaterialModule: async (event) => {
     try {
       const contents = await facultyCourseRepository.getAllMaterialModule(event.pathParameters.materialId, event.supabase);
-      return contents;
     } catch (error) {
       console.log("error", error);
       throw new Error(error);
