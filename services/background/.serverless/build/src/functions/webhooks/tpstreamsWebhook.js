@@ -5,11 +5,20 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+var __esm = (fn, res, err) => function __init() {
+  if (err) throw err[0];
+  try {
+    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+  } catch (e) {
+    throw err = [e], e;
+  }
 };
 var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
 };
 var __export = (target, all) => {
   for (var name in all)
@@ -25746,6 +25755,18 @@ var supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // src/modules/webhook/video.webhook.repository.ts
+var createNotification = async (notification) => {
+  const { error } = await supabase.from("notifications").insert({
+    user_id: notification.user_id ?? null,
+    type: notification.type,
+    title: notification.title,
+    body: notification.body,
+    data: notification.data ?? null,
+    is_admin: notification.is_admin ?? false,
+    sent_at: (/* @__PURE__ */ new Date()).toISOString()
+  });
+  if (error) console.log("createNotification error", error);
+};
 var videoWebhookRepository = {
   handleVideoWebhook: async (data) => {
     try {
@@ -25807,6 +25828,16 @@ var videoWebhookRepository = {
       ];
       if (failedVideos.length > 0) {
         await supabase.from("courses").update({ pending_publish: false }).eq("id", courseId);
+        await createNotification({
+          user_id: course?.faculty_id,
+          type: "COURSE_UPDATE",
+          title: "Auto publish failed",
+          body: `"${course?.title}" could not be published \u2014 ${failedVideos.length} video(s) failed to process.`,
+          data: {
+            course_id: courseId,
+            failed_videos: failedVideos.map((v) => ({ id: v.id, title: v.title }))
+          }
+        });
         console.log(`Auto publish aborted \u2014 ${failedVideos.length} failed videos`);
         return true;
       }
@@ -25818,6 +25849,20 @@ var videoWebhookRepository = {
         is_draft: false,
         pending_publish: false
       }).eq("id", courseId);
+      await createNotification({
+        user_id: course?.faculty_id,
+        type: "COURSE_UPDATE",
+        title: "Course published",
+        body: `"${course?.title}" is now live \u2014 all videos finished processing.`,
+        data: { course_id: courseId }
+      });
+      await createNotification({
+        type: "COURSE_UPDATE",
+        title: "New course published",
+        body: `"${course?.title}" has been auto published.`,
+        data: { course_id: courseId, faculty_id: course?.faculty_id },
+        is_admin: true
+      });
       console.log(`Course ${courseId} auto published! \u2705`);
       return true;
     } catch (error) {

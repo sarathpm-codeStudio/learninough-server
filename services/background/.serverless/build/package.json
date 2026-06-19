@@ -1,0 +1,14 @@
+{
+  "name": "background-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec 'npx serverless offline' --ext ts --watch src",
+    "start": "npx serverless offline"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Background jobs and webhook handlers",
+  "dependencies": {}
+}

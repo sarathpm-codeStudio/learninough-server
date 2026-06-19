@@ -8,6 +8,10 @@ provider:
   environment:
     VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue
     COURSE_INTRO_VIDEO_QUEUE_URL: !Ref CourseIntroVideoUploadQueue
+    SUPABASE_URL:                ${ssm:/learning-app/SUPABASE_URL}
+    SUPABASE_ANON_KEY:           ${ssm:/learning-app/SUPABASE_ANON_KEY}
+    BANK_ENCRYPTION_KEY:         ${ssm:/learning-app/BANK_ENCRYPTION_KEY}
+
   iam:
     role:
       statements:

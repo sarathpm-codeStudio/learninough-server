@@ -38,7 +38,7 @@ export const bankRepository = {
                     account_number:      encryptedAccount,
                     pan_number:          encryptedPan,
                     is_verified:         false,
-                })
+                }, { onConflict: 'faculty_id' })
                 .select('id, faculty_id, bank_name, account_holder_name, ifsc_code, is_verified, created_at')
                 .single();
 
