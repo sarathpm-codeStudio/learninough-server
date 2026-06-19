@@ -364,7 +364,7 @@ export const facultyCourseService = {
     getAllMaterialModule: async (event: any) => {
         try {
             const contents = await facultyCourseRepository.getAllMaterialModule(event.pathParameters.materialId, event.supabase);
-            return contents;
+            // return contents;
         } catch (error: any) {
             console.log("error", error);
             throw new Error(error)

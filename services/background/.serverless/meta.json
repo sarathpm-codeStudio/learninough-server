@@ -1,6 +1,6 @@
 {
   "/home/dev/Desktop/learninough-server/services/background/serverless.yml": {
-    "versionFramework": "4.35.1",
+    "versionFramework": "4.38.0",
     "servicePath": "/home/dev/Desktop/learninough-server/services/background/serverless.yml",
     "serviceConfigFileName": "serverless.yml",
     "service": {
@@ -16,7 +16,10 @@
           },
           "COURSE_INTRO_VIDEO_QUEUE_URL": {
             "Ref": "CourseIntroVideoUploadQueue"
-          }
+          },
+          "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+          "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+          "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90"
         },
         "iam": {
           "role": {
@@ -67,14 +70,1321 @@
           }
         },
         "stage": "dev",
-        "versionFunctions": true
+        "versionFunctions": true,
+        "compiledCloudFormationTemplate": {
+          "AWSTemplateFormatVersion": "2010-09-09",
+          "Description": "The AWS CloudFormation template for this Serverless application",
+          "Resources": {
+            "CreateVideoUploadProgressLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-createVideoUploadProgress"
+              }
+            },
+            "SaveBankDetailsLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-saveBankDetails"
+              }
+            },
+            "GetBankDetailsLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-getBankDetails"
+              }
+            },
+            "ProcessVideoUploadLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-processVideoUpload"
+              }
+            },
+            "CourseIntroVideoUploadLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-courseIntroVideoUpload"
+              }
+            },
+            "ChatNotificationWorkerLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-chatNotificationWorker"
+              }
+            },
+            "SyncVideoProgressLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-syncVideoProgress"
+              }
+            },
+            "TpstreamsWebhookLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-tpstreamsWebhook"
+              }
+            },
+            "IamRoleLambdaExecution": {
+              "Type": "AWS::IAM::Role",
+              "Properties": {
+                "AssumeRolePolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {
+                        "Service": [
+                          "lambda.amazonaws.com"
+                        ]
+                      },
+                      "Action": [
+                        "sts:AssumeRole"
+                      ]
+                    }
+                  ]
+                },
+                "Policies": [
+                  {
+                    "PolicyName": {
+                      "Fn::Join": [
+                        "-",
+                        [
+                          "background-service",
+                          "dev",
+                          "lambda"
+                        ]
+                      ]
+                    },
+                    "PolicyDocument": {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:CreateLogStream",
+                            "logs:CreateLogGroup",
+                            "logs:TagResource"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/background-service-dev*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:PutLogEvents"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/background-service-dev*:*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "sqs:ReceiveMessage",
+                            "sqs:DeleteMessage",
+                            "sqs:GetQueueAttributes"
+                          ],
+                          "Resource": {
+                            "Fn::GetAtt": [
+                              "VideoUploadQueue",
+                              "Arn"
+                            ]
+                          }
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "sqs:ReceiveMessage",
+                            "sqs:DeleteMessage",
+                            "sqs:GetQueueAttributes"
+                          ],
+                          "Resource": {
+                            "Fn::GetAtt": [
+                              "CourseIntroVideoUploadQueue",
+                              "Arn"
+                            ]
+                          }
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "sqs:ReceiveMessage",
+                            "sqs:DeleteMessage",
+                            "sqs:GetQueueAttributes"
+                          ],
+                          "Resource": {
+                            "Fn::GetAtt": [
+                              "ChatNotificationQueue",
+                              "Arn"
+                            ]
+                          }
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "sqs:ReceiveMessage",
+                            "sqs:DeleteMessage",
+                            "sqs:GetQueueAttributes"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::GetAtt": [
+                                "VideoUploadQueue",
+                                "Arn"
+                              ]
+                            },
+                            {
+                              "Fn::GetAtt": [
+                                "CourseIntroVideoUploadQueue",
+                                "Arn"
+                              ]
+                            },
+                            {
+                              "Fn::GetAtt": [
+                                "ChatNotificationQueue",
+                                "Arn"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "Path": "/",
+                "RoleName": {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      "background-service",
+                      "dev",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "lambdaRole"
+                    ]
+                  ]
+                }
+              }
+            },
+            "CreateVideoUploadProgressLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+                },
+                "Handler": "src/functions/video/processVideoUpload.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-createVideoUploadProgress",
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                      "Ref": "CourseIntroVideoUploadQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "CreateVideoUploadProgressLogGroup"
+              ]
+            },
+            "SaveBankDetailsLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+                },
+                "Handler": "src/functions/bank/saveBankDetails.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-saveBankDetails",
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                      "Ref": "CourseIntroVideoUploadQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "SaveBankDetailsLogGroup"
+              ]
+            },
+            "GetBankDetailsLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+                },
+                "Handler": "src/functions/bank/getBankDetails.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-getBankDetails",
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                      "Ref": "CourseIntroVideoUploadQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "GetBankDetailsLogGroup"
+              ]
+            },
+            "ProcessVideoUploadLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+                },
+                "Handler": "src/functions/video/processVideoUpload.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-processVideoUpload",
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                      "Ref": "CourseIntroVideoUploadQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "ProcessVideoUploadLogGroup"
+              ]
+            },
+            "CourseIntroVideoUploadLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+                },
+                "Handler": "src/functions/video/courseIntroVideoUpload.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-courseIntroVideoUpload",
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                      "Ref": "CourseIntroVideoUploadQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "CourseIntroVideoUploadLogGroup"
+              ]
+            },
+            "ChatNotificationWorkerLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+                },
+                "Handler": "src/functions/chat/chat.notification.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-chatNotificationWorker",
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                      "Ref": "CourseIntroVideoUploadQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "ChatNotificationWorkerLogGroup"
+              ]
+            },
+            "SyncVideoProgressLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+                },
+                "Handler": "src/functions/video/syncVideoProgress.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-syncVideoProgress",
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                      "Ref": "CourseIntroVideoUploadQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "SyncVideoProgressLogGroup"
+              ]
+            },
+            "TpstreamsWebhookLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+                },
+                "Handler": "src/functions/webhooks/tpstreamsWebhook.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-tpstreamsWebhook",
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                      "Ref": "CourseIntroVideoUploadQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "TpstreamsWebhookLogGroup"
+              ]
+            },
+            "CreateVideoUploadProgressLambdaVersionG0fZEqu13gkwNLE640PibNUMqwrSfARjTCgcFs5mFtU": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "CreateVideoUploadProgressLambdaFunction"
+                },
+                "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+              }
+            },
+            "SaveBankDetailsLambdaVersionTA2avS1hXFg8u8RScbGTeuwG22UJLvAn02eOSHr58": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "SaveBankDetailsLambdaFunction"
+                },
+                "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+              }
+            },
+            "GetBankDetailsLambdaVersionOXLBdfN6OpVT3kMHB0WMufm0jVH29INf3KdZkjc": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "GetBankDetailsLambdaFunction"
+                },
+                "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+              }
+            },
+            "ProcessVideoUploadLambdaVersionSNAnxY6wuHHxQRm8MsrrnBWN4vXMmKf81rWn1AYnJNM": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "ProcessVideoUploadLambdaFunction"
+                },
+                "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+              }
+            },
+            "CourseIntroVideoUploadLambdaVersiondcv6TKtvIM0xKtTILfwKz9QqBJtvo3jhZUredlNPrZs": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "CourseIntroVideoUploadLambdaFunction"
+                },
+                "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+              }
+            },
+            "ChatNotificationWorkerLambdaVersionrYNztdflbPHjhMaS4w7Hj4mOA160dYuxYKbAiYE34": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "ChatNotificationWorkerLambdaFunction"
+                },
+                "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+              }
+            },
+            "SyncVideoProgressLambdaVersionRbKM3AiABN2I5rGgbUTfhH8ZP78iSdHafsHwdTzjJA": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "SyncVideoProgressLambdaFunction"
+                },
+                "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+              }
+            },
+            "TpstreamsWebhookLambdaVersionConQazVwbay8JHkijFCsbh3nHcjigNHvAcQoHOb3Qk": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "TpstreamsWebhookLambdaFunction"
+                },
+                "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+              }
+            },
+            "SyncVideoProgressEventsRuleSchedule1": {
+              "Type": "AWS::Events::Rule",
+              "Properties": {
+                "ScheduleExpression": "rate(5 minutes)",
+                "State": "DISABLED",
+                "Targets": [
+                  {
+                    "Arn": {
+                      "Fn::GetAtt": [
+                        "SyncVideoProgressLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "Id": "syncVideoProgressSchedule"
+                  }
+                ]
+              }
+            },
+            "SyncVideoProgressLambdaPermissionEventsRuleSchedule1": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "SyncVideoProgressLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "events.amazonaws.com",
+                "SourceArn": {
+                  "Fn::GetAtt": [
+                    "SyncVideoProgressEventsRuleSchedule1",
+                    "Arn"
+                  ]
+                }
+              }
+            },
+            "ApiGatewayRestApi": {
+              "Type": "AWS::ApiGateway::RestApi",
+              "Properties": {
+                "Name": "dev-background-service",
+                "EndpointConfiguration": {
+                  "Types": [
+                    "EDGE"
+                  ]
+                },
+                "Policy": ""
+              }
+            },
+            "ApiGatewayResourceVideo": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Fn::GetAtt": [
+                    "ApiGatewayRestApi",
+                    "RootResourceId"
+                  ]
+                },
+                "PathPart": "video",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceVideoCreateDashuploadDashprogress": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceVideo"
+                },
+                "PathPart": "create-upload-progress",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFaculty": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Fn::GetAtt": [
+                    "ApiGatewayRestApi",
+                    "RootResourceId"
+                  ]
+                },
+                "PathPart": "faculty",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFacultyBank": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceFaculty"
+                },
+                "PathPart": "bank",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFacultyBankDetails": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceFacultyBank"
+                },
+                "PathPart": "details",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceWebhooks": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Fn::GetAtt": [
+                    "ApiGatewayRestApi",
+                    "RootResourceId"
+                  ]
+                },
+                "PathPart": "webhooks",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceWebhooksTpstreams": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceWebhooks"
+                },
+                "PathPart": "tpstreams",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayMethodFacultyBankDetailsOptions": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "AuthorizationType": "NONE",
+                "HttpMethod": "OPTIONS",
+                "MethodResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": true,
+                      "method.response.header.Access-Control-Allow-Headers": true,
+                      "method.response.header.Access-Control-Allow-Methods": true
+                    },
+                    "ResponseModels": {}
+                  }
+                ],
+                "RequestParameters": {},
+                "Integration": {
+                  "Type": "MOCK",
+                  "RequestTemplates": {
+                    "application/json": "{statusCode:200}"
+                  },
+                  "ContentHandling": "CONVERT_TO_TEXT",
+                  "IntegrationResponses": [
+                    {
+                      "StatusCode": "200",
+                      "ResponseParameters": {
+                        "method.response.header.Access-Control-Allow-Origin": "'*'",
+                        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,POST'"
+                      },
+                      "ResponseTemplates": {
+                        "application/json": ""
+                      }
+                    }
+                  ]
+                },
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceFacultyBankDetails"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayMethodVideoCreateDashuploadDashprogressPost": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "POST",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceVideoCreateDashuploadDashprogress"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "CreateVideoUploadProgressLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "CreateVideoUploadProgressLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayMethodFacultyBankDetailsPost": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "POST",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceFacultyBankDetails"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "SaveBankDetailsLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "SaveBankDetailsLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayMethodFacultyBankDetailsGet": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "GET",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceFacultyBankDetails"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "GetBankDetailsLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "GetBankDetailsLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayMethodWebhooksTpstreamsPost": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "POST",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceWebhooksTpstreams"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "TpstreamsWebhookLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "TpstreamsWebhookLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayDeployment1781862696707": {
+              "Type": "AWS::ApiGateway::Deployment",
+              "Properties": {
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "StageName": "dev"
+              },
+              "DependsOn": [
+                "ApiGatewayMethodFacultyBankDetailsOptions",
+                "ApiGatewayMethodVideoCreateDashuploadDashprogressPost",
+                "ApiGatewayMethodFacultyBankDetailsPost",
+                "ApiGatewayMethodFacultyBankDetailsGet",
+                "ApiGatewayMethodWebhooksTpstreamsPost"
+              ]
+            },
+            "CreateVideoUploadProgressLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "CreateVideoUploadProgressLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "SaveBankDetailsLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "SaveBankDetailsLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "GetBankDetailsLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "GetBankDetailsLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "TpstreamsWebhookLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "TpstreamsWebhookLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "ProcessVideoUploadEventSourceMappingSQSVideoUploadQueue": {
+              "Type": "AWS::Lambda::EventSourceMapping",
+              "DependsOn": [
+                "IamRoleLambdaExecution"
+              ],
+              "Properties": {
+                "BatchSize": 1,
+                "EventSourceArn": {
+                  "Fn::GetAtt": [
+                    "VideoUploadQueue",
+                    "Arn"
+                  ]
+                },
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "ProcessVideoUploadLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Enabled": true
+              }
+            },
+            "CourseIntroVideoUploadEventSourceMappingSQSCourseIntroVideoUploadQueue": {
+              "Type": "AWS::Lambda::EventSourceMapping",
+              "DependsOn": [
+                "IamRoleLambdaExecution"
+              ],
+              "Properties": {
+                "BatchSize": 1,
+                "EventSourceArn": {
+                  "Fn::GetAtt": [
+                    "CourseIntroVideoUploadQueue",
+                    "Arn"
+                  ]
+                },
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "CourseIntroVideoUploadLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Enabled": true
+              }
+            },
+            "ChatNotificationWorkerEventSourceMappingSQSChatNotificationQueue": {
+              "Type": "AWS::Lambda::EventSourceMapping",
+              "DependsOn": [
+                "IamRoleLambdaExecution"
+              ],
+              "Properties": {
+                "BatchSize": 1,
+                "EventSourceArn": {
+                  "Fn::GetAtt": [
+                    "ChatNotificationQueue",
+                    "Arn"
+                  ]
+                },
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "ChatNotificationWorkerLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Enabled": true
+              }
+            },
+            "VideoUploadQueue": {
+              "Type": "AWS::SQS::Queue",
+              "Properties": {
+                "QueueName": "video-upload-queue",
+                "VisibilityTimeout": 300
+              }
+            },
+            "CourseIntroVideoUploadQueue": {
+              "Type": "AWS::SQS::Queue",
+              "Properties": {
+                "QueueName": "course-intro-video-upload-queue",
+                "VisibilityTimeout": 300
+              }
+            },
+            "ChatNotificationQueue": {
+              "Type": "AWS::SQS::Queue",
+              "Properties": {
+                "QueueName": "chat-notification-queue",
+                "VisibilityTimeout": 300
+              }
+            }
+          },
+          "Outputs": {
+            "ServerlessDeploymentBucketName": {
+              "Value": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "Export": {
+                "Name": "sls-background-service-dev-ServerlessDeploymentBucketName"
+              }
+            },
+            "CreateVideoUploadProgressLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "CreateVideoUploadProgressLambdaVersionG0fZEqu13gkwNLE640PibNUMqwrSfARjTCgcFs5mFtU"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-CreateVideoUploadProgressLambdaFunctionQualifiedArn"
+              }
+            },
+            "SaveBankDetailsLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "SaveBankDetailsLambdaVersionTA2avS1hXFg8u8RScbGTeuwG22UJLvAn02eOSHr58"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
+              }
+            },
+            "GetBankDetailsLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "GetBankDetailsLambdaVersionOXLBdfN6OpVT3kMHB0WMufm0jVH29INf3KdZkjc"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
+              }
+            },
+            "ProcessVideoUploadLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "ProcessVideoUploadLambdaVersionSNAnxY6wuHHxQRm8MsrrnBWN4vXMmKf81rWn1AYnJNM"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
+              }
+            },
+            "CourseIntroVideoUploadLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "CourseIntroVideoUploadLambdaVersiondcv6TKtvIM0xKtTILfwKz9QqBJtvo3jhZUredlNPrZs"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-CourseIntroVideoUploadLambdaFunctionQualifiedArn"
+              }
+            },
+            "ChatNotificationWorkerLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "ChatNotificationWorkerLambdaVersionrYNztdflbPHjhMaS4w7Hj4mOA160dYuxYKbAiYE34"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
+              }
+            },
+            "SyncVideoProgressLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "SyncVideoProgressLambdaVersionRbKM3AiABN2I5rGgbUTfhH8ZP78iSdHafsHwdTzjJA"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-SyncVideoProgressLambdaFunctionQualifiedArn"
+              }
+            },
+            "TpstreamsWebhookLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "TpstreamsWebhookLambdaVersionConQazVwbay8JHkijFCsbh3nHcjigNHvAcQoHOb3Qk"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
+              }
+            },
+            "ServiceEndpoint": {
+              "Description": "URL of the service endpoint",
+              "Value": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "https://",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    ".execute-api.",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ".",
+                    {
+                      "Ref": "AWS::URLSuffix"
+                    },
+                    "/dev"
+                  ]
+                ]
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-ServiceEndpoint"
+              }
+            }
+          }
+        },
+        "vpc": {}
       },
       "plugins": [
         "serverless-offline"
       ],
       "custom": {
         "serverless-offline": {
-          "httpPort": 3002,
+          "httpPort": 3000,
           "lambdaPort": 3003
         }
       },
@@ -101,7 +1411,8 @@
               "VisibilityTimeout": 300
             }
           }
-        }
+        },
+        "Outputs": {}
       },
       "functions": {
         "createVideoUploadProgress": {
@@ -109,11 +1420,100 @@
           "events": [
             {
               "http": {
-                "path": "/video/create-upload-progress",
-                "method": "post"
+                "path": "video/create-upload-progress",
+                "method": "post",
+                "integration": "AWS_PROXY"
               }
             }
-          ]
+          ],
+          "name": "background-service-dev-createVideoUploadProgress",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "timeout": 30,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "CreateVideoUploadProgressLambdaVersionG0fZEqu13gkwNLE640PibNUMqwrSfARjTCgcFs5mFtU"
+        },
+        "saveBankDetails": {
+          "handler": "src/functions/bank/saveBankDetails.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bank/details",
+                "method": "post",
+                "cors": {
+                  "origin": "*",
+                  "methods": [
+                    "OPTIONS",
+                    "POST"
+                  ],
+                  "headers": [
+                    "Content-Type",
+                    "X-Amz-Date",
+                    "Authorization",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
+                    "X-Amz-User-Agent",
+                    "X-Amzn-Trace-Id"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                },
+                "integration": "AWS_PROXY"
+              }
+            }
+          ],
+          "name": "background-service-dev-saveBankDetails",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "timeout": 30,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "SaveBankDetailsLambdaVersionTA2avS1hXFg8u8RScbGTeuwG22UJLvAn02eOSHr58"
+        },
+        "getBankDetails": {
+          "handler": "src/functions/bank/getBankDetails.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/bank/details",
+                "method": "get",
+                "cors": {
+                  "origin": "*",
+                  "methods": [
+                    "OPTIONS",
+                    "GET"
+                  ],
+                  "headers": [
+                    "Content-Type",
+                    "X-Amz-Date",
+                    "Authorization",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
+                    "X-Amz-User-Agent",
+                    "X-Amzn-Trace-Id"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                },
+                "integration": "AWS_PROXY"
+              }
+            }
+          ],
+          "name": "background-service-dev-getBankDetails",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "timeout": 30,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "GetBankDetailsLambdaVersionOXLBdfN6OpVT3kMHB0WMufm0jVH29INf3KdZkjc"
         },
         "processVideoUpload": {
           "handler": "src/functions/video/processVideoUpload.handler",
@@ -129,7 +1529,17 @@
                 "batchSize": 1
               }
             }
-          ]
+          ],
+          "name": "background-service-dev-processVideoUpload",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "timeout": 30,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "ProcessVideoUploadLambdaVersionSNAnxY6wuHHxQRm8MsrrnBWN4vXMmKf81rWn1AYnJNM"
         },
         "courseIntroVideoUpload": {
           "handler": "src/functions/video/courseIntroVideoUpload.handler",
@@ -145,7 +1555,17 @@
                 "batchSize": 1
               }
             }
-          ]
+          ],
+          "name": "background-service-dev-courseIntroVideoUpload",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "timeout": 30,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "CourseIntroVideoUploadLambdaVersiondcv6TKtvIM0xKtTILfwKz9QqBJtvo3jhZUredlNPrZs"
         },
         "chatNotificationWorker": {
           "handler": "src/functions/chat/chat.notification.handler",
@@ -161,29 +1581,62 @@
                 "batchSize": 1
               }
             }
-          ]
+          ],
+          "name": "background-service-dev-chatNotificationWorker",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "timeout": 30,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "ChatNotificationWorkerLambdaVersionrYNztdflbPHjhMaS4w7Hj4mOA160dYuxYKbAiYE34"
         },
         "syncVideoProgress": {
           "handler": "src/functions/video/syncVideoProgress.handler",
           "events": [
             {
               "schedule": {
-                "rate": "rate(5 minutes)",
+                "rate": [
+                  "rate(5 minutes)"
+                ],
                 "enabled": false
               }
             }
-          ]
+          ],
+          "name": "background-service-dev-syncVideoProgress",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "timeout": 30,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "SyncVideoProgressLambdaVersionRbKM3AiABN2I5rGgbUTfhH8ZP78iSdHafsHwdTzjJA"
         },
         "tpstreamsWebhook": {
           "handler": "src/functions/webhooks/tpstreamsWebhook.handler",
           "events": [
             {
               "http": {
-                "path": "/webhooks/tpstreams",
-                "method": "post"
+                "path": "webhooks/tpstreams",
+                "method": "post",
+                "integration": "AWS_PROXY"
               }
             }
-          ]
+          ],
+          "name": "background-service-dev-tpstreamsWebhook",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "timeout": 30,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "TpstreamsWebhookLambdaVersionConQazVwbay8JHkijFCsbh3nHcjigNHvAcQoHOb3Qk"
         }
       }
     },
@@ -198,7 +1651,10 @@
         },
         "COURSE_INTRO_VIDEO_QUEUE_URL": {
           "Ref": "CourseIntroVideoUploadQueue"
-        }
+        },
+        "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+        "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90"
       },
       "iam": {
         "role": {
@@ -249,7 +1705,1314 @@
         }
       },
       "stage": "dev",
-      "versionFunctions": true
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "CreateVideoUploadProgressLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-createVideoUploadProgress"
+            }
+          },
+          "SaveBankDetailsLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-saveBankDetails"
+            }
+          },
+          "GetBankDetailsLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-getBankDetails"
+            }
+          },
+          "ProcessVideoUploadLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-processVideoUpload"
+            }
+          },
+          "CourseIntroVideoUploadLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-courseIntroVideoUpload"
+            }
+          },
+          "ChatNotificationWorkerLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-chatNotificationWorker"
+            }
+          },
+          "SyncVideoProgressLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-syncVideoProgress"
+            }
+          },
+          "TpstreamsWebhookLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-tpstreamsWebhook"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "background-service",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:TagResource"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/background-service-dev*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/background-service-dev*:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": {
+                          "Fn::GetAtt": [
+                            "VideoUploadQueue",
+                            "Arn"
+                          ]
+                        }
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": {
+                          "Fn::GetAtt": [
+                            "CourseIntroVideoUploadQueue",
+                            "Arn"
+                          ]
+                        }
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": {
+                          "Fn::GetAtt": [
+                            "ChatNotificationQueue",
+                            "Arn"
+                          ]
+                        }
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::GetAtt": [
+                              "VideoUploadQueue",
+                              "Arn"
+                            ]
+                          },
+                          {
+                            "Fn::GetAtt": [
+                              "CourseIntroVideoUploadQueue",
+                              "Arn"
+                            ]
+                          },
+                          {
+                            "Fn::GetAtt": [
+                              "ChatNotificationQueue",
+                              "Arn"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "background-service",
+                    "dev",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "CreateVideoUploadProgressLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+              },
+              "Handler": "src/functions/video/processVideoUpload.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-createVideoUploadProgress",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                    "Ref": "CourseIntroVideoUploadQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "CreateVideoUploadProgressLogGroup"
+            ]
+          },
+          "SaveBankDetailsLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+              },
+              "Handler": "src/functions/bank/saveBankDetails.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-saveBankDetails",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                    "Ref": "CourseIntroVideoUploadQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "SaveBankDetailsLogGroup"
+            ]
+          },
+          "GetBankDetailsLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+              },
+              "Handler": "src/functions/bank/getBankDetails.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-getBankDetails",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                    "Ref": "CourseIntroVideoUploadQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetBankDetailsLogGroup"
+            ]
+          },
+          "ProcessVideoUploadLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+              },
+              "Handler": "src/functions/video/processVideoUpload.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-processVideoUpload",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                    "Ref": "CourseIntroVideoUploadQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "ProcessVideoUploadLogGroup"
+            ]
+          },
+          "CourseIntroVideoUploadLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+              },
+              "Handler": "src/functions/video/courseIntroVideoUpload.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-courseIntroVideoUpload",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                    "Ref": "CourseIntroVideoUploadQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "CourseIntroVideoUploadLogGroup"
+            ]
+          },
+          "ChatNotificationWorkerLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+              },
+              "Handler": "src/functions/chat/chat.notification.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-chatNotificationWorker",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                    "Ref": "CourseIntroVideoUploadQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "ChatNotificationWorkerLogGroup"
+            ]
+          },
+          "SyncVideoProgressLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+              },
+              "Handler": "src/functions/video/syncVideoProgress.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-syncVideoProgress",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                    "Ref": "CourseIntroVideoUploadQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "SyncVideoProgressLogGroup"
+            ]
+          },
+          "TpstreamsWebhookLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+              },
+              "Handler": "src/functions/webhooks/tpstreamsWebhook.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-tpstreamsWebhook",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                    "Ref": "CourseIntroVideoUploadQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "TpstreamsWebhookLogGroup"
+            ]
+          },
+          "CreateVideoUploadProgressLambdaVersionG0fZEqu13gkwNLE640PibNUMqwrSfARjTCgcFs5mFtU": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "CreateVideoUploadProgressLambdaFunction"
+              },
+              "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+            }
+          },
+          "SaveBankDetailsLambdaVersionTA2avS1hXFg8u8RScbGTeuwG22UJLvAn02eOSHr58": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "SaveBankDetailsLambdaFunction"
+              },
+              "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+            }
+          },
+          "GetBankDetailsLambdaVersionOXLBdfN6OpVT3kMHB0WMufm0jVH29INf3KdZkjc": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetBankDetailsLambdaFunction"
+              },
+              "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+            }
+          },
+          "ProcessVideoUploadLambdaVersionSNAnxY6wuHHxQRm8MsrrnBWN4vXMmKf81rWn1AYnJNM": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ProcessVideoUploadLambdaFunction"
+              },
+              "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+            }
+          },
+          "CourseIntroVideoUploadLambdaVersiondcv6TKtvIM0xKtTILfwKz9QqBJtvo3jhZUredlNPrZs": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "CourseIntroVideoUploadLambdaFunction"
+              },
+              "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+            }
+          },
+          "ChatNotificationWorkerLambdaVersionrYNztdflbPHjhMaS4w7Hj4mOA160dYuxYKbAiYE34": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ChatNotificationWorkerLambdaFunction"
+              },
+              "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+            }
+          },
+          "SyncVideoProgressLambdaVersionRbKM3AiABN2I5rGgbUTfhH8ZP78iSdHafsHwdTzjJA": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "SyncVideoProgressLambdaFunction"
+              },
+              "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+            }
+          },
+          "TpstreamsWebhookLambdaVersionConQazVwbay8JHkijFCsbh3nHcjigNHvAcQoHOb3Qk": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "TpstreamsWebhookLambdaFunction"
+              },
+              "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+            }
+          },
+          "SyncVideoProgressEventsRuleSchedule1": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+              "ScheduleExpression": "rate(5 minutes)",
+              "State": "DISABLED",
+              "Targets": [
+                {
+                  "Arn": {
+                    "Fn::GetAtt": [
+                      "SyncVideoProgressLambdaFunction",
+                      "Arn"
+                    ]
+                  },
+                  "Id": "syncVideoProgressSchedule"
+                }
+              ]
+            }
+          },
+          "SyncVideoProgressLambdaPermissionEventsRuleSchedule1": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "SyncVideoProgressLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "events.amazonaws.com",
+              "SourceArn": {
+                "Fn::GetAtt": [
+                  "SyncVideoProgressEventsRuleSchedule1",
+                  "Arn"
+                ]
+              }
+            }
+          },
+          "ApiGatewayRestApi": {
+            "Type": "AWS::ApiGateway::RestApi",
+            "Properties": {
+              "Name": "dev-background-service",
+              "EndpointConfiguration": {
+                "Types": [
+                  "EDGE"
+                ]
+              },
+              "Policy": ""
+            }
+          },
+          "ApiGatewayResourceVideo": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "video",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceVideoCreateDashuploadDashprogress": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceVideo"
+              },
+              "PathPart": "create-upload-progress",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFaculty": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "faculty",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyBank": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFaculty"
+              },
+              "PathPart": "bank",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyBankDetails": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyBank"
+              },
+              "PathPart": "details",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceWebhooks": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "webhooks",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceWebhooksTpstreams": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceWebhooks"
+              },
+              "PathPart": "tpstreams",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodFacultyBankDetailsOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,POST'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceFacultyBankDetails"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodVideoCreateDashuploadDashprogressPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceVideoCreateDashuploadDashprogress"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "CreateVideoUploadProgressLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "CreateVideoUploadProgressLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodFacultyBankDetailsPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceFacultyBankDetails"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "SaveBankDetailsLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "SaveBankDetailsLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodFacultyBankDetailsGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceFacultyBankDetails"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetBankDetailsLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "GetBankDetailsLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodWebhooksTpstreamsPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceWebhooksTpstreams"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "TpstreamsWebhookLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "TpstreamsWebhookLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1781862696707": {
+            "Type": "AWS::ApiGateway::Deployment",
+            "Properties": {
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "StageName": "dev"
+            },
+            "DependsOn": [
+              "ApiGatewayMethodFacultyBankDetailsOptions",
+              "ApiGatewayMethodVideoCreateDashuploadDashprogressPost",
+              "ApiGatewayMethodFacultyBankDetailsPost",
+              "ApiGatewayMethodFacultyBankDetailsGet",
+              "ApiGatewayMethodWebhooksTpstreamsPost"
+            ]
+          },
+          "CreateVideoUploadProgressLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "CreateVideoUploadProgressLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "SaveBankDetailsLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "SaveBankDetailsLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetBankDetailsLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetBankDetailsLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "TpstreamsWebhookLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "TpstreamsWebhookLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "ProcessVideoUploadEventSourceMappingSQSVideoUploadQueue": {
+            "Type": "AWS::Lambda::EventSourceMapping",
+            "DependsOn": [
+              "IamRoleLambdaExecution"
+            ],
+            "Properties": {
+              "BatchSize": 1,
+              "EventSourceArn": {
+                "Fn::GetAtt": [
+                  "VideoUploadQueue",
+                  "Arn"
+                ]
+              },
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "ProcessVideoUploadLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Enabled": true
+            }
+          },
+          "CourseIntroVideoUploadEventSourceMappingSQSCourseIntroVideoUploadQueue": {
+            "Type": "AWS::Lambda::EventSourceMapping",
+            "DependsOn": [
+              "IamRoleLambdaExecution"
+            ],
+            "Properties": {
+              "BatchSize": 1,
+              "EventSourceArn": {
+                "Fn::GetAtt": [
+                  "CourseIntroVideoUploadQueue",
+                  "Arn"
+                ]
+              },
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "CourseIntroVideoUploadLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Enabled": true
+            }
+          },
+          "ChatNotificationWorkerEventSourceMappingSQSChatNotificationQueue": {
+            "Type": "AWS::Lambda::EventSourceMapping",
+            "DependsOn": [
+              "IamRoleLambdaExecution"
+            ],
+            "Properties": {
+              "BatchSize": 1,
+              "EventSourceArn": {
+                "Fn::GetAtt": [
+                  "ChatNotificationQueue",
+                  "Arn"
+                ]
+              },
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "ChatNotificationWorkerLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Enabled": true
+            }
+          },
+          "VideoUploadQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "video-upload-queue",
+              "VisibilityTimeout": 300
+            }
+          },
+          "CourseIntroVideoUploadQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "course-intro-video-upload-queue",
+              "VisibilityTimeout": 300
+            }
+          },
+          "ChatNotificationQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "chat-notification-queue",
+              "VisibilityTimeout": 300
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+            "Export": {
+              "Name": "sls-background-service-dev-ServerlessDeploymentBucketName"
+            }
+          },
+          "CreateVideoUploadProgressLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "CreateVideoUploadProgressLambdaVersionG0fZEqu13gkwNLE640PibNUMqwrSfARjTCgcFs5mFtU"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-CreateVideoUploadProgressLambdaFunctionQualifiedArn"
+            }
+          },
+          "SaveBankDetailsLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "SaveBankDetailsLambdaVersionTA2avS1hXFg8u8RScbGTeuwG22UJLvAn02eOSHr58"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
+            }
+          },
+          "GetBankDetailsLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetBankDetailsLambdaVersionOXLBdfN6OpVT3kMHB0WMufm0jVH29INf3KdZkjc"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
+            }
+          },
+          "ProcessVideoUploadLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ProcessVideoUploadLambdaVersionSNAnxY6wuHHxQRm8MsrrnBWN4vXMmKf81rWn1AYnJNM"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
+            }
+          },
+          "CourseIntroVideoUploadLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "CourseIntroVideoUploadLambdaVersiondcv6TKtvIM0xKtTILfwKz9QqBJtvo3jhZUredlNPrZs"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-CourseIntroVideoUploadLambdaFunctionQualifiedArn"
+            }
+          },
+          "ChatNotificationWorkerLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ChatNotificationWorkerLambdaVersionrYNztdflbPHjhMaS4w7Hj4mOA160dYuxYKbAiYE34"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
+            }
+          },
+          "SyncVideoProgressLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "SyncVideoProgressLambdaVersionRbKM3AiABN2I5rGgbUTfhH8ZP78iSdHafsHwdTzjJA"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-SyncVideoProgressLambdaFunctionQualifiedArn"
+            }
+          },
+          "TpstreamsWebhookLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "TpstreamsWebhookLambdaVersionConQazVwbay8JHkijFCsbh3nHcjigNHvAcQoHOb3Qk"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
+            }
+          },
+          "ServiceEndpoint": {
+            "Description": "URL of the service endpoint",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  ".execute-api.",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix"
+                  },
+                  "/dev"
+                ]
+              ]
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-ServiceEndpoint"
+            }
+          }
+        }
+      },
+      "vpc": {}
     },
     "dashboard": {
       "isEnabledForService": false,
@@ -260,56 +3023,1389 @@
       "serviceProvider": null,
       "instanceParameters": null
     },
-    "error": {
-      "message": "Serverless plugin \"serverless-offline\" not found. Make sure it's installed and listed in the \"plugins\" section of your serverless config file. Use the --debug flag to learn more.",
-      "stack": "ServerlessError2: Serverless plugin \"serverless-offline\" not found. Make sure it's installed and listed in the \"plugins\" section of your serverless config file. Use the --debug flag to learn more.\n    at PluginManager.resolveServicePlugins (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2320:4570)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async PluginManager.loadAllPlugins (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2320:2753)\n    at async Serverless.init (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2372:9869)\n    at async runFramework (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2399:843)\n    at async TraditionalRunner.run (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2395:28530)\n    at async route (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2566:2848)\n    at async Object.run (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2567:3886)\n    at async run2 (file:///home/dev/.serverless/releases/4.35.1/package/dist/sf-core.js:2567:5040)",
-      "code": "PLUGIN_NOT_FOUND"
-    },
-    "serviceRawFile": "service: background-service\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n  region: ap-south-1\n  timeout: 30\n  environment:\n    VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue\n    COURSE_INTRO_VIDEO_QUEUE_URL: !Ref CourseIntroVideoUploadQueue\n  iam:\n    role:\n      statements:\n        - Effect: Allow\n          Action:\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt VideoUploadQueue.Arn\n        - Effect: Allow\n          Action:\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt CourseIntroVideoUploadQueue.Arn\n        - Effect: Allow\n          Action:\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt ChatNotificationQueue.Arn\n\nplugins:\n  - serverless-offline\n\ncustom:\n  serverless-offline:\n    httpPort: 3002\n    lambdaPort: 3003\n\nresources:\n  Resources:\n    VideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-queue\n        VisibilityTimeout: 300\n\n    CourseIntroVideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: course-intro-video-upload-queue\n        VisibilityTimeout: 300\n\n    ChatNotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-queue\n        VisibilityTimeout: 300\n\nfunctions:\n\n\n\n  # ── HTTP Endpoints ─────────────────────────────────────────\n\n  createVideoUploadProgress:\n    handler: src/functions/video/processVideoUpload.handler\n    events:\n      - http:\n          path: /video/create-upload-progress\n          method: post\n          \n\n\n  # ── SQS Background Jobs ──────────────────────────────────────\n\n  processVideoUpload:\n    handler: src/functions/video/processVideoUpload.handler\n    events:\n      - sqs:\n          arn: !GetAtt VideoUploadQueue.Arn\n          batchSize: 1\n\n  courseIntroVideoUpload:\n    handler: src/functions/video/courseIntroVideoUpload.handler\n    events:\n      - sqs:\n          arn: !GetAtt CourseIntroVideoUploadQueue.Arn\n          batchSize: 1\n\n\n  chatNotificationWorker:\n    handler: src/functions/chat/chat.notification.handler\n    events:\n      - sqs:\n          arn: !GetAtt ChatNotificationQueue.Arn\n          batchSize: 1\n\n\n  # ── cron Jobs ──────────────────────────────────────\n\n  syncVideoProgress:\n    handler: src/functions/video/syncVideoProgress.handler\n    events:\n      - schedule:\n          rate: rate(5 minutes)\n          enabled: false\n\n\n\n  # ── Webhooks ─────────────────────────────────────────────────\n\n  tpstreamsWebhook:\n    handler: src/functions/webhooks/tpstreamsWebhook.handler\n    events:\n      - http:\n          path: /webhooks/tpstreams\n          method: post\n          # No auth — TPStreams calls this directly\n",
+    "serviceRawFile": "service: background-service\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n  region: ap-south-1\n  timeout: 30\n  environment:\n    VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue\n    COURSE_INTRO_VIDEO_QUEUE_URL: !Ref CourseIntroVideoUploadQueue\n    SUPABASE_URL:                ${ssm:/learning-app/SUPABASE_URL}\n    SUPABASE_ANON_KEY:           ${ssm:/learning-app/SUPABASE_ANON_KEY}\n    BANK_ENCRYPTION_KEY:         ${ssm:/learning-app/BANK_ENCRYPTION_KEY}\n\n  iam:\n    role:\n      statements:\n        - Effect: Allow\n          Action:\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt VideoUploadQueue.Arn\n        - Effect: Allow\n          Action:\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt CourseIntroVideoUploadQueue.Arn\n        - Effect: Allow\n          Action:\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt ChatNotificationQueue.Arn\n\nplugins:\n  - serverless-offline\n\ncustom:\n  serverless-offline:\n    httpPort: 3000\n    lambdaPort: 3003\n\nresources:\n  Resources:\n    VideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-queue\n        VisibilityTimeout: 300\n\n    CourseIntroVideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: course-intro-video-upload-queue\n        VisibilityTimeout: 300\n\n    ChatNotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-queue\n        VisibilityTimeout: 300\n\nfunctions:\n\n\n\n  # ── HTTP Endpoints ─────────────────────────────────────────\n\n  createVideoUploadProgress:\n    handler: src/functions/video/processVideoUpload.handler\n    events:\n      - http:\n          path: /video/create-upload-progress\n          method: post\n\n  \n  saveBankDetails:\n    handler: src/functions/bank/saveBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: post\n          cors:   true\n  \n  getBankDetails:\n    handler: src/functions/bank/getBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: get\n          cors:   true\n  \n          \n\n\n  # ── SQS Background Jobs ──────────────────────────────────────\n\n  processVideoUpload:\n    handler: src/functions/video/processVideoUpload.handler\n    events:\n      - sqs:\n          arn: !GetAtt VideoUploadQueue.Arn\n          batchSize: 1\n\n  courseIntroVideoUpload:\n    handler: src/functions/video/courseIntroVideoUpload.handler\n    events:\n      - sqs:\n          arn: !GetAtt CourseIntroVideoUploadQueue.Arn\n          batchSize: 1\n\n\n  chatNotificationWorker:\n    handler: src/functions/chat/chat.notification.handler\n    events:\n      - sqs:\n          arn: !GetAtt ChatNotificationQueue.Arn\n          batchSize: 1\n\n\n  # ── cron Jobs ──────────────────────────────────────\n\n  syncVideoProgress:\n    handler: src/functions/video/syncVideoProgress.handler\n    events:\n      - schedule:\n          rate: rate(5 minutes)\n          enabled: false\n\n\n\n  # ── Webhooks ─────────────────────────────────────────────────\n\n  tpstreamsWebhook:\n    handler: src/functions/webhooks/tpstreamsWebhook.handler\n    events:\n      - http:\n          path: /webhooks/tpstreams\n          method: post\n          # No auth — TPStreams calls this directly\n",
     "command": [
-      "offline"
+      "deploy"
     ],
-    "options": {},
+    "options": {
+      "region": "ap-south-1"
+    },
     "orgId": "5acd3926-d700-405e-92da-dc1a13a30598",
     "orgName": "sarath1937",
     "userId": "n0TL8qG4d4qRbh4SlP",
     "userName": "sarath1937",
-    "serviceProviderAwsAccountId": "397251795477",
+    "serviceProviderAwsAccountId": "303192504126",
     "serviceProviderAwsCfStackName": "background-service-dev",
-    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:ap-south-1:397251795477:stack/background-service-dev/87692360-4ad5-11f1-af96-0a83936a9a5f",
-    "serviceProviderAwsCfStackCreated": "2026-05-08T12:00:39.274Z",
-    "serviceProviderAwsCfStackUpdated": null,
-    "serviceProviderAwsCfStackStatus": "CREATE_COMPLETE",
+    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:ap-south-1:303192504126:stack/background-service-dev/49b7f6a0-6bbd-11f1-b381-0220d2af102b",
+    "serviceProviderAwsCfStackCreated": "2026-06-19T09:00:16.213Z",
+    "serviceProviderAwsCfStackUpdated": "2026-06-19T09:47:17.023Z",
+    "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
     "serviceProviderAwsCfStackOutputs": [
       {
+        "OutputKey": "ProcessVideoUploadLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-processVideoUpload:3",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "CourseIntroVideoUploadLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-courseIntroVideoUpload:3",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-CourseIntroVideoUploadLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetBankDetailsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-getBankDetails:3",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
+      },
+      {
         "OutputKey": "SyncVideoProgressLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:background-service-dev-syncVideoProgress:3",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-syncVideoProgress:3",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-SyncVideoProgressLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "ChatNotificationWorkerLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:background-service-dev-chatNotificationWorker:3",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-chatNotificationWorker:3",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "TpstreamsWebhookLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:397251795477:function:background-service-dev-tpstreamsWebhook:3",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-tpstreamsWebhook:3",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "ServiceEndpoint",
-        "OutputValue": "https://c22wx5dv23.execute-api.ap-south-1.amazonaws.com/dev",
+        "OutputValue": "https://mgio0iypij.execute-api.ap-south-1.amazonaws.com/dev",
         "Description": "URL of the service endpoint",
         "ExportName": "sls-background-service-dev-ServiceEndpoint"
       },
       {
         "OutputKey": "ServerlessDeploymentBucketName",
-        "OutputValue": "serverless-framework-deployments-ap-south-1-978cf2f5-1fe8",
+        "OutputValue": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
         "ExportName": "sls-background-service-dev-ServerlessDeploymentBucketName"
+      },
+      {
+        "OutputKey": "CreateVideoUploadProgressLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-createVideoUploadProgress:3",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-CreateVideoUploadProgressLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "SaveBankDetailsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-saveBankDetails:3",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
       }
-    ]
+    ],
+    "compiledCloudFormationTemplate": {
+      "AWSTemplateFormatVersion": "2010-09-09",
+      "Description": "The AWS CloudFormation template for this Serverless application",
+      "Resources": {
+        "CreateVideoUploadProgressLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-createVideoUploadProgress"
+          }
+        },
+        "SaveBankDetailsLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-saveBankDetails"
+          }
+        },
+        "GetBankDetailsLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-getBankDetails"
+          }
+        },
+        "ProcessVideoUploadLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-processVideoUpload"
+          }
+        },
+        "CourseIntroVideoUploadLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-courseIntroVideoUpload"
+          }
+        },
+        "ChatNotificationWorkerLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-chatNotificationWorker"
+          }
+        },
+        "SyncVideoProgressLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-syncVideoProgress"
+          }
+        },
+        "TpstreamsWebhookLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-tpstreamsWebhook"
+          }
+        },
+        "IamRoleLambdaExecution": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+            "AssumeRolePolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": [
+                      "lambda.amazonaws.com"
+                    ]
+                  },
+                  "Action": [
+                    "sts:AssumeRole"
+                  ]
+                }
+              ]
+            },
+            "Policies": [
+              {
+                "PolicyName": {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      "background-service",
+                      "dev",
+                      "lambda"
+                    ]
+                  ]
+                },
+                "PolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:CreateLogStream",
+                        "logs:CreateLogGroup",
+                        "logs:TagResource"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/background-service-dev*:*"
+                        }
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:PutLogEvents"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/background-service-dev*:*:*"
+                        }
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "sqs:ReceiveMessage",
+                        "sqs:DeleteMessage",
+                        "sqs:GetQueueAttributes"
+                      ],
+                      "Resource": {
+                        "Fn::GetAtt": [
+                          "VideoUploadQueue",
+                          "Arn"
+                        ]
+                      }
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "sqs:ReceiveMessage",
+                        "sqs:DeleteMessage",
+                        "sqs:GetQueueAttributes"
+                      ],
+                      "Resource": {
+                        "Fn::GetAtt": [
+                          "CourseIntroVideoUploadQueue",
+                          "Arn"
+                        ]
+                      }
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "sqs:ReceiveMessage",
+                        "sqs:DeleteMessage",
+                        "sqs:GetQueueAttributes"
+                      ],
+                      "Resource": {
+                        "Fn::GetAtt": [
+                          "ChatNotificationQueue",
+                          "Arn"
+                        ]
+                      }
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "sqs:ReceiveMessage",
+                        "sqs:DeleteMessage",
+                        "sqs:GetQueueAttributes"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::GetAtt": [
+                            "VideoUploadQueue",
+                            "Arn"
+                          ]
+                        },
+                        {
+                          "Fn::GetAtt": [
+                            "CourseIntroVideoUploadQueue",
+                            "Arn"
+                          ]
+                        },
+                        {
+                          "Fn::GetAtt": [
+                            "ChatNotificationQueue",
+                            "Arn"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "/",
+            "RoleName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "background-service",
+                  "dev",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "lambdaRole"
+                ]
+              ]
+            }
+          }
+        },
+        "CreateVideoUploadProgressLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+            },
+            "Handler": "src/functions/video/processVideoUpload.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-createVideoUploadProgress",
+            "MemorySize": 1024,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                  "Ref": "CourseIntroVideoUploadQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "CreateVideoUploadProgressLogGroup"
+          ]
+        },
+        "SaveBankDetailsLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+            },
+            "Handler": "src/functions/bank/saveBankDetails.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-saveBankDetails",
+            "MemorySize": 1024,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                  "Ref": "CourseIntroVideoUploadQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "SaveBankDetailsLogGroup"
+          ]
+        },
+        "GetBankDetailsLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+            },
+            "Handler": "src/functions/bank/getBankDetails.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-getBankDetails",
+            "MemorySize": 1024,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                  "Ref": "CourseIntroVideoUploadQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "GetBankDetailsLogGroup"
+          ]
+        },
+        "ProcessVideoUploadLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+            },
+            "Handler": "src/functions/video/processVideoUpload.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-processVideoUpload",
+            "MemorySize": 1024,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                  "Ref": "CourseIntroVideoUploadQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "ProcessVideoUploadLogGroup"
+          ]
+        },
+        "CourseIntroVideoUploadLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+            },
+            "Handler": "src/functions/video/courseIntroVideoUpload.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-courseIntroVideoUpload",
+            "MemorySize": 1024,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                  "Ref": "CourseIntroVideoUploadQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "CourseIntroVideoUploadLogGroup"
+          ]
+        },
+        "ChatNotificationWorkerLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+            },
+            "Handler": "src/functions/chat/chat.notification.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-chatNotificationWorker",
+            "MemorySize": 1024,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                  "Ref": "CourseIntroVideoUploadQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "ChatNotificationWorkerLogGroup"
+          ]
+        },
+        "SyncVideoProgressLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+            },
+            "Handler": "src/functions/video/syncVideoProgress.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-syncVideoProgress",
+            "MemorySize": 1024,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                  "Ref": "CourseIntroVideoUploadQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "SyncVideoProgressLogGroup"
+          ]
+        },
+        "TpstreamsWebhookLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1781862704511-2026-06-19T09:51:44.511Z/background-service.zip"
+            },
+            "Handler": "src/functions/webhooks/tpstreamsWebhook.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-tpstreamsWebhook",
+            "MemorySize": 1024,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "COURSE_INTRO_VIDEO_QUEUE_URL": {
+                  "Ref": "CourseIntroVideoUploadQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "TpstreamsWebhookLogGroup"
+          ]
+        },
+        "CreateVideoUploadProgressLambdaVersionG0fZEqu13gkwNLE640PibNUMqwrSfARjTCgcFs5mFtU": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "CreateVideoUploadProgressLambdaFunction"
+            },
+            "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+          }
+        },
+        "SaveBankDetailsLambdaVersionTA2avS1hXFg8u8RScbGTeuwG22UJLvAn02eOSHr58": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "SaveBankDetailsLambdaFunction"
+            },
+            "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+          }
+        },
+        "GetBankDetailsLambdaVersionOXLBdfN6OpVT3kMHB0WMufm0jVH29INf3KdZkjc": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "GetBankDetailsLambdaFunction"
+            },
+            "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+          }
+        },
+        "ProcessVideoUploadLambdaVersionSNAnxY6wuHHxQRm8MsrrnBWN4vXMmKf81rWn1AYnJNM": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "ProcessVideoUploadLambdaFunction"
+            },
+            "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+          }
+        },
+        "CourseIntroVideoUploadLambdaVersiondcv6TKtvIM0xKtTILfwKz9QqBJtvo3jhZUredlNPrZs": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "CourseIntroVideoUploadLambdaFunction"
+            },
+            "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+          }
+        },
+        "ChatNotificationWorkerLambdaVersionrYNztdflbPHjhMaS4w7Hj4mOA160dYuxYKbAiYE34": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "ChatNotificationWorkerLambdaFunction"
+            },
+            "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+          }
+        },
+        "SyncVideoProgressLambdaVersionRbKM3AiABN2I5rGgbUTfhH8ZP78iSdHafsHwdTzjJA": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "SyncVideoProgressLambdaFunction"
+            },
+            "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+          }
+        },
+        "TpstreamsWebhookLambdaVersionConQazVwbay8JHkijFCsbh3nHcjigNHvAcQoHOb3Qk": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "TpstreamsWebhookLambdaFunction"
+            },
+            "CodeSha256": "sbkACFeS9chufWw6A/Zcb6drgaWRxyOWiCy4tcO87DU="
+          }
+        },
+        "SyncVideoProgressEventsRuleSchedule1": {
+          "Type": "AWS::Events::Rule",
+          "Properties": {
+            "ScheduleExpression": "rate(5 minutes)",
+            "State": "DISABLED",
+            "Targets": [
+              {
+                "Arn": {
+                  "Fn::GetAtt": [
+                    "SyncVideoProgressLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Id": "syncVideoProgressSchedule"
+              }
+            ]
+          }
+        },
+        "SyncVideoProgressLambdaPermissionEventsRuleSchedule1": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "SyncVideoProgressLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "events.amazonaws.com",
+            "SourceArn": {
+              "Fn::GetAtt": [
+                "SyncVideoProgressEventsRuleSchedule1",
+                "Arn"
+              ]
+            }
+          }
+        },
+        "ApiGatewayRestApi": {
+          "Type": "AWS::ApiGateway::RestApi",
+          "Properties": {
+            "Name": "dev-background-service",
+            "EndpointConfiguration": {
+              "Types": [
+                "EDGE"
+              ]
+            },
+            "Policy": ""
+          }
+        },
+        "ApiGatewayResourceVideo": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Fn::GetAtt": [
+                "ApiGatewayRestApi",
+                "RootResourceId"
+              ]
+            },
+            "PathPart": "video",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceVideoCreateDashuploadDashprogress": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceVideo"
+            },
+            "PathPart": "create-upload-progress",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFaculty": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Fn::GetAtt": [
+                "ApiGatewayRestApi",
+                "RootResourceId"
+              ]
+            },
+            "PathPart": "faculty",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFacultyBank": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceFaculty"
+            },
+            "PathPart": "bank",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFacultyBankDetails": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceFacultyBank"
+            },
+            "PathPart": "details",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceWebhooks": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Fn::GetAtt": [
+                "ApiGatewayRestApi",
+                "RootResourceId"
+              ]
+            },
+            "PathPart": "webhooks",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceWebhooksTpstreams": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceWebhooks"
+            },
+            "PathPart": "tpstreams",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayMethodFacultyBankDetailsOptions": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "AuthorizationType": "NONE",
+            "HttpMethod": "OPTIONS",
+            "MethodResponses": [
+              {
+                "StatusCode": "200",
+                "ResponseParameters": {
+                  "method.response.header.Access-Control-Allow-Origin": true,
+                  "method.response.header.Access-Control-Allow-Headers": true,
+                  "method.response.header.Access-Control-Allow-Methods": true
+                },
+                "ResponseModels": {}
+              }
+            ],
+            "RequestParameters": {},
+            "Integration": {
+              "Type": "MOCK",
+              "RequestTemplates": {
+                "application/json": "{statusCode:200}"
+              },
+              "ContentHandling": "CONVERT_TO_TEXT",
+              "IntegrationResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": "'*'",
+                    "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                    "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,POST'"
+                  },
+                  "ResponseTemplates": {
+                    "application/json": ""
+                  }
+                }
+              ]
+            },
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceFacultyBankDetails"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayMethodVideoCreateDashuploadDashprogressPost": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "POST",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceVideoCreateDashuploadDashprogress"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "CreateVideoUploadProgressLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "CreateVideoUploadProgressLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayMethodFacultyBankDetailsPost": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "POST",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceFacultyBankDetails"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "SaveBankDetailsLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "SaveBankDetailsLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayMethodFacultyBankDetailsGet": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "GET",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceFacultyBankDetails"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "GetBankDetailsLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "GetBankDetailsLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayMethodWebhooksTpstreamsPost": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "POST",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceWebhooksTpstreams"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "TpstreamsWebhookLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "TpstreamsWebhookLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayDeployment1781862696707": {
+          "Type": "AWS::ApiGateway::Deployment",
+          "Properties": {
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "StageName": "dev"
+          },
+          "DependsOn": [
+            "ApiGatewayMethodFacultyBankDetailsOptions",
+            "ApiGatewayMethodVideoCreateDashuploadDashprogressPost",
+            "ApiGatewayMethodFacultyBankDetailsPost",
+            "ApiGatewayMethodFacultyBankDetailsGet",
+            "ApiGatewayMethodWebhooksTpstreamsPost"
+          ]
+        },
+        "CreateVideoUploadProgressLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "CreateVideoUploadProgressLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "SaveBankDetailsLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "SaveBankDetailsLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "GetBankDetailsLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "GetBankDetailsLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "TpstreamsWebhookLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "TpstreamsWebhookLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "ProcessVideoUploadEventSourceMappingSQSVideoUploadQueue": {
+          "Type": "AWS::Lambda::EventSourceMapping",
+          "DependsOn": [
+            "IamRoleLambdaExecution"
+          ],
+          "Properties": {
+            "BatchSize": 1,
+            "EventSourceArn": {
+              "Fn::GetAtt": [
+                "VideoUploadQueue",
+                "Arn"
+              ]
+            },
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "ProcessVideoUploadLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Enabled": true
+          }
+        },
+        "CourseIntroVideoUploadEventSourceMappingSQSCourseIntroVideoUploadQueue": {
+          "Type": "AWS::Lambda::EventSourceMapping",
+          "DependsOn": [
+            "IamRoleLambdaExecution"
+          ],
+          "Properties": {
+            "BatchSize": 1,
+            "EventSourceArn": {
+              "Fn::GetAtt": [
+                "CourseIntroVideoUploadQueue",
+                "Arn"
+              ]
+            },
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "CourseIntroVideoUploadLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Enabled": true
+          }
+        },
+        "ChatNotificationWorkerEventSourceMappingSQSChatNotificationQueue": {
+          "Type": "AWS::Lambda::EventSourceMapping",
+          "DependsOn": [
+            "IamRoleLambdaExecution"
+          ],
+          "Properties": {
+            "BatchSize": 1,
+            "EventSourceArn": {
+              "Fn::GetAtt": [
+                "ChatNotificationQueue",
+                "Arn"
+              ]
+            },
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "ChatNotificationWorkerLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Enabled": true
+          }
+        },
+        "VideoUploadQueue": {
+          "Type": "AWS::SQS::Queue",
+          "Properties": {
+            "QueueName": "video-upload-queue",
+            "VisibilityTimeout": 300
+          }
+        },
+        "CourseIntroVideoUploadQueue": {
+          "Type": "AWS::SQS::Queue",
+          "Properties": {
+            "QueueName": "course-intro-video-upload-queue",
+            "VisibilityTimeout": 300
+          }
+        },
+        "ChatNotificationQueue": {
+          "Type": "AWS::SQS::Queue",
+          "Properties": {
+            "QueueName": "chat-notification-queue",
+            "VisibilityTimeout": 300
+          }
+        }
+      },
+      "Outputs": {
+        "ServerlessDeploymentBucketName": {
+          "Value": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+          "Export": {
+            "Name": "sls-background-service-dev-ServerlessDeploymentBucketName"
+          }
+        },
+        "CreateVideoUploadProgressLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "CreateVideoUploadProgressLambdaVersionG0fZEqu13gkwNLE640PibNUMqwrSfARjTCgcFs5mFtU"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-CreateVideoUploadProgressLambdaFunctionQualifiedArn"
+          }
+        },
+        "SaveBankDetailsLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "SaveBankDetailsLambdaVersionTA2avS1hXFg8u8RScbGTeuwG22UJLvAn02eOSHr58"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
+          }
+        },
+        "GetBankDetailsLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "GetBankDetailsLambdaVersionOXLBdfN6OpVT3kMHB0WMufm0jVH29INf3KdZkjc"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
+          }
+        },
+        "ProcessVideoUploadLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "ProcessVideoUploadLambdaVersionSNAnxY6wuHHxQRm8MsrrnBWN4vXMmKf81rWn1AYnJNM"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
+          }
+        },
+        "CourseIntroVideoUploadLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "CourseIntroVideoUploadLambdaVersiondcv6TKtvIM0xKtTILfwKz9QqBJtvo3jhZUredlNPrZs"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-CourseIntroVideoUploadLambdaFunctionQualifiedArn"
+          }
+        },
+        "ChatNotificationWorkerLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "ChatNotificationWorkerLambdaVersionrYNztdflbPHjhMaS4w7Hj4mOA160dYuxYKbAiYE34"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
+          }
+        },
+        "SyncVideoProgressLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "SyncVideoProgressLambdaVersionRbKM3AiABN2I5rGgbUTfhH8ZP78iSdHafsHwdTzjJA"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-SyncVideoProgressLambdaFunctionQualifiedArn"
+          }
+        },
+        "TpstreamsWebhookLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "TpstreamsWebhookLambdaVersionConQazVwbay8JHkijFCsbh3nHcjigNHvAcQoHOb3Qk"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
+          }
+        },
+        "ServiceEndpoint": {
+          "Description": "URL of the service endpoint",
+          "Value": {
+            "Fn::Join": [
+              "",
+              [
+                "https://",
+                {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                ".execute-api.",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ".",
+                {
+                  "Ref": "AWS::URLSuffix"
+                },
+                "/dev"
+              ]
+            ]
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-ServiceEndpoint"
+          }
+        }
+      }
+    }
   }
 }

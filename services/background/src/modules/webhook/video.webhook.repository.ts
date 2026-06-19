@@ -3,6 +3,29 @@ import { supabase } from "../../../../../shared/config/supabase";
 import { MaterialStatus } from "../../../../../shared/constants/types";
 
 
+// ─── notification helper ────────────────────────────────────
+const createNotification = async (notification: {
+    user_id?: string | null;
+    type: string;
+    title: string;
+    body: string;
+    data?: Record<string, any> | null;
+    is_admin?: boolean;
+}) => {
+    const { error } = await supabase.from("notifications").insert({
+        user_id: notification.user_id ?? null,
+        type: notification.type,
+        title: notification.title,
+        body: notification.body,
+        data: notification.data ?? null,
+        is_admin: notification.is_admin ?? false,
+        sent_at: new Date().toISOString(),
+    });
+
+    if (error) console.log("createNotification error", error);
+};
+
+
 export const videoWebhookRepository = {
 
     handleVideoWebhook: async (data: any) => {
@@ -131,7 +154,18 @@ export const videoWebhookRepository = {
                     .update({ pending_publish: false })
                     .eq("id", courseId)
 
-                // Notify faculty
+                // Notify faculty ✅
+                await createNotification({
+                    user_id: course?.faculty_id,
+                    type: "COURSE_UPDATE",
+                    title: "Auto publish failed",
+                    body: `"${course?.title}" could not be published — ${failedVideos.length} video(s) failed to process.`,
+                    data: {
+                        course_id: courseId,
+                        failed_videos: failedVideos.map(v => ({ id: v.id, title: v.title })),
+                    },
+                })
+
                 console.log(`Auto publish aborted — ${failedVideos.length} failed videos`)
                 return true
             }
@@ -152,7 +186,23 @@ export const videoWebhookRepository = {
                 })
                 .eq("id", courseId)
 
-            // Notify faculty
+            // Notify faculty ✅
+            await createNotification({
+                user_id: course?.faculty_id,
+                type: "COURSE_UPDATE",
+                title: "Course published",
+                body: `"${course?.title}" is now live — all videos finished processing.`,
+                data: { course_id: courseId },
+            })
+
+            // Notify admin ✅
+            await createNotification({
+                type: "COURSE_UPDATE",
+                title: "New course published",
+                body: `"${course?.title}" has been auto published.`,
+                data: { course_id: courseId, faculty_id: course?.faculty_id },
+                is_admin: true,
+            })
 
             console.log(`Course ${courseId} auto published! ✅`)
             return true
