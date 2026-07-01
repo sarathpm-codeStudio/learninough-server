@@ -16982,42 +16982,9 @@ var require_websocket_server = __commonJS({
 // src/functions/video/processVideoUpload.ts
 var processVideoUpload_exports = {};
 __export(processVideoUpload_exports, {
-  handler: () => handler,
-  handlerFun: () => handlerFun
+  handler: () => handler
 });
 module.exports = __toCommonJS(processVideoUpload_exports);
-
-// ../../shared/utils/response.ts
-var handleResponse = {
-  success: (data, message = "Success", status = 200) => ({
-    statusCode: status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*"
-      // for CORS
-    },
-    body: JSON.stringify({
-      status,
-      message,
-      data
-    })
-  }),
-  error: (error, message = "Error", status = 500) => {
-    console.log("Error:", message, error);
-    return {
-      statusCode: status,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      },
-      body: JSON.stringify({
-        status,
-        message,
-        error: process.env.NODE_ENV === "production" ? "Internal Server Error" : error?.message || error
-      })
-    };
-  }
-};
 
 // ../../shared/node_modules/@supabase/supabase-js/dist/index.mjs
 var dist_exports = {};
@@ -25754,233 +25721,151 @@ var supabase = createClient(supabaseUrl, supabaseKey, {
     transport: wrapper_default
   }
 });
-var getSupabaseClient = (accessToken) => {
-  return createClient(supabaseUrl, supabaseKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    },
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    },
-    realtime: {
-      transport: wrapper_default
-    }
-  });
-};
-
-// ../../shared/utils/verifyAuth.ts
-var verifyAuth = (handler2) => async (event) => {
-  const authHeader = event.headers?.Authorization || event.headers?.authorization;
-  const token = authHeader?.split(" ")[1];
-  if (!token) return handleResponse.error(null, "Unauthorized", 401);
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data.user) return handleResponse.error(error, "User not found", 401);
-  const authedSupabase = getSupabaseClient(token);
-  const { data: profile, error: profileError } = await authedSupabase.from("profiles").select("*").eq("id", data.user.id).single();
-  if (profileError) return handleResponse.error(profileError, "User not found", 401);
-  console.log("profile", profile);
-  event.user = { ...data.user, profile };
-  event.token = token;
-  event.supabase = authedSupabase;
-  return handler2(event);
-};
-var verifyRole = (role) => (handler2) => async (event) => {
-  if (!event.user) return handleResponse.error(null, "User not found", 401);
-  console.log("user", event?.user);
-  if (event.user.profile.role !== role) {
-    return handleResponse.error(null, "You are not authorized to perform this action", 401);
-  }
-  return handler2(event);
-};
-var verifyAccountStatus = (handler2) => async (event) => {
-  if (!event.user) return handleResponse.error(null, "User not found", 401);
-  const client = event.supabase ?? supabase;
-  const userDetails = await client.from("profiles").select("*").eq("id", event.user.id).single();
-  if (userDetails.error) return handleResponse.error(userDetails.error, "User not found", 401);
-  if (userDetails.data.account_verified !== "APPROVED" /* APPROVED */) {
-    return handleResponse.error(null, "Your account is not approved", 401);
-  }
-  return handler2(event);
-};
-
-// ../../shared/utils/compose.ts
-var compose = (...middlewares) => (handler2) => {
-  return middlewares.reduceRight((acc, middleware) => middleware(acc), handler2);
-};
 
 // src/modules/video/video.repository.ts
-var TPSTREAMS_API_KEY = process.env.TPSTREAMS_API_KEY;
-var TPSTREAMS_ORG_ID = process.env.TPSTREAMS_ORG_ID;
+var createNotification = async (notification) => {
+  const { error } = await supabase.from("notifications").insert({
+    user_id: notification.user_id ?? null,
+    type: notification.type,
+    title: notification.title,
+    body: notification.body,
+    data: notification.data ?? null,
+    is_admin: notification.is_admin ?? false,
+    sent_at: (/* @__PURE__ */ new Date()).toISOString()
+  });
+  if (error) console.log("createNotification error", error);
+};
 var videoRepository = {
   // create video upload progress 
-  createVideoUploadProgress: async (uniqueId, facultyId, assetId, type) => {
-    try {
-      await supabase.from("video_upload_progress").insert({
-        faculty_id: facultyId,
-        unique_id: uniqueId,
-        type,
-        asset_id: assetId,
-        uploading_status: "transcoding",
-        upload_progress: 0,
-        transcoding_progress: 0
-      });
-      return true;
-    } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
-    }
+  createVideoUploadProgress: async (event) => {
+    const results = await Promise.allSettled(
+      event.Records.map((record) => processRecord(record))
+    );
+    const failures = results.map((r, i) => ({ result: r, record: event.Records[i] })).filter(({ result }) => result.status === "rejected").map(({ record }) => ({ itemIdentifier: record.messageId }));
+    return { batchItemFailures: failures };
   }
-  // // uplaod course material video to tpstreams
-  // backgroundProcessVideoUpload: async (event: any) => {
-  //     try {
-  //         for (const record of event.Records) {
-  //             const { material_id, video_data, file_name } = JSON.parse(record.body);
-  //             try {
-  //                 console.log(`Processing video for material: ${material_id}`);
-  //                 // 1. Update status → processing
-  //                 await supabase
-  //                     .from("course_materials")
-  //                     .update({ material_status: MaterialStatus.PROCESSING })
-  //                     .eq("id", material_id);
-  //                 // 2. Upload to TPStreams
-  //                 const formData = new FormData();
-  //                 const buffer = Buffer.from(video_data, "base64");
-  //                 const blob = new Blob([buffer]);
-  //                 formData.append("file", blob, file_name);
-  //                 formData.append("title", file_name);
-  //                 const response = await fetch(
-  //                     `https://app.tpstreams.com/api/v1/${TPSTREAMS_ORG_ID}/assets/videos/`,
-  //                     {
-  //                         method: "POST",
-  //                         headers: { Authorization: `Token ${TPSTREAMS_API_KEY}` },
-  //                         body: formData,
-  //                     }
-  //                 );
-  //                 const tpData = await response.json();
-  //                 // 3. Update material with TPStreams video ID
-  //                 await supabase
-  //                     .from("course_materials")
-  //                     .update({
-  //                         material_status: MaterialStatus.PROCESSING,
-  //                         video_upload_id: tpData.id,
-  //                         video_asset_id: tpData.asset_id,
-  //                         duration_sec: tpData.duration,
-  //                     })
-  //                     .eq("id", material_id);
-  //                 console.log(`Video uploaded successfully: ${tpData.id}`);
-  //             } catch (err: any) {
-  //                 console.error(`Video upload failed for material ${material_id}:`, err.message);
-  //                 await supabase
-  //                     .from("course_materials")
-  //                     .update({ material_status: MaterialStatus.FAILED })
-  //                     .eq("id", material_id);
-  //             }
-  //         }
-  //     } catch (error: any) {
-  //         console.log("error", error);
-  //         throw new Error(error);
-  //     }
-  // },
-  // // upload course intro video to tpstreams
-  // uploadCourseIntroVideo: async (event: any) => {
-  //     try {
-  //         for (const record of event.Records) {
-  //             const { course_id, video_data, file_name } = JSON.parse(record.body);
-  //             try {
-  //                 console.log(`Processing video for course: ${course_id}`);
-  //                 // 1. Update status → processing
-  //                 // await supabase
-  //                 //     .from("courses")
-  //                 //     .update({ course_status: CourseStatus.PROCESSING })
-  //                 //     .eq("id", course_id);
-  //                 // 2. Upload to TPStreams
-  //                 const formData = new FormData();
-  //                 const buffer = Buffer.from(video_data, "base64");
-  //                 const blob = new Blob([buffer]);
-  //                 formData.append("file", blob, file_name);
-  //                 formData.append("title", file_name);
-  //                 const response = await fetch(
-  //                     `https://app.tpstreams.com/api/v1/${TPSTREAMS_ORG_ID}/assets/videos/`,
-  //                     {
-  //                         method: "POST",
-  //                         headers: { Authorization: `Token ${TPSTREAMS_API_KEY}` },
-  //                         body: formData,
-  //                     }
-  //                 );
-  //                 const tpData = await response.json();
-  //                 // 3. Update course with TPStreams video ID
-  //                 await supabase
-  //                     .from("courses")
-  //                     .update({
-  //                         // course_status: CourseStatus.READY,
-  //                         video_upload_id: tpData.id,
-  //                         video_asset_id: tpData.asset_id,
-  //                         duration_sec: tpData.duration,
-  //                     })
-  //                     .eq("id", course_id);
-  //                 console.log(`Video uploaded successfully: ${tpData.id}`);
-  //             } catch (err: any) {
-  //                 console.error(`Video upload failed for course ${course_id}:`, err.message);
-  //                 // await supabase
-  //                 //     .from("courses")
-  //                 //     .update({ course_status: CourseStatus.FAILED })
-  //                 //     .eq("id", course_id);
-  //             }
-  //         }
-  //     } catch (error: any) {
-  //         console.log("error", error);
-  //         throw new Error(error);
-  //     }
-  // },
 };
+async function processRecord(record) {
+  const data = JSON.parse(record.body);
+  try {
+    console.log("Processing video webhook:", data);
+    let courseId = "";
+    const videoStatus = data?.video?.status === "Completed" ? "COMPLETED" /* COMPLETED */ : data?.video?.status === "Error" ? "FAILED" /* FAILED */ : "TRANSCODING" /* TRANSCODING */;
+    const materialStatus = videoStatus === "COMPLETED" /* COMPLETED */ ? "READY" /* READY */ : videoStatus === "TRANSCODING" /* TRANSCODING */ ? "PROCESSING" /* PROCESSING */ : videoStatus === "FAILED" /* FAILED */ ? "FAILED" /* FAILED */ : "PENDING" /* PENDING */;
+    const { data: updatedUploadProgress, error: uploadProgressError } = await supabase.from("video_upload_progress").update({
+      uploading_status: videoStatus,
+      upload_progress: data?.video?.progress
+    }).eq("asset_id", data?.id).select().single();
+    if (uploadProgressError) throw uploadProgressError;
+    if (updatedUploadProgress?.type === "intro") {
+      const { data: updatedCourse, error: courseError } = await supabase.from("courses").update({
+        video_uploading_status: videoStatus,
+        video_upload_progress: data?.video?.progress
+      }).eq("video_asset_id", updatedUploadProgress?.asset_id).select().single();
+      if (courseError) throw courseError;
+      courseId = updatedCourse?.id;
+    } else {
+      const { data: updatedMaterial, error: materialError } = await supabase.from("course_materials").update({
+        material_status: materialStatus,
+        video_uploading_status: videoStatus,
+        video_upload_progress: data?.video?.progress,
+        duration_sec: data?.video?.duration
+      }).eq("video_asset_id", updatedUploadProgress?.asset_id).select().single();
+      if (materialError) throw materialError;
+      courseId = updatedMaterial?.course_id;
+    }
+    if (videoStatus === "TRANSCODING" /* TRANSCODING */) {
+      console.log("Still transcoding, waiting...");
+      return true;
+    }
+    const { data: course } = await supabase.from("courses").select("id, title, faculty_id, pending_publish, is_draft, video_uploading_status").eq("id", courseId).single();
+    if (videoStatus === "FAILED" /* FAILED */) {
+      await createNotification({
+        user_id: course?.faculty_id,
+        type: "COURSE_UPDATE",
+        title: "Video processing failed",
+        body: `A video in "${course?.title}" failed to process.`,
+        data: { course_id: courseId }
+      });
+    }
+    if (!course?.pending_publish) return true;
+    const { data: allVideos } = await supabase.from("course_materials").select("id, title, video_uploading_status").eq("course_id", courseId).eq("is_deleted", false).eq("type", "VIDEO");
+    const introFailed = course.video_uploading_status === "FAILED" /* FAILED */;
+    const introProcessing = course.video_uploading_status !== "COMPLETED" /* COMPLETED */ && course.video_uploading_status !== "FAILED" /* FAILED */ && course.video_uploading_status !== null;
+    const failedVideos = [
+      ...allVideos?.filter(
+        (v) => v.video_uploading_status === "FAILED" /* FAILED */
+      ) ?? [],
+      ...introFailed ? [{ id: courseId, title: "Intro Video" }] : []
+    ];
+    const processingVideos = [
+      ...allVideos?.filter(
+        (v) => v.video_uploading_status !== "COMPLETED" /* COMPLETED */ && v.video_uploading_status !== "FAILED" /* FAILED */
+      ) ?? [],
+      ...introProcessing ? [{ id: courseId, title: "Intro Video" }] : []
+    ];
+    if (failedVideos.length > 0) {
+      await supabase.from("courses").update({ pending_publish: false }).eq("id", courseId);
+      await createNotification({
+        user_id: course?.faculty_id,
+        type: "COURSE_UPDATE",
+        title: "Auto publish failed",
+        body: `"${course?.title}" could not be published \u2014 ${failedVideos.length} video(s) failed.`,
+        data: {
+          course_id: courseId,
+          failed_videos: failedVideos.map((v) => ({ id: v.id, title: v.title }))
+        }
+      });
+      console.log(`Auto publish aborted \u2014 ${failedVideos.length} failed videos`);
+      return true;
+    }
+    if (processingVideos.length > 0) {
+      console.log(`Still waiting \u2014 ${processingVideos.length} videos processing`);
+      return true;
+    }
+    await supabase.from("courses").update({
+      is_draft: false,
+      pending_publish: false
+    }).eq("id", courseId);
+    await createNotification({
+      user_id: course?.faculty_id,
+      type: "COURSE_UPDATE",
+      title: "Course published",
+      body: `"${course?.title}" is now live \u2014 all videos finished processing.`,
+      data: { course_id: courseId }
+    });
+    await createNotification({
+      type: "COURSE_UPDATE",
+      title: "New course published",
+      body: `"${course?.title}" has been auto published.`,
+      data: { course_id: courseId, faculty_id: course?.faculty_id },
+      is_admin: true
+    });
+    console.log(`Course ${courseId} auto published! \u2705`);
+    return true;
+  } catch (error) {
+    console.error("processRecord error:", error);
+    throw error;
+  }
+}
 
 // src/modules/video/video.service.ts
 var videoService = {
   createVideoUploadProgress: async (event) => {
     try {
-      const data = JSON.parse(event.body);
-      await videoRepository.createVideoUploadProgress(data.uniqueId, event.user.id, data.assetId, data.type);
-      return true;
+      return await videoRepository.createVideoUploadProgress(event);
     } catch (error) {
       throw new Error(error.message);
     }
   }
-  // backgroundProcessVideoUpload: async (event: any) => {
-  //     try {
-  //         await videoRepository.backgroundProcessVideoUpload(event);
-  //     } catch (error: any) {
-  //         throw new Error(error.message)
-  //     }
-  // },
-  // uploadCourseIntroVideo: async (event: any) => {
-  //     try {
-  //         await videoRepository.uploadCourseIntroVideo(event);
-  //     } catch (error: any) {
-  //         throw new Error(error.message)
-  //     }
-  // },
 };
 
 // src/functions/video/processVideoUpload.ts
-var handlerFun = async (event) => {
-  try {
-    const result = await videoService.createVideoUploadProgress(event);
-    return handleResponse.success(result, "Video upload progress created successfully", 200);
-  } catch (err) {
-    return handleResponse.error(err, "Error processing video upload", 400);
-  }
+var handler = async (event) => {
+  return await videoService.createVideoUploadProgress(event);
 };
-var handler = compose(
-  verifyAuth,
-  verifyRole("FACULTY"),
-  verifyAccountStatus
-)(handlerFun);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  handler,
-  handlerFun
+  handler
 });
 //# sourceMappingURL=processVideoUpload.js.map

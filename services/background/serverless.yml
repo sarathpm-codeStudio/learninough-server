@@ -1,34 +1,150 @@
+# service: background-service
+
+# provider:
+#   name: aws
+#   runtime: nodejs20.x
+#   region: ap-south-1
+#   timeout: 30
+#   environment:
+#     VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue
+#     CHAT_NOTIFICATION_QUEUE_URL: !Ref ChatNotificationQueue
+#     SUPABASE_URL:                ${ssm:/learning-app/SUPABASE_URL}
+#     SUPABASE_ANON_KEY:           ${ssm:/learning-app/SUPABASE_ANON_KEY}
+#     BANK_ENCRYPTION_KEY:         ${ssm:/learning-app/BANK_ENCRYPTION_KEY}
+
+#   iam:
+#     role:
+#       statements:
+#         - Effect: Allow
+#           Action:
+#             - sqs:SendMessage
+#             - sqs:ReceiveMessage
+#             - sqs:DeleteMessage
+#             - sqs:GetQueueAttributes
+#           Resource: !GetAtt VideoUploadQueue.Arn
+#         - Effect: Allow
+#           Action:
+#             - sqs:ReceiveMessage
+#             - sqs:DeleteMessage
+#             - sqs:GetQueueAttributes
+#           Resource: !GetAtt ChatNotificationQueue.Arn
+
+# plugins:
+#   - serverless-offline
+
+# custom:
+#   serverless-offline:
+#     httpPort: 3000
+#     lambdaPort: 3003
+
+# resources:
+#   Resources:
+#     VideoUploadQueue:
+#       Type: AWS::SQS::Queue
+#       Properties:
+#         QueueName: video-upload-queue
+#         VisibilityTimeout: 300
+
+#     ChatNotificationQueue:
+#       Type: AWS::SQS::Queue
+#       Properties:
+#         QueueName: chat-notification-queue
+#         VisibilityTimeout: 300
+
+# functions:
+
+
+
+#   # ── HTTP Endpoints ─────────────────────────────────────────
+
+#   saveBankDetails:
+#     handler: src/functions/bank/saveBankDetails.handler
+#     events:
+#       - http:
+#           path:   faculty/bank/details
+#           method: post
+#           cors:   true
+  
+#   getBankDetails:
+#     handler: src/functions/bank/getBankDetails.handler
+#     events:
+#       - http:
+#           path:   faculty/bank/details
+#           method: get
+#           cors:   true
+  
+          
+
+
+#   # ── SQS Background Jobs ──────────────────────────────────────
+
+#   processVideoUpload:
+#     handler: src/functions/video/processVideoUpload.handler
+#     events:
+#       - sqs:
+#           arn: !GetAtt VideoUploadQueue.Arn
+#           batchSize: 1
+#           functionResponseType: ReportBatchItemFailures
+
+#   chatNotificationWorker:
+#     handler: src/functions/chat/chat.notification.handler
+#     events:
+#       - sqs:
+#           arn: !GetAtt ChatNotificationQueue.Arn
+#           batchSize: 1
+
+
+#   # ── Webhooks ─────────────────────────────────────────────────
+
+#   tpstreamsWebhook:
+#     handler: src/functions/webhooks/tpstreamsWebhook.handler
+#     events:
+#       - http:
+#           path: /webhooks/tpstreams
+#           method: post
+#           # No auth — TPStreams calls this directly
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 service: background-service
 
 provider:
   name: aws
   runtime: nodejs20.x
   region: ap-south-1
-  timeout: 30
+  timeout: 30                          # default for HTTP endpoints
   environment:
-    VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue
-    COURSE_INTRO_VIDEO_QUEUE_URL: !Ref CourseIntroVideoUploadQueue
-    SUPABASE_URL:                ${ssm:/learning-app/SUPABASE_URL}
-    SUPABASE_ANON_KEY:           ${ssm:/learning-app/SUPABASE_ANON_KEY}
-    BANK_ENCRYPTION_KEY:         ${ssm:/learning-app/BANK_ENCRYPTION_KEY}
+    VIDEO_UPLOAD_QUEUE_URL:        !Ref VideoUploadQueue
+    CHAT_NOTIFICATION_QUEUE_URL:   !Ref ChatNotificationQueue
+    SUPABASE_URL:                  ${ssm:/learning-app/SUPABASE_URL}
+    SUPABASE_ANON_KEY:             ${ssm:/learning-app/SUPABASE_ANON_KEY}
+    BANK_ENCRYPTION_KEY:           ${ssm:/learning-app/BANK_ENCRYPTION_KEY}
 
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
+            - sqs:SendMessage          # ← ADDED (webhook needs to push)
             - sqs:ReceiveMessage
             - sqs:DeleteMessage
             - sqs:GetQueueAttributes
           Resource: !GetAtt VideoUploadQueue.Arn
+
         - Effect: Allow
           Action:
-            - sqs:ReceiveMessage
-            - sqs:DeleteMessage
-            - sqs:GetQueueAttributes
-          Resource: !GetAtt CourseIntroVideoUploadQueue.Arn
-        - Effect: Allow
-          Action:
+            - sqs:SendMessage          # ← ADDED
             - sqs:ReceiveMessage
             - sqs:DeleteMessage
             - sqs:GetQueueAttributes
@@ -44,38 +160,43 @@ custom:
 
 resources:
   Resources:
+
+    # ── Dead Letter Queues ──────────────────────────────────────
+    VideoUploadDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: video-upload-dlq
+        MessageRetentionPeriod: 1209600    # 14 days
+
+    ChatNotificationDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: chat-notification-dlq
+        MessageRetentionPeriod: 1209600    # 14 days
+
+    # ── Main Queues ─────────────────────────────────────────────
     VideoUploadQueue:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: video-upload-queue
         VisibilityTimeout: 300
-
-    CourseIntroVideoUploadQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: course-intro-video-upload-queue
-        VisibilityTimeout: 300
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt VideoUploadDLQ.Arn
+          maxReceiveCount: 3             # retry 3 times then → DLQ
 
     ChatNotificationQueue:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: chat-notification-queue
         VisibilityTimeout: 300
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt ChatNotificationDLQ.Arn
+          maxReceiveCount: 3
 
 functions:
 
+  # ── HTTP Endpoints ──────────────────────────────────────────
 
-
-  # ── HTTP Endpoints ─────────────────────────────────────────
-
-  createVideoUploadProgress:
-    handler: src/functions/video/processVideoUpload.handler
-    events:
-      - http:
-          path: /video/create-upload-progress
-          method: post
-
-  
   saveBankDetails:
     handler: src/functions/bank/saveBankDetails.handler
     events:
@@ -83,7 +204,7 @@ functions:
           path:   faculty/bank/details
           method: post
           cors:   true
-  
+
   getBankDetails:
     handler: src/functions/bank/getBankDetails.handler
     events:
@@ -91,52 +212,33 @@ functions:
           path:   faculty/bank/details
           method: get
           cors:   true
-  
-          
 
-
-  # ── SQS Background Jobs ──────────────────────────────────────
-
-  processVideoUpload:
-    handler: src/functions/video/processVideoUpload.handler
-    events:
-      - sqs:
-          arn: !GetAtt VideoUploadQueue.Arn
-          batchSize: 1
-
-  courseIntroVideoUpload:
-    handler: src/functions/video/courseIntroVideoUpload.handler
-    events:
-      - sqs:
-          arn: !GetAtt CourseIntroVideoUploadQueue.Arn
-          batchSize: 1
-
-
-  chatNotificationWorker:
-    handler: src/functions/chat/chat.notification.handler
-    events:
-      - sqs:
-          arn: !GetAtt ChatNotificationQueue.Arn
-          batchSize: 1
-
-
-  # ── cron Jobs ──────────────────────────────────────
-
-  syncVideoProgress:
-    handler: src/functions/video/syncVideoProgress.handler
-    events:
-      - schedule:
-          rate: rate(5 minutes)
-          enabled: false
-
-
-
-  # ── Webhooks ─────────────────────────────────────────────────
+  # ── Webhooks ────────────────────────────────────────────────
 
   tpstreamsWebhook:
     handler: src/functions/webhooks/tpstreamsWebhook.handler
+    timeout: 10                          # short — just pushes to SQS
     events:
       - http:
           path: /webhooks/tpstreams
           method: post
-          # No auth — TPStreams calls this directly
+
+  # ── SQS Background Jobs ─────────────────────────────────────
+
+  processVideoUpload:
+    handler: src/functions/video/processVideoUpload.handler
+    timeout: 300                         # long — does heavy DB work
+    events:
+      - sqs:
+          arn: !GetAtt VideoUploadQueue.Arn
+          batchSize: 1
+          functionResponseType: ReportBatchItemFailures
+
+  chatNotificationWorker:
+    handler: src/functions/chat/chat.notification.handler
+    timeout: 60                          # medium — notification work
+    events:
+      - sqs:
+          arn: !GetAtt ChatNotificationQueue.Arn
+          batchSize: 1
+          functionResponseType: ReportBatchItemFailures   # ← ADDED

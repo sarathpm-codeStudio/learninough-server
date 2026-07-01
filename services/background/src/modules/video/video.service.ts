@@ -8,10 +8,10 @@ export const videoService = {
 
         try {
 
-            const data = JSON.parse(event.body);
 
-            await videoRepository.createVideoUploadProgress(data.uniqueId, event.user.id, data.assetId, data.type);
-            return true;
+            // Return the { batchItemFailures } from the repo so SQS's
+            // ReportBatchItemFailures contract works (retries only failed records).
+            return await videoRepository.createVideoUploadProgress(event);
 
         } catch (error: any) {
 
@@ -21,36 +21,5 @@ export const videoService = {
 
     },
 
-
-
-
-
-    // backgroundProcessVideoUpload: async (event: any) => {
-
-    //     try {
-
-    //         await videoRepository.backgroundProcessVideoUpload(event);
-
-    //     } catch (error: any) {
-
-    //         throw new Error(error.message)
-    //     }
-
-
-    // },
-
-    // uploadCourseIntroVideo: async (event: any) => {
-
-    //     try {
-
-    //         await videoRepository.uploadCourseIntroVideo(event);
-
-    //     } catch (error: any) {
-
-    //         throw new Error(error.message)
-    //     }
-
-
-    // },
 
 }
