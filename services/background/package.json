@@ -14,7 +14,8 @@
     "@aws-sdk/client-sns": "^3.1030.0",
     "@aws-sdk/client-sqs": "^3.1025.0",
     "@supabase/supabase-js": "^2.101.0",
-    "aws-sdk": "^2.1693.0"
+    "aws-sdk": "^2.1693.0",
+    "exceljs": "^4.4.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",

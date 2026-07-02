@@ -17,6 +17,7 @@ const sns = new SNSClient({ region: process.env.AWS_REGION } as any);
 export const chatRepository = {
 
 
+
     chatNotificationWorker: async (event: any) => {
 
         try {
