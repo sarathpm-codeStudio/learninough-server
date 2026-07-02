@@ -1,18 +1,7 @@
-
-
-import { handleResponse } from "../../../../../shared/utils/response";
 import { chatService } from "../../modules/chat/chat.service";
 
-
+// SQS consumer — must return { batchItemFailures } at the TOP LEVEL so the
+// ReportBatchItemFailures contract works. Do NOT wrap in an HTTP response.
 export const handler = async (event: any) => {
-
-    try {
-
-        await chatService.chatNotificationWorker(event);
-
-    } catch (err: any) {
-
-        return handleResponse.error(err, "Error processing chat notification", 400);
-
-    }
+    return await chatService.chatNotificationWorker(event);
 };

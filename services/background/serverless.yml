@@ -15,7 +15,14 @@ provider:
     CHAT_NOTIFICATION_QUEUE_URL:   !Ref ChatNotificationQueue
     SUPABASE_URL:                  ${ssm:/learning-app/SUPABASE_URL}
     SUPABASE_ANON_KEY:             ${ssm:/learning-app/SUPABASE_ANON_KEY}
+    SUPABASE_SERVICE_ROLE_KEY:     ${ssm:/learning-app/SUPABASE_SERVICE_ROLE_KEY}
     BANK_ENCRYPTION_KEY:           ${ssm:/learning-app/BANK_ENCRYPTION_KEY}
+    # FCM (Firebase Admin) credentials for chat push notifications.
+    FIREBASE_PROJECT_ID:           ${ssm:/learning-app/FIREBASE_PROJECT_ID}
+    FIREBASE_CLIENT_EMAIL:         ${ssm:/learning-app/FIREBASE_CLIENT_EMAIL}
+    FIREBASE_PRIVATE_KEY:          ${ssm:/learning-app/FIREBASE_PRIVATE_KEY}
+    # Shared secret the Supabase chat_messages webhook must present.
+    CHAT_WEBHOOK_SECRET:           ${ssm:/learning-app/CHAT_WEBHOOK_SECRET}
 
   iam:
     role:
@@ -123,6 +130,16 @@ functions:
     events:
       - http:
           path: /webhooks/tpstreams
+          method: post
+
+  # Supabase database webhook: fires on every chat_messages INSERT and enqueues
+  # a chat push job. Authenticated via the x-webhook-secret header.
+  chatMessageWebhook:
+    handler: src/functions/webhooks/chatMessageWebhook.handler
+    timeout: 10                          # short — just pushes to SQS
+    events:
+      - http:
+          path: /webhooks/chat-message
           method: post
 
   # ── SQS Background Jobs ─────────────────────────────────────

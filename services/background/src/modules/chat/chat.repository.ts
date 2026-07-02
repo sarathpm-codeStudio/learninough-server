@@ -1,168 +1,152 @@
+import { supabaseAdmin } from "../../utils/supabaseAdmin";
+import { sendPushToTokens } from "../../utils/fcm";
 
+// ─── in-app notification helper ─────────────────────────────
+// Mirrors the notifications-table pattern used by the video worker so a chat
+// push also leaves an in-app notification row for the recipient.
+const createNotification = async (notification: {
+    user_id: string;
+    type: string;
+    title: string;
+    body: string;
+    data?: Record<string, any> | null;
+}) => {
+    const { error } = await supabaseAdmin.from("notifications").insert({
+        user_id: notification.user_id,
+        type: notification.type,
+        title: notification.title,
+        body: notification.body,
+        data: notification.data ?? null,
+        is_admin: false,
+        sent_at: new Date().toISOString(),
+    });
+    if (error) console.log("createNotification error", error);
+};
 
+// Human-readable push text. The message body itself is encrypted, so we
+// intentionally do NOT try to show its content — just who sent it and what kind
+// of message it was.
+const buildBody = (senderName: string, messageType: string): string => {
+    switch (messageType) {
+        case "IMAGE":
+            return `${senderName} sent a photo`;
+        case "PDF":
+            return `${senderName} sent a document`;
+        case "VIDEO":
+            return `${senderName} sent a video`;
+        default:
+            return `${senderName} sent you a message`;
+    }
+};
 
-import { supabase } from "../../../../../shared/config/supabase";
-import { cacheService } from "../../../../../shared/cache/cache.service";
-import {
-    SNSClient,
-    CreatePlatformEndpointCommand,
-    PublishCommand
-} from '@aws-sdk/client-sns';
+// ─── one queue message → one push fan-out ───────────────────
+const processRecord = async (record: any) => {
+    const data = JSON.parse(record.body);
+    const { room_id, sender_id, message_id, message_type = "TEXT" } = data;
 
-const sns = new SNSClient({ region: process.env.AWS_REGION } as any);
+    if (!room_id || !sender_id) {
+        // Nothing actionable — drop it (do not retry a malformed job).
+        console.log(
+            "chatNotificationWorker: skipping record without room_id/sender_id",
+            data
+        );
+        return;
+    }
 
+    // Recipients = STUDENT members of the room except the sender. We derive this
+    // from chat_room_members (not a receiver_id column) because the faculty/admin
+    // web clients insert messages without setting receiver_id. Push notifications
+    // are only for students, so we filter on profile role here as well.
+    const { data: members, error: memberErr } = await supabaseAdmin
+        .from("chat_room_members")
+        .select("user_id, profiles!inner(role)")
+        .eq("room_id", room_id)
+        .eq("is_deleted", false)
+        .neq("user_id", sender_id)
+        .eq("profiles.role", "STUDENT");
 
+    if (memberErr) throw new Error(memberErr.message);
 
+    const recipientIds = (members ?? [])
+        .map((m: any) => m.user_id)
+        .filter(Boolean);
+    if (recipientIds.length === 0) return;
+
+    // Sender's display name for the push title/body.
+    const { data: sender } = await supabaseAdmin
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", sender_id)
+        .maybeSingle();
+
+    const senderName =
+        [sender?.first_name, sender?.last_name]
+            .filter(Boolean)
+            .join(" ")
+            .trim() || "New message";
+    const body = buildBody(senderName, message_type);
+
+    // Leave an in-app notification row for each recipient.
+    // await Promise.all(
+    //     recipientIds.map((uid: string) =>
+    //         createNotification({
+    //             user_id: uid,
+    //             type: "CHAT_MESSAGE",
+    //             title: senderName,
+    //             body,
+    //             data: { room_id, message_id: message_id ?? null },
+    //         })
+    //     )
+    // );
+
+    // All FCM device tokens for the recipients.
+    const { data: devices, error: devErr } = await supabaseAdmin
+        .from("user_devices")
+        .select("fcm_token")
+        .in("user_id", recipientIds);
+
+    if (devErr) throw new Error(devErr.message);
+
+    const tokens = (devices ?? [])
+        .map((d: any) => d.fcm_token)
+        .filter(Boolean);
+
+    if (tokens.length === 0) return; // recipient has no registered device
+
+    const { invalidTokens } = await sendPushToTokens(tokens, {
+        title: senderName,
+        body,
+        data: {
+            type: "CHAT_MESSAGE",
+            room_id: String(room_id),
+            message_id: message_id ? String(message_id) : "",
+        },
+    });
+
+    // Prune dead tokens so we stop trying them next time.
+    if (invalidTokens.length) {
+        await supabaseAdmin
+            .from("user_devices")
+            .delete()
+            .in("fcm_token", invalidTokens);
+    }
+};
 
 export const chatRepository = {
-
-
-
+    // SQS consumer for chat push notifications. Every chat message enqueues one
+    // job here (no online/offline check) and we fan a push out to all of the
+    // recipient's devices. Returns { batchItemFailures } so SQS retries only the
+    // records that actually failed.
     chatNotificationWorker: async (event: any) => {
+        const results = await Promise.allSettled(
+            event.Records.map((record: any) => processRecord(record))
+        );
 
-        try {
+        const failures = results
+            .map((r, i) => ({ result: r, record: event.Records[i] }))
+            .filter(({ result }) => result.status === "rejected")
+            .map(({ record }) => ({ itemIdentifier: record.messageId }));
 
-            for (const record of event.Records) {
-
-                try {
-
-                    const job = JSON.parse(record.body);
-
-
-                    // 1. Check Redis — skip if online
-                    const isOnline = await cacheService.get(`presence:${job.receiver_id}`);
-                    if (isOnline) {
-                        console.log(`User ${job.receiver_id} online — skipping push`);
-                        continue;
-                    }
-
-                    // 2. Get receiver device tokens + SNS endpoint
-                    const { data: devices } = await supabase
-                        .from('notification_devices')
-                        .select('device_token, platform, sns_endpoint_arn')
-                        .eq('user_id', job.receiver_id)
-                        .eq('is_active', true);
-
-                    if (!devices || devices.length === 0) continue;
-
-                    // 3. Get sender name
-                    const { data: sender } = await supabase
-                        .from('profiles')
-                        .select('name')
-                        .eq('id', job.sender_id)
-                        .single();
-
-
-                    // 4. Build message
-                    let notifBody = '';
-                    switch (job.message_type) {
-                        case 'TEXT': notifBody = job.content; break;
-                        case 'IMAGE': notifBody = 'Sent a photo'; break;
-                        case 'PDF': notifBody = `Sent a file: ${job.file_name}`; break;
-                        case 'VIDEO': notifBody = 'Sent a video'; break;
-                        default: notifBody = 'Sent a message';
-                    }
-
-
-                    // 5. Send to each device via SNS endpoint
-                    for (const device of devices) {
-                        try {
-                            // Build platform-specific message
-                            const message = buildSNSMessage({
-                                title: sender?.name ?? 'New message',
-                                body: notifBody,
-                                platform: device.platform,
-                                data: {
-                                    type: 'CHAT_MESSAGE',
-                                    room_id: job.room_id,
-                                    message_id: job.message_id,
-                                    sender_id: job.sender_id,
-                                }
-                            });
-
-                            await sns.send(new PublishCommand({
-                                TargetArn: device.sns_endpoint_arn,
-                                Message: JSON.stringify(message),
-                                MessageStructure: 'json',
-                            }));
-
-                        } catch (err: any) {
-                            // Endpoint disabled = device unregistered
-                            if (err.code === 'EndpointDisabled') {
-                                await supabase
-                                    .from('notification_devices')
-                                    .update({ is_active: false })
-                                    .eq('sns_endpoint_arn', device.sns_endpoint_arn);
-                            }
-                        }
-                    }
-
-                } catch (error: any) {
-
-                    throw new Error(error.messageI)
-
-                }
-
-
-            }
-        } catch (error: any) {
-
-            throw new Error(error.message)
-        }
-    }
-
-
-
-}
-
-
-// helper
-
-
-function buildSNSMessage({ title, body, platform, data }: any) {
-    if (platform === 'android') {
-        return {
-            GCM: JSON.stringify({
-                // visible notification
-                notification: { title, body },
-                // silent data payload — Flutter handles this in background
-                data: {
-                    ...data,
-                    action: 'MARK_DELIVERED', // ← Flutter sees this
-                },
-                priority: 'high',
-            })
-        };
-    }
-
-    if (platform === 'ios') {
-        return {
-            APNS: JSON.stringify({
-                aps: {
-                    alert: { title, body },
-                    badge: 1,
-                    sound: 'default',
-                    // content-available = 1 means silent background push
-                    'content-available': 1,
-                },
-                // data Flutter reads in background
-                action: 'MARK_DELIVERED',
-                room_id: data.room_id,
-                message_id: data.message_id,
-                sender_id: data.sender_id,
-            }),
-            APNS_SANDBOX: JSON.stringify({
-                aps: {
-                    alert: { title, body },
-                    badge: 1,
-                    sound: 'default',
-                    'content-available': 1,
-                },
-                action: 'MARK_DELIVERED',
-                room_id: data.room_id,
-                message_id: data.message_id,
-                sender_id: data.sender_id,
-            }),
-        };
-    }
-}
+        return { batchItemFailures: failures };
+    },
+};

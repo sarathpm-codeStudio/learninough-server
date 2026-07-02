@@ -3,7 +3,6 @@
 import { supabase } from "../../../../shared/config/supabase";
 import { cacheService } from "../../../../shared/cache/cache.service"
 import { userRole } from "../../../../shared/constants/types";
-import { pushToQueue } from "../../../../shared/utils/queue";
 
 
 
@@ -251,34 +250,13 @@ export const chatRepository = {
                 .eq('id', room_id);
 
 
-            const isOnline = await cacheService.get(`presence:${receiverId}`);
-
-            if (!isOnline) {
-
-                // Receiver is offline → push to SQS for notification
-
-                await pushToQueue(process.env.CHAT_NOTIFICATION_QUEUE_URL!, {
-
-                    type: 'CHAT_MESSAGE',
-                    message_id: message.id,
-                    room_id,
-                    sender_id: userId,
-                    receiver_id: receiverId,
-                    message_type,
-                    content: content?.substring(0, 100) ?? null,
-                    file_name: file_name ?? null,
-
-
-
-                })
-
-                return {
-                    message,
-                    room,
-                    is_new: false,
-                }
-
-            }
+            // NOTE: push notifications are NOT enqueued here anymore.
+            // Every chat_messages INSERT (from any client OR from this function)
+            // is picked up by the Supabase database webhook, which enqueues the
+            // push job onto ChatNotificationQueue. Enqueuing here as well would
+            // double-notify. We also no longer gate on presence — the product
+            // requirement is to notify on every message regardless of online
+            // status. See services/background chatMessageWebhook + chat worker.
 
             return {
                 message,
