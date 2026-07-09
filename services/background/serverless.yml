@@ -1,38 +1,58 @@
+
+
 service: background-service
 
 provider:
   name: aws
   runtime: nodejs20.x
   region: ap-south-1
-  timeout: 30
+  stage: ${opt:stage, 'dev'}           # deploy with --stage dev | --stage prod
+  timeout: 30                          # default for HTTP endpoints
+  apiGateway:
+    binaryMediaTypes:                  # required so base64 xlsx bodies decode to real files
+      - '*/*'
   environment:
-    VIDEO_UPLOAD_QUEUE_URL: !Ref VideoUploadQueue
-    COURSE_INTRO_VIDEO_QUEUE_URL: !Ref CourseIntroVideoUploadQueue
-    SUPABASE_URL:                ${ssm:/learning-app/SUPABASE_URL}
-    SUPABASE_ANON_KEY:           ${ssm:/learning-app/SUPABASE_ANON_KEY}
-    BANK_ENCRYPTION_KEY:         ${ssm:/learning-app/BANK_ENCRYPTION_KEY}
+    STAGE:                         ${sls:stage}
+    VIDEO_UPLOAD_QUEUE_URL:        !Ref VideoUploadQueue
+    CHAT_NOTIFICATION_QUEUE_URL:   !Ref ChatNotificationQueue
+    NOTIFICATION_QUEUE_URL:        !Ref NotificationQueue
+    SUPABASE_URL:                  ${ssm:/learning-app/${sls:stage}/SUPABASE_URL}
+    SUPABASE_ANON_KEY:             ${ssm:/learning-app/${sls:stage}/SUPABASE_ANON_KEY}
+    SUPABASE_SERVICE_ROLE_KEY:     ${ssm:/learning-app/${sls:stage}/SUPABASE_SERVICE_ROLE_KEY}
+    BANK_ENCRYPTION_KEY:           ${ssm:/learning-app/BANK_ENCRYPTION_KEY}
+    # FCM (Firebase Admin) credentials for chat push notifications.
+    FIREBASE_PROJECT_ID:           ${ssm:/learning-app/FIREBASE_PROJECT_ID}
+    FIREBASE_CLIENT_EMAIL:         ${ssm:/learning-app/FIREBASE_CLIENT_EMAIL}
+    FIREBASE_PRIVATE_KEY:          ${ssm:/learning-app/FIREBASE_PRIVATE_KEY}
+    # Shared secret the Supabase chat_messages webhook must present.
+    CHAT_WEBHOOK_SECRET:           ${ssm:/learning-app/CHAT_WEBHOOK_SECRET}
 
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
+            - sqs:SendMessage          # ← ADDED (webhook needs to push)
             - sqs:ReceiveMessage
             - sqs:DeleteMessage
             - sqs:GetQueueAttributes
           Resource: !GetAtt VideoUploadQueue.Arn
+
         - Effect: Allow
           Action:
-            - sqs:ReceiveMessage
-            - sqs:DeleteMessage
-            - sqs:GetQueueAttributes
-          Resource: !GetAtt CourseIntroVideoUploadQueue.Arn
-        - Effect: Allow
-          Action:
+            - sqs:SendMessage          # ← ADDED
             - sqs:ReceiveMessage
             - sqs:DeleteMessage
             - sqs:GetQueueAttributes
           Resource: !GetAtt ChatNotificationQueue.Arn
+
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage          # streak cron pushes jobs
+            - sqs:ReceiveMessage       # notification worker consumes
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource: !GetAtt NotificationQueue.Arn
 
 plugins:
   - serverless-offline
@@ -44,38 +64,60 @@ custom:
 
 resources:
   Resources:
+
+    # ── Dead Letter Queues ──────────────────────────────────────
+    VideoUploadDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: video-upload-dlq-${sls:stage}
+        MessageRetentionPeriod: 1209600    # 14 days
+
+    ChatNotificationDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: chat-notification-dlq-${sls:stage}
+        MessageRetentionPeriod: 1209600    # 14 days
+
+    NotificationDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: notification-dlq-${sls:stage}
+        MessageRetentionPeriod: 1209600    # 14 days
+
+    # ── Main Queues ─────────────────────────────────────────────
     VideoUploadQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: video-upload-queue
+        QueueName: video-upload-queue-${sls:stage}
         VisibilityTimeout: 300
-
-    CourseIntroVideoUploadQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: course-intro-video-upload-queue
-        VisibilityTimeout: 300
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt VideoUploadDLQ.Arn
+          maxReceiveCount: 3             # retry 3 times then → DLQ
 
     ChatNotificationQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: chat-notification-queue
+        QueueName: chat-notification-queue-${sls:stage}
         VisibilityTimeout: 300
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt ChatNotificationDLQ.Arn
+          maxReceiveCount: 3
+
+    # Shared queue for ALL push scenarios (streak reward/broken, …). Producers
+    # enqueue { type, user_id, data }; notificationWorker switches on `type`.
+    NotificationQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: notification-queue-${sls:stage}
+        VisibilityTimeout: 300
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt NotificationDLQ.Arn
+          maxReceiveCount: 3
 
 functions:
 
+  # ── HTTP Endpoints ──────────────────────────────────────────
 
-
-  # ── HTTP Endpoints ─────────────────────────────────────────
-
-  createVideoUploadProgress:
-    handler: src/functions/video/processVideoUpload.handler
-    events:
-      - http:
-          path: /video/create-upload-progress
-          method: post
-
-  
   saveBankDetails:
     handler: src/functions/bank/saveBankDetails.handler
     events:
@@ -83,7 +125,7 @@ functions:
           path:   faculty/bank/details
           method: post
           cors:   true
-  
+
   getBankDetails:
     handler: src/functions/bank/getBankDetails.handler
     events:
@@ -91,52 +133,95 @@ functions:
           path:   faculty/bank/details
           method: get
           cors:   true
-  
-          
 
-
-  # ── SQS Background Jobs ──────────────────────────────────────
-
-  processVideoUpload:
-    handler: src/functions/video/processVideoUpload.handler
+  exportCourseEnrollments:
+    handler: src/functions/csvExpoter/admin/enrollmentExport.handler
     events:
-      - sqs:
-          arn: !GetAtt VideoUploadQueue.Arn
-          batchSize: 1
+      - http:
+          path:   admin/courses/{courseId}/enrollments/export
+          method: get
+          cors:   true
 
-  courseIntroVideoUpload:
-    handler: src/functions/video/courseIntroVideoUpload.handler
+  exportCourseEnrollmentsFaculty:
+    handler: src/functions/csvExpoter/faculty/enrollmentExport.handler
     events:
-      - sqs:
-          arn: !GetAtt CourseIntroVideoUploadQueue.Arn
-          batchSize: 1
+      - http:
+          path:   faculty/courses/{courseId}/enrollments/export
+          method: get
+          cors:   true
 
-
-  chatNotificationWorker:
-    handler: src/functions/chat/chat.notification.handler
-    events:
-      - sqs:
-          arn: !GetAtt ChatNotificationQueue.Arn
-          batchSize: 1
-
-
-  # ── cron Jobs ──────────────────────────────────────
-
-  syncVideoProgress:
-    handler: src/functions/video/syncVideoProgress.handler
-    events:
-      - schedule:
-          rate: rate(5 minutes)
-          enabled: false
-
-
-
-  # ── Webhooks ─────────────────────────────────────────────────
+  # ── Webhooks ────────────────────────────────────────────────
 
   tpstreamsWebhook:
     handler: src/functions/webhooks/tpstreamsWebhook.handler
+    timeout: 10                          # short — just pushes to SQS
     events:
       - http:
           path: /webhooks/tpstreams
           method: post
-          # No auth — TPStreams calls this directly
+
+  # Supabase database webhook: fires on every chat_messages INSERT and enqueues
+  # a chat push job. Authenticated via the x-webhook-secret header.
+  chatMessageWebhook:
+    handler: src/functions/webhooks/chatMessageWebhook.handler
+    timeout: 10                          # short — just pushes to SQS
+    events:
+      - http:
+          path: /webhooks/chat-message
+          method: post
+
+  # ── SQS Background Jobs ─────────────────────────────────────
+
+  processVideoUpload:
+    handler: src/functions/video/processVideoUpload.handler
+    timeout: 300                         # long — does heavy DB work
+    events:
+      - sqs:
+          arn: !GetAtt VideoUploadQueue.Arn
+          batchSize: 1
+          functionResponseType: ReportBatchItemFailures
+
+  chatNotificationWorker:
+    handler: src/functions/chat/chat.notification.handler
+    timeout: 60                          # medium — notification work
+    events:
+      - sqs:
+          arn: !GetAtt ChatNotificationQueue.Arn
+          batchSize: 1
+          functionResponseType: ReportBatchItemFailures   # ← ADDED
+
+  # Shared push worker — drains NotificationQueue and fans each job out to FCM
+  # + an in-app notifications row, based on the job's `type`.
+  notificationWorker:
+    handler: src/functions/notification/notificationWorker.handler
+    timeout: 60
+    events:
+      - sqs:
+          arn: !GetAtt NotificationQueue.Arn
+          batchSize: 1
+          functionResponseType: ReportBatchItemFailures
+
+  # ── Scheduled Jobs ──────────────────────────────────────────
+
+  # Cron A — daily student-streak settlement. Runs at DAY-END (00:00 IST /
+  # 18:30 UTC) for the day that just ended: updates streak_days, awards coins on
+  # the goal, resets broken streaks, and STAGES reward/broken pushes into
+  # scheduled_notifications (scheduled_for = the coming 08:00 IST). No push yet.
+  studentStreakCron:
+    handler: src/functions/streak/updateStreaks.handler
+    timeout: 300
+    events:
+      - schedule:
+          rate: cron(30 18 * * ? *)      # 18:30 UTC = 00:00 IST (day end)
+          enabled: true
+
+  # Cron B — notification dispatch. Runs 08:00 IST (02:30 UTC): drains every
+  # due scheduled_notifications row onto NotificationQueue → notificationWorker
+  # → FCM. This is the "scheduled delivery" step for jobs staged at midnight.
+  notificationDispatchCron:
+    handler: src/functions/notification/notificationDispatch.handler
+    timeout: 300
+    events:
+      - schedule:
+          rate: cron(30 2 * * ? *)       # 02:30 UTC = 08:00 IST daily
+          enabled: true

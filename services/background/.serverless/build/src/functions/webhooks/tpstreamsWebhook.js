@@ -17018,6 +17018,14 @@ var handleResponse = {
   }
 };
 
+// ../../shared/utils/parseBody.ts
+var parseJsonBody = (event) => {
+  if (event?.body == null) return null;
+  if (typeof event.body !== "string") return event.body;
+  const raw = event.isBase64Encoded ? Buffer.from(event.body, "base64").toString("utf8") : event.body;
+  return JSON.parse(raw);
+};
+
 // ../../shared/node_modules/@supabase/supabase-js/dist/index.mjs
 var dist_exports = {};
 __export(dist_exports, {
@@ -25755,119 +25763,175 @@ var supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // src/modules/webhook/video.webhook.repository.ts
-var createNotification = async (notification) => {
-  const { error } = await supabase.from("notifications").insert({
-    user_id: notification.user_id ?? null,
-    type: notification.type,
-    title: notification.title,
-    body: notification.body,
-    data: notification.data ?? null,
-    is_admin: notification.is_admin ?? false,
-    sent_at: (/* @__PURE__ */ new Date()).toISOString()
-  });
-  if (error) console.log("createNotification error", error);
-};
+var import_client_sqs = require("@aws-sdk/client-sqs");
+var sqs = new import_client_sqs.SQSClient({ region: "ap-south-1" });
 var videoWebhookRepository = {
+  // handleVideoWebhook: async (data: any) => {
+  //     try {
+  //         console.log("updatedUploadProgress", data);
+  //         let courseId = ""
+  //         const videoStatus =
+  //             data?.video?.status === "Completed" ? MaterialStatus.COMPLETED :
+  //                 data?.video?.status === "Error" ? MaterialStatus.FAILED :
+  //                     MaterialStatus.TRANSCODING;
+  //         const materialStatus = videoStatus === MaterialStatus.COMPLETED ? MaterialStatus.READY : videoStatus === MaterialStatus.TRANSCODING ? MaterialStatus.PROCESSING : videoStatus === MaterialStatus.FAILED ? MaterialStatus.FAILED : MaterialStatus.PENDING;
+  //         const { data: updatedUploadProgress, error: uploadProgressError } = await supabase
+  //             .from("video_upload_progress")
+  //             .update({
+  //                 uploading_status: videoStatus,
+  //                 upload_progress: data?.video?.progress, // this not valid
+  //             })
+  //             .eq("asset_id", data?.id)
+  //             .select()
+  //             .single();
+  //         if (updatedUploadProgress?.type === "intro") {
+  //             // update course intro video status
+  //             const { data: updatedCourse, error: courseError } = await supabase
+  //                 .from("courses")
+  //                 .update({
+  //                     video_uploading_status: videoStatus,
+  //                     video_upload_progress: data?.video?.progress, // this not valid
+  //                 })
+  //                 .eq("video_asset_id", updatedUploadProgress?.asset_id)
+  //                 .select()
+  //                 .single();
+  //             courseId = updatedCourse?.id;
+  //         } else {
+  //             // update material video status
+  //             const { data: updatedCourse, error: courseError } = await supabase
+  //                 .from("course_materials")
+  //                 .update({
+  //                     material_status: materialStatus,
+  //                     video_uploading_status: videoStatus,
+  //                     video_upload_progress: data?.video?.progress, // this not valid
+  //                     duration_sec: data?.video?.duration,
+  //                 })
+  //                 .eq("video_asset_id", updatedUploadProgress?.asset_id)
+  //                 .select()
+  //                 .single();
+  //             courseId = updatedCourse?.course_id;
+  //         }
+  //         if (videoStatus === MaterialStatus.TRANSCODING) return true
+  //         const { data: course } = await supabase
+  //             .from("courses")
+  //             .select("id, title, faculty_id, pending_publish, is_draft, video_uploading_status")
+  //             .eq("id", courseId)
+  //             .single()
+  //         if (videoStatus === MaterialStatus.FAILED) {
+  //             // create notification to faculty
+  //         }
+  //         if (!course?.pending_publish) return true
+  //         //  Get all material videos
+  //         const { data: allVideos } = await supabase
+  //             .from("course_materials")
+  //             .select("id, title, video_uploading_status")
+  //             .eq("course_id", courseId)
+  //             .eq("is_deleted", false)
+  //             .eq("type", "VIDEO")
+  //         // 7. Check intro video status from course table ✅
+  //         const introFailed = course.video_uploading_status === MaterialStatus.FAILED
+  //         const introProcessing = course.video_uploading_status !== MaterialStatus.COMPLETED
+  //             && course.video_uploading_status !== MaterialStatus.FAILED
+  //             && course.video_uploading_status !== null
+  //         // null = no intro video uploaded → skip check
+  //         // 8. Combine intro + material videos
+  //         const failedVideos = [
+  //             // Failed material videos
+  //             ...(allVideos?.filter(
+  //                 v => v.video_uploading_status === MaterialStatus.FAILED
+  //             ) ?? []),
+  //             // Failed intro video ✅
+  //             ...(introFailed ? [{
+  //                 id: courseId,
+  //                 title: 'Intro Video',
+  //             }] : []),
+  //         ]
+  //         const processingVideos = [
+  //             // Processing material videos
+  //             ...(allVideos?.filter(
+  //                 v => v.video_uploading_status !== MaterialStatus.COMPLETED &&
+  //                     v.video_uploading_status !== MaterialStatus.FAILED
+  //             ) ?? []),
+  //             // Processing intro video ✅
+  //             ...(introProcessing ? [{
+  //                 id: courseId,
+  //                 title: 'Intro Video',
+  //             }] : []),
+  //         ]
+  //         // ─── FAILED → abort auto publish ────────────────────
+  //         if (failedVideos.length > 0) {
+  //             // Reset pending_publish ❌
+  //             await supabase
+  //                 .from("courses")
+  //                 .update({ pending_publish: false })
+  //                 .eq("id", courseId)
+  //             // Notify faculty ✅
+  //             await createNotification({
+  //                 user_id: course?.faculty_id,
+  //                 type: "COURSE_UPDATE",
+  //                 title: "Auto publish failed",
+  //                 body: `"${course?.title}" could not be published — ${failedVideos.length} video(s) failed to process.`,
+  //                 data: {
+  //                     course_id: courseId,
+  //                     failed_videos: failedVideos.map(v => ({ id: v.id, title: v.title })),
+  //                 },
+  //             })
+  //             console.log(`Auto publish aborted — ${failedVideos.length} failed videos`)
+  //             return true
+  //         }
+  //         // ─── STILL PROCESSING → keep waiting ────────────────
+  //         if (processingVideos.length > 0) {
+  //             console.log(`Still waiting — ${processingVideos.length} videos processing`)
+  //             return true
+  //         }
+  //         // ─── ALL COMPLETED → auto publish ✅ ────────────────
+  //         await supabase
+  //             .from("courses")
+  //             .update({
+  //                 is_draft: false,
+  //                 pending_publish: false,
+  //             })
+  //             .eq("id", courseId)
+  //         // Notify faculty ✅
+  //         await createNotification({
+  //             user_id: course?.faculty_id,
+  //             type: "COURSE_UPDATE",
+  //             title: "Course published",
+  //             body: `"${course?.title}" is now live — all videos finished processing.`,
+  //             data: { course_id: courseId },
+  //         })
+  //         // Notify admin ✅
+  //         await createNotification({
+  //             type: "COURSE_UPDATE",
+  //             title: "New course published",
+  //             body: `"${course?.title}" has been auto published.`,
+  //             data: { course_id: courseId, faculty_id: course?.faculty_id },
+  //             is_admin: true,
+  //         })
+  //         console.log(`Course ${courseId} auto published! ✅`)
+  //         return true
+  //     } catch (error: any) {
+  //         console.log("error", error);
+  //         throw new Error(error);
+  //     }
+  // },
   handleVideoWebhook: async (data) => {
     try {
-      console.log("updatedUploadProgress", data);
-      let courseId = "";
-      const videoStatus = data?.video?.status === "Completed" ? "COMPLETED" /* COMPLETED */ : data?.video?.status === "Error" ? "FAILED" /* FAILED */ : "TRANSCODING" /* TRANSCODING */;
-      const materialStatus = videoStatus === "COMPLETED" /* COMPLETED */ ? "READY" /* READY */ : videoStatus === "TRANSCODING" /* TRANSCODING */ ? "PROCESSING" /* PROCESSING */ : videoStatus === "FAILED" /* FAILED */ ? "FAILED" /* FAILED */ : "PENDING" /* PENDING */;
-      const { data: updatedUploadProgress, error: uploadProgressError } = await supabase.from("video_upload_progress").update({
-        uploading_status: videoStatus,
-        upload_progress: data?.video?.progress
-        // this not valid
-      }).eq("asset_id", data?.id).select().single();
-      if (updatedUploadProgress?.type === "intro") {
-        const { data: updatedCourse, error: courseError } = await supabase.from("courses").update({
-          video_uploading_status: videoStatus,
-          video_upload_progress: data?.video?.progress
-          // this not valid
-        }).eq("video_asset_id", updatedUploadProgress?.asset_id).select().single();
-        courseId = updatedCourse?.id;
-      } else {
-        const { data: updatedCourse, error: courseError } = await supabase.from("course_materials").update({
-          material_status: materialStatus,
-          video_uploading_status: videoStatus,
-          video_upload_progress: data?.video?.progress,
-          // this not valid
-          duration_sec: data?.video?.duration
-        }).eq("video_asset_id", updatedUploadProgress?.asset_id).select().single();
-        courseId = updatedCourse?.course_id;
-      }
-      if (videoStatus === "TRANSCODING" /* TRANSCODING */) return true;
-      const { data: course } = await supabase.from("courses").select("id, title, faculty_id, pending_publish, is_draft, video_uploading_status").eq("id", courseId).single();
-      if (videoStatus === "FAILED" /* FAILED */) {
-      }
-      if (!course?.pending_publish) return true;
-      const { data: allVideos } = await supabase.from("course_materials").select("id, title, video_uploading_status").eq("course_id", courseId).eq("is_deleted", false).eq("type", "VIDEO");
-      const introFailed = course.video_uploading_status === "FAILED" /* FAILED */;
-      const introProcessing = course.video_uploading_status !== "COMPLETED" /* COMPLETED */ && course.video_uploading_status !== "FAILED" /* FAILED */ && course.video_uploading_status !== null;
-      const failedVideos = [
-        // Failed material videos
-        ...allVideos?.filter(
-          (v) => v.video_uploading_status === "FAILED" /* FAILED */
-        ) ?? [],
-        // Failed intro video ✅
-        ...introFailed ? [{
-          id: courseId,
-          title: "Intro Video"
-        }] : []
-      ];
-      const processingVideos = [
-        // Processing material videos
-        ...allVideos?.filter(
-          (v) => v.video_uploading_status !== "COMPLETED" /* COMPLETED */ && v.video_uploading_status !== "FAILED" /* FAILED */
-        ) ?? [],
-        // Processing intro video ✅
-        ...introProcessing ? [{
-          id: courseId,
-          title: "Intro Video"
-        }] : []
-      ];
-      if (failedVideos.length > 0) {
-        await supabase.from("courses").update({ pending_publish: false }).eq("id", courseId);
-        await createNotification({
-          user_id: course?.faculty_id,
-          type: "COURSE_UPDATE",
-          title: "Auto publish failed",
-          body: `"${course?.title}" could not be published \u2014 ${failedVideos.length} video(s) failed to process.`,
-          data: {
-            course_id: courseId,
-            failed_videos: failedVideos.map((v) => ({ id: v.id, title: v.title }))
-          }
-        });
-        console.log(`Auto publish aborted \u2014 ${failedVideos.length} failed videos`);
-        return true;
-      }
-      if (processingVideos.length > 0) {
-        console.log(`Still waiting \u2014 ${processingVideos.length} videos processing`);
-        return true;
-      }
-      await supabase.from("courses").update({
-        is_draft: false,
-        pending_publish: false
-      }).eq("id", courseId);
-      await createNotification({
-        user_id: course?.faculty_id,
-        type: "COURSE_UPDATE",
-        title: "Course published",
-        body: `"${course?.title}" is now live \u2014 all videos finished processing.`,
-        data: { course_id: courseId }
-      });
-      await createNotification({
-        type: "COURSE_UPDATE",
-        title: "New course published",
-        body: `"${course?.title}" has been auto published.`,
-        data: { course_id: courseId, faculty_id: course?.faculty_id },
-        is_admin: true
-      });
-      console.log(`Course ${courseId} auto published! \u2705`);
-      return true;
+      await sqs.send(new import_client_sqs.SendMessageCommand({
+        QueueUrl: process.env.VIDEO_UPLOAD_QUEUE_URL,
+        MessageBody: JSON.stringify(data)
+        // raw tpstreams payload
+      }));
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ received: true })
+      };
     } catch (error) {
-      console.log("error", error);
-      throw new Error(error);
+      console.error("Webhook receiver error:", error);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ received: true })
+      };
     }
   }
 };
@@ -25876,7 +25940,7 @@ var videoWebhookRepository = {
 var videoWebhookService = {
   handleVideoWebhook: async (event) => {
     try {
-      const updatedMaterial = await videoWebhookRepository.handleVideoWebhook(JSON.parse(event.body));
+      const updatedMaterial = await videoWebhookRepository.handleVideoWebhook(parseJsonBody(event));
       return updatedMaterial;
     } catch (error) {
       throw new Error(error.message);
