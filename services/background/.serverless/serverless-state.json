@@ -8,8 +8,15 @@
       "name": "aws",
       "runtime": "nodejs20.x",
       "region": "ap-south-1",
+      "stage": "dev",
       "timeout": 30,
+      "apiGateway": {
+        "binaryMediaTypes": [
+          "*/*"
+        ]
+      },
       "environment": {
+        "STAGE": "dev",
         "VIDEO_UPLOAD_QUEUE_URL": {
           "Ref": "VideoUploadQueue"
         },
@@ -18,7 +25,12 @@
         },
         "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
         "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-        "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90"
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+        "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+        "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+        "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+        "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCpsF2hz2Ou6NiS\\n4ukCoI0di3rVOG7VfMPh8y/a1kVxpCPts90z05zHj9YWyzpnT9Mehv65NjwF/KpA\\nHSnDFOk2rXVscvXXSMj/tBVHmL9JsYvke9eawPuqzZnvqrDswsACMkHaDCAoUan8\\nhsYGtb/YXTQLfEZjYnDBL0ECS6d0PxaQz0ovn/ucMWcfZjp/DCQQalHK9138cnbV\\nuP6FSM77XTinTbRCY6vah3SuSHUQmqoZaVITRG7kEyz6HOKbut4YrVnl3/Smmb3a\\nAH4VKGnGz2LTTLxumrX0sXiYaamdHpprXcRqxT/lRksrYrf3CIy6TmL+tkXYl+6j\\n8UuDxI4bAgMBAAECggEAGk4YXb6oHdPDyxV4+KrJ5XQbYRVj/R1fwlWwK/T+g+zl\\nkvJIjsG1sqwGDLeJgL17pWZY835IVMdD3zeGI1NJCexe4SZ7HNoQKq+Qgu5XbQWk\\ngZF/LWLQQLypqeEklzdji5Od6L7rd0SdnOOJrD2dlV1xdXxY7wwyHYiFQ+VVeqwS\\nXayCXVabyc53Yfbd1HWDAk0DpfV1mzFhzqi7wbO5vN60l+LJd47Bgv3SM84mC6ag\\nbqMBCPUY0idEJ7ipBEMzPJp7lbXp2CYi9FTLJmrhHTYY8xpVFjUoasJC7/kuMEAC\\nxvkNqrZ8Rh4p5s07SxsVU8chqoau+jRuJE0bxzGoiQKBgQDWyXksvNmb0dN7vQA5\\nev2VZXWhqLSu4PxqcNv3McRBXjGh07KeFQJ0hHo8DIBDPs8cm3rzwJq2SHCxUAnF\\nE/7ZyZ3wyO1PtWm3G770bEzQ6h+4nRKRPveGF2Dv2WxZUmrl4Wl+4jLMzMQbU4LA\\nG1xgxYCVqCIxqJ/tgSU+741K8wKBgQDKP6Kdjyx/tL2REEWHYF/CSnJQe4jb6xGI\\ngZNZ/X3wsMAodObcaiBxVf4sTpGuqyMNDPUEM/Fz/Lu8gw9hSjH7UWxcknjFuSj+\\nU+0pku9J45KR0985WK3RQqgkmlk4N376P/OgI5yxZTnHmYGZVODjRp+G9/NnNI6h\\nQFkeX7EqOQKBgErRgblYy4Cg1cdbrfFX62+YGSLH7rCgRK0bRTRVjKSsmCNj5+tz\\nLBjEcQPr4t4JygGQE4NHS11F3KOXWt/guDzLI45Vn3zNl9al/p2MADIh7AzWAjrA\\nMV7vU+AY38o5kG0lWSdOyh1XEtTmATzECyjWg5UeLVMZBySngP7sWU6LAoGAOOf+\\n0WZflu88B30UkyrCxuA7mfmoYHibzlTnKQLyVK7m4ntCGfKifkE76yuQQh1VF271\\n4eDbp08NY9VclntR5OzcGI/9+2RF7ImgyXnWamvl6bI7tN8GyUKAHQxw3ih/SdqE\\nqiJbDG72+vpuRL5lKI3OhSNvETLwjt6UNL+oEcECgYAqWgZGabum6aWkQ2YZxvy6\\nmJ0zv/ESNNLAe1pS7n0q8gIw99qmJ7uV/9kRNKRnxRja0R32fEBdSaV5bF3FeA6C\\nqKjcHDU+/ipNxjL+3tmhPoOKtoMABrhN5i9TosN6LXdRDimJ5/DdfPX9pVSctMoc\\n2AQH2ifVNJl/RzBqS+4gVw==\\n-----END PRIVATE KEY-----\\n",
+        "CHAT_WEBHOOK_SECRET": "c4b84f40b919088c893b6dff50f522c140312078525714a0ef8dee0d5189ce9c"
       },
       "iam": {
         "role": {
@@ -56,7 +68,6 @@
           ]
         }
       },
-      "stage": "dev",
       "versionFunctions": true,
       "compiledCloudFormationTemplate": {
         "AWSTemplateFormatVersion": "2010-09-09",
@@ -74,10 +85,28 @@
               "LogGroupName": "/aws/lambda/background-service-dev-getBankDetails"
             }
           },
+          "ExportCourseEnrollmentsLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-exportCourseEnrollments"
+            }
+          },
+          "ExportCourseEnrollmentsFacultyLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-exportCourseEnrollmentsFaculty"
+            }
+          },
           "TpstreamsWebhookLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/background-service-dev-tpstreamsWebhook"
+            }
+          },
+          "ChatMessageWebhookLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-chatMessageWebhook"
             }
           },
           "ProcessVideoUploadLogGroup": {
@@ -203,7 +232,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1782893693778-2026-07-01T08:14:53.778Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1783413664010-2026-07-07T08:41:04.010Z/background-service.zip"
               },
               "Handler": "src/functions/bank/saveBankDetails.handler",
               "Runtime": "nodejs20.x",
@@ -212,6 +241,7 @@
               "Timeout": 30,
               "Environment": {
                 "Variables": {
+                  "STAGE": "dev",
                   "VIDEO_UPLOAD_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"VIDEO_UPLOAD_QUEUE_URL\"]"
                   },
@@ -220,7 +250,12 @@
                   },
                   "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
                   "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCpsF2hz2Ou6NiS\\n4ukCoI0di3rVOG7VfMPh8y/a1kVxpCPts90z05zHj9YWyzpnT9Mehv65NjwF/KpA\\nHSnDFOk2rXVscvXXSMj/tBVHmL9JsYvke9eawPuqzZnvqrDswsACMkHaDCAoUan8\\nhsYGtb/YXTQLfEZjYnDBL0ECS6d0PxaQz0ovn/ucMWcfZjp/DCQQalHK9138cnbV\\nuP6FSM77XTinTbRCY6vah3SuSHUQmqoZaVITRG7kEyz6HOKbut4YrVnl3/Smmb3a\\nAH4VKGnGz2LTTLxumrX0sXiYaamdHpprXcRqxT/lRksrYrf3CIy6TmL+tkXYl+6j\\n8UuDxI4bAgMBAAECggEAGk4YXb6oHdPDyxV4+KrJ5XQbYRVj/R1fwlWwK/T+g+zl\\nkvJIjsG1sqwGDLeJgL17pWZY835IVMdD3zeGI1NJCexe4SZ7HNoQKq+Qgu5XbQWk\\ngZF/LWLQQLypqeEklzdji5Od6L7rd0SdnOOJrD2dlV1xdXxY7wwyHYiFQ+VVeqwS\\nXayCXVabyc53Yfbd1HWDAk0DpfV1mzFhzqi7wbO5vN60l+LJd47Bgv3SM84mC6ag\\nbqMBCPUY0idEJ7ipBEMzPJp7lbXp2CYi9FTLJmrhHTYY8xpVFjUoasJC7/kuMEAC\\nxvkNqrZ8Rh4p5s07SxsVU8chqoau+jRuJE0bxzGoiQKBgQDWyXksvNmb0dN7vQA5\\nev2VZXWhqLSu4PxqcNv3McRBXjGh07KeFQJ0hHo8DIBDPs8cm3rzwJq2SHCxUAnF\\nE/7ZyZ3wyO1PtWm3G770bEzQ6h+4nRKRPveGF2Dv2WxZUmrl4Wl+4jLMzMQbU4LA\\nG1xgxYCVqCIxqJ/tgSU+741K8wKBgQDKP6Kdjyx/tL2REEWHYF/CSnJQe4jb6xGI\\ngZNZ/X3wsMAodObcaiBxVf4sTpGuqyMNDPUEM/Fz/Lu8gw9hSjH7UWxcknjFuSj+\\nU+0pku9J45KR0985WK3RQqgkmlk4N376P/OgI5yxZTnHmYGZVODjRp+G9/NnNI6h\\nQFkeX7EqOQKBgErRgblYy4Cg1cdbrfFX62+YGSLH7rCgRK0bRTRVjKSsmCNj5+tz\\nLBjEcQPr4t4JygGQE4NHS11F3KOXWt/guDzLI45Vn3zNl9al/p2MADIh7AzWAjrA\\nMV7vU+AY38o5kG0lWSdOyh1XEtTmATzECyjWg5UeLVMZBySngP7sWU6LAoGAOOf+\\n0WZflu88B30UkyrCxuA7mfmoYHibzlTnKQLyVK7m4ntCGfKifkE76yuQQh1VF271\\n4eDbp08NY9VclntR5OzcGI/9+2RF7ImgyXnWamvl6bI7tN8GyUKAHQxw3ih/SdqE\\nqiJbDG72+vpuRL5lKI3OhSNvETLwjt6UNL+oEcECgYAqWgZGabum6aWkQ2YZxvy6\\nmJ0zv/ESNNLAe1pS7n0q8gIw99qmJ7uV/9kRNKRnxRja0R32fEBdSaV5bF3FeA6C\\nqKjcHDU+/ipNxjL+3tmhPoOKtoMABrhN5i9TosN6LXdRDimJ5/DdfPX9pVSctMoc\\n2AQH2ifVNJl/RzBqS+4gVw==\\n-----END PRIVATE KEY-----\\n",
+                  "CHAT_WEBHOOK_SECRET": "c4b84f40b919088c893b6dff50f522c140312078525714a0ef8dee0d5189ce9c",
                   "NODE_OPTIONS": "--enable-source-maps"
                 }
               },
@@ -240,7 +275,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1782893693778-2026-07-01T08:14:53.778Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1783413664010-2026-07-07T08:41:04.010Z/background-service.zip"
               },
               "Handler": "src/functions/bank/getBankDetails.handler",
               "Runtime": "nodejs20.x",
@@ -249,6 +284,7 @@
               "Timeout": 30,
               "Environment": {
                 "Variables": {
+                  "STAGE": "dev",
                   "VIDEO_UPLOAD_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"VIDEO_UPLOAD_QUEUE_URL\"]"
                   },
@@ -257,7 +293,12 @@
                   },
                   "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
                   "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCpsF2hz2Ou6NiS\\n4ukCoI0di3rVOG7VfMPh8y/a1kVxpCPts90z05zHj9YWyzpnT9Mehv65NjwF/KpA\\nHSnDFOk2rXVscvXXSMj/tBVHmL9JsYvke9eawPuqzZnvqrDswsACMkHaDCAoUan8\\nhsYGtb/YXTQLfEZjYnDBL0ECS6d0PxaQz0ovn/ucMWcfZjp/DCQQalHK9138cnbV\\nuP6FSM77XTinTbRCY6vah3SuSHUQmqoZaVITRG7kEyz6HOKbut4YrVnl3/Smmb3a\\nAH4VKGnGz2LTTLxumrX0sXiYaamdHpprXcRqxT/lRksrYrf3CIy6TmL+tkXYl+6j\\n8UuDxI4bAgMBAAECggEAGk4YXb6oHdPDyxV4+KrJ5XQbYRVj/R1fwlWwK/T+g+zl\\nkvJIjsG1sqwGDLeJgL17pWZY835IVMdD3zeGI1NJCexe4SZ7HNoQKq+Qgu5XbQWk\\ngZF/LWLQQLypqeEklzdji5Od6L7rd0SdnOOJrD2dlV1xdXxY7wwyHYiFQ+VVeqwS\\nXayCXVabyc53Yfbd1HWDAk0DpfV1mzFhzqi7wbO5vN60l+LJd47Bgv3SM84mC6ag\\nbqMBCPUY0idEJ7ipBEMzPJp7lbXp2CYi9FTLJmrhHTYY8xpVFjUoasJC7/kuMEAC\\nxvkNqrZ8Rh4p5s07SxsVU8chqoau+jRuJE0bxzGoiQKBgQDWyXksvNmb0dN7vQA5\\nev2VZXWhqLSu4PxqcNv3McRBXjGh07KeFQJ0hHo8DIBDPs8cm3rzwJq2SHCxUAnF\\nE/7ZyZ3wyO1PtWm3G770bEzQ6h+4nRKRPveGF2Dv2WxZUmrl4Wl+4jLMzMQbU4LA\\nG1xgxYCVqCIxqJ/tgSU+741K8wKBgQDKP6Kdjyx/tL2REEWHYF/CSnJQe4jb6xGI\\ngZNZ/X3wsMAodObcaiBxVf4sTpGuqyMNDPUEM/Fz/Lu8gw9hSjH7UWxcknjFuSj+\\nU+0pku9J45KR0985WK3RQqgkmlk4N376P/OgI5yxZTnHmYGZVODjRp+G9/NnNI6h\\nQFkeX7EqOQKBgErRgblYy4Cg1cdbrfFX62+YGSLH7rCgRK0bRTRVjKSsmCNj5+tz\\nLBjEcQPr4t4JygGQE4NHS11F3KOXWt/guDzLI45Vn3zNl9al/p2MADIh7AzWAjrA\\nMV7vU+AY38o5kG0lWSdOyh1XEtTmATzECyjWg5UeLVMZBySngP7sWU6LAoGAOOf+\\n0WZflu88B30UkyrCxuA7mfmoYHibzlTnKQLyVK7m4ntCGfKifkE76yuQQh1VF271\\n4eDbp08NY9VclntR5OzcGI/9+2RF7ImgyXnWamvl6bI7tN8GyUKAHQxw3ih/SdqE\\nqiJbDG72+vpuRL5lKI3OhSNvETLwjt6UNL+oEcECgYAqWgZGabum6aWkQ2YZxvy6\\nmJ0zv/ESNNLAe1pS7n0q8gIw99qmJ7uV/9kRNKRnxRja0R32fEBdSaV5bF3FeA6C\\nqKjcHDU+/ipNxjL+3tmhPoOKtoMABrhN5i9TosN6LXdRDimJ5/DdfPX9pVSctMoc\\n2AQH2ifVNJl/RzBqS+4gVw==\\n-----END PRIVATE KEY-----\\n",
+                  "CHAT_WEBHOOK_SECRET": "c4b84f40b919088c893b6dff50f522c140312078525714a0ef8dee0d5189ce9c",
                   "NODE_OPTIONS": "--enable-source-maps"
                 }
               },
@@ -272,20 +313,21 @@
               "GetBankDetailsLogGroup"
             ]
           },
-          "TpstreamsWebhookLambdaFunction": {
+          "ExportCourseEnrollmentsLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1782893693778-2026-07-01T08:14:53.778Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1783413664010-2026-07-07T08:41:04.010Z/background-service.zip"
               },
-              "Handler": "src/functions/webhooks/tpstreamsWebhook.handler",
+              "Handler": "src/functions/csvExpoter/admin/enrollmentExport.handler",
               "Runtime": "nodejs20.x",
-              "FunctionName": "background-service-dev-tpstreamsWebhook",
+              "FunctionName": "background-service-dev-exportCourseEnrollments",
               "MemorySize": 1024,
-              "Timeout": 10,
+              "Timeout": 30,
               "Environment": {
                 "Variables": {
+                  "STAGE": "dev",
                   "VIDEO_UPLOAD_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"VIDEO_UPLOAD_QUEUE_URL\"]"
                   },
@@ -294,7 +336,98 @@
                   },
                   "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
                   "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCpsF2hz2Ou6NiS\\n4ukCoI0di3rVOG7VfMPh8y/a1kVxpCPts90z05zHj9YWyzpnT9Mehv65NjwF/KpA\\nHSnDFOk2rXVscvXXSMj/tBVHmL9JsYvke9eawPuqzZnvqrDswsACMkHaDCAoUan8\\nhsYGtb/YXTQLfEZjYnDBL0ECS6d0PxaQz0ovn/ucMWcfZjp/DCQQalHK9138cnbV\\nuP6FSM77XTinTbRCY6vah3SuSHUQmqoZaVITRG7kEyz6HOKbut4YrVnl3/Smmb3a\\nAH4VKGnGz2LTTLxumrX0sXiYaamdHpprXcRqxT/lRksrYrf3CIy6TmL+tkXYl+6j\\n8UuDxI4bAgMBAAECggEAGk4YXb6oHdPDyxV4+KrJ5XQbYRVj/R1fwlWwK/T+g+zl\\nkvJIjsG1sqwGDLeJgL17pWZY835IVMdD3zeGI1NJCexe4SZ7HNoQKq+Qgu5XbQWk\\ngZF/LWLQQLypqeEklzdji5Od6L7rd0SdnOOJrD2dlV1xdXxY7wwyHYiFQ+VVeqwS\\nXayCXVabyc53Yfbd1HWDAk0DpfV1mzFhzqi7wbO5vN60l+LJd47Bgv3SM84mC6ag\\nbqMBCPUY0idEJ7ipBEMzPJp7lbXp2CYi9FTLJmrhHTYY8xpVFjUoasJC7/kuMEAC\\nxvkNqrZ8Rh4p5s07SxsVU8chqoau+jRuJE0bxzGoiQKBgQDWyXksvNmb0dN7vQA5\\nev2VZXWhqLSu4PxqcNv3McRBXjGh07KeFQJ0hHo8DIBDPs8cm3rzwJq2SHCxUAnF\\nE/7ZyZ3wyO1PtWm3G770bEzQ6h+4nRKRPveGF2Dv2WxZUmrl4Wl+4jLMzMQbU4LA\\nG1xgxYCVqCIxqJ/tgSU+741K8wKBgQDKP6Kdjyx/tL2REEWHYF/CSnJQe4jb6xGI\\ngZNZ/X3wsMAodObcaiBxVf4sTpGuqyMNDPUEM/Fz/Lu8gw9hSjH7UWxcknjFuSj+\\nU+0pku9J45KR0985WK3RQqgkmlk4N376P/OgI5yxZTnHmYGZVODjRp+G9/NnNI6h\\nQFkeX7EqOQKBgErRgblYy4Cg1cdbrfFX62+YGSLH7rCgRK0bRTRVjKSsmCNj5+tz\\nLBjEcQPr4t4JygGQE4NHS11F3KOXWt/guDzLI45Vn3zNl9al/p2MADIh7AzWAjrA\\nMV7vU+AY38o5kG0lWSdOyh1XEtTmATzECyjWg5UeLVMZBySngP7sWU6LAoGAOOf+\\n0WZflu88B30UkyrCxuA7mfmoYHibzlTnKQLyVK7m4ntCGfKifkE76yuQQh1VF271\\n4eDbp08NY9VclntR5OzcGI/9+2RF7ImgyXnWamvl6bI7tN8GyUKAHQxw3ih/SdqE\\nqiJbDG72+vpuRL5lKI3OhSNvETLwjt6UNL+oEcECgYAqWgZGabum6aWkQ2YZxvy6\\nmJ0zv/ESNNLAe1pS7n0q8gIw99qmJ7uV/9kRNKRnxRja0R32fEBdSaV5bF3FeA6C\\nqKjcHDU+/ipNxjL+3tmhPoOKtoMABrhN5i9TosN6LXdRDimJ5/DdfPX9pVSctMoc\\n2AQH2ifVNJl/RzBqS+4gVw==\\n-----END PRIVATE KEY-----\\n",
+                  "CHAT_WEBHOOK_SECRET": "c4b84f40b919088c893b6dff50f522c140312078525714a0ef8dee0d5189ce9c",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "ExportCourseEnrollmentsLogGroup"
+            ]
+          },
+          "ExportCourseEnrollmentsFacultyLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1783413664010-2026-07-07T08:41:04.010Z/background-service.zip"
+              },
+              "Handler": "src/functions/csvExpoter/faculty/enrollmentExport.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-exportCourseEnrollmentsFaculty",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "STAGE": "dev",
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"VIDEO_UPLOAD_QUEUE_URL\"]"
+                  },
+                  "CHAT_NOTIFICATION_QUEUE_URL": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"CHAT_NOTIFICATION_QUEUE_URL\"]"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCpsF2hz2Ou6NiS\\n4ukCoI0di3rVOG7VfMPh8y/a1kVxpCPts90z05zHj9YWyzpnT9Mehv65NjwF/KpA\\nHSnDFOk2rXVscvXXSMj/tBVHmL9JsYvke9eawPuqzZnvqrDswsACMkHaDCAoUan8\\nhsYGtb/YXTQLfEZjYnDBL0ECS6d0PxaQz0ovn/ucMWcfZjp/DCQQalHK9138cnbV\\nuP6FSM77XTinTbRCY6vah3SuSHUQmqoZaVITRG7kEyz6HOKbut4YrVnl3/Smmb3a\\nAH4VKGnGz2LTTLxumrX0sXiYaamdHpprXcRqxT/lRksrYrf3CIy6TmL+tkXYl+6j\\n8UuDxI4bAgMBAAECggEAGk4YXb6oHdPDyxV4+KrJ5XQbYRVj/R1fwlWwK/T+g+zl\\nkvJIjsG1sqwGDLeJgL17pWZY835IVMdD3zeGI1NJCexe4SZ7HNoQKq+Qgu5XbQWk\\ngZF/LWLQQLypqeEklzdji5Od6L7rd0SdnOOJrD2dlV1xdXxY7wwyHYiFQ+VVeqwS\\nXayCXVabyc53Yfbd1HWDAk0DpfV1mzFhzqi7wbO5vN60l+LJd47Bgv3SM84mC6ag\\nbqMBCPUY0idEJ7ipBEMzPJp7lbXp2CYi9FTLJmrhHTYY8xpVFjUoasJC7/kuMEAC\\nxvkNqrZ8Rh4p5s07SxsVU8chqoau+jRuJE0bxzGoiQKBgQDWyXksvNmb0dN7vQA5\\nev2VZXWhqLSu4PxqcNv3McRBXjGh07KeFQJ0hHo8DIBDPs8cm3rzwJq2SHCxUAnF\\nE/7ZyZ3wyO1PtWm3G770bEzQ6h+4nRKRPveGF2Dv2WxZUmrl4Wl+4jLMzMQbU4LA\\nG1xgxYCVqCIxqJ/tgSU+741K8wKBgQDKP6Kdjyx/tL2REEWHYF/CSnJQe4jb6xGI\\ngZNZ/X3wsMAodObcaiBxVf4sTpGuqyMNDPUEM/Fz/Lu8gw9hSjH7UWxcknjFuSj+\\nU+0pku9J45KR0985WK3RQqgkmlk4N376P/OgI5yxZTnHmYGZVODjRp+G9/NnNI6h\\nQFkeX7EqOQKBgErRgblYy4Cg1cdbrfFX62+YGSLH7rCgRK0bRTRVjKSsmCNj5+tz\\nLBjEcQPr4t4JygGQE4NHS11F3KOXWt/guDzLI45Vn3zNl9al/p2MADIh7AzWAjrA\\nMV7vU+AY38o5kG0lWSdOyh1XEtTmATzECyjWg5UeLVMZBySngP7sWU6LAoGAOOf+\\n0WZflu88B30UkyrCxuA7mfmoYHibzlTnKQLyVK7m4ntCGfKifkE76yuQQh1VF271\\n4eDbp08NY9VclntR5OzcGI/9+2RF7ImgyXnWamvl6bI7tN8GyUKAHQxw3ih/SdqE\\nqiJbDG72+vpuRL5lKI3OhSNvETLwjt6UNL+oEcECgYAqWgZGabum6aWkQ2YZxvy6\\nmJ0zv/ESNNLAe1pS7n0q8gIw99qmJ7uV/9kRNKRnxRja0R32fEBdSaV5bF3FeA6C\\nqKjcHDU+/ipNxjL+3tmhPoOKtoMABrhN5i9TosN6LXdRDimJ5/DdfPX9pVSctMoc\\n2AQH2ifVNJl/RzBqS+4gVw==\\n-----END PRIVATE KEY-----\\n",
+                  "CHAT_WEBHOOK_SECRET": "c4b84f40b919088c893b6dff50f522c140312078525714a0ef8dee0d5189ce9c",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "ExportCourseEnrollmentsFacultyLogGroup"
+            ]
+          },
+          "TpstreamsWebhookLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1783413664010-2026-07-07T08:41:04.010Z/background-service.zip"
+              },
+              "Handler": "src/functions/webhooks/tpstreamsWebhook.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-tpstreamsWebhook",
+              "MemorySize": 1024,
+              "Timeout": 10,
+              "Environment": {
+                "Variables": {
+                  "STAGE": "dev",
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"VIDEO_UPLOAD_QUEUE_URL\"]"
+                  },
+                  "CHAT_NOTIFICATION_QUEUE_URL": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"CHAT_NOTIFICATION_QUEUE_URL\"]"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCpsF2hz2Ou6NiS\\n4ukCoI0di3rVOG7VfMPh8y/a1kVxpCPts90z05zHj9YWyzpnT9Mehv65NjwF/KpA\\nHSnDFOk2rXVscvXXSMj/tBVHmL9JsYvke9eawPuqzZnvqrDswsACMkHaDCAoUan8\\nhsYGtb/YXTQLfEZjYnDBL0ECS6d0PxaQz0ovn/ucMWcfZjp/DCQQalHK9138cnbV\\nuP6FSM77XTinTbRCY6vah3SuSHUQmqoZaVITRG7kEyz6HOKbut4YrVnl3/Smmb3a\\nAH4VKGnGz2LTTLxumrX0sXiYaamdHpprXcRqxT/lRksrYrf3CIy6TmL+tkXYl+6j\\n8UuDxI4bAgMBAAECggEAGk4YXb6oHdPDyxV4+KrJ5XQbYRVj/R1fwlWwK/T+g+zl\\nkvJIjsG1sqwGDLeJgL17pWZY835IVMdD3zeGI1NJCexe4SZ7HNoQKq+Qgu5XbQWk\\ngZF/LWLQQLypqeEklzdji5Od6L7rd0SdnOOJrD2dlV1xdXxY7wwyHYiFQ+VVeqwS\\nXayCXVabyc53Yfbd1HWDAk0DpfV1mzFhzqi7wbO5vN60l+LJd47Bgv3SM84mC6ag\\nbqMBCPUY0idEJ7ipBEMzPJp7lbXp2CYi9FTLJmrhHTYY8xpVFjUoasJC7/kuMEAC\\nxvkNqrZ8Rh4p5s07SxsVU8chqoau+jRuJE0bxzGoiQKBgQDWyXksvNmb0dN7vQA5\\nev2VZXWhqLSu4PxqcNv3McRBXjGh07KeFQJ0hHo8DIBDPs8cm3rzwJq2SHCxUAnF\\nE/7ZyZ3wyO1PtWm3G770bEzQ6h+4nRKRPveGF2Dv2WxZUmrl4Wl+4jLMzMQbU4LA\\nG1xgxYCVqCIxqJ/tgSU+741K8wKBgQDKP6Kdjyx/tL2REEWHYF/CSnJQe4jb6xGI\\ngZNZ/X3wsMAodObcaiBxVf4sTpGuqyMNDPUEM/Fz/Lu8gw9hSjH7UWxcknjFuSj+\\nU+0pku9J45KR0985WK3RQqgkmlk4N376P/OgI5yxZTnHmYGZVODjRp+G9/NnNI6h\\nQFkeX7EqOQKBgErRgblYy4Cg1cdbrfFX62+YGSLH7rCgRK0bRTRVjKSsmCNj5+tz\\nLBjEcQPr4t4JygGQE4NHS11F3KOXWt/guDzLI45Vn3zNl9al/p2MADIh7AzWAjrA\\nMV7vU+AY38o5kG0lWSdOyh1XEtTmATzECyjWg5UeLVMZBySngP7sWU6LAoGAOOf+\\n0WZflu88B30UkyrCxuA7mfmoYHibzlTnKQLyVK7m4ntCGfKifkE76yuQQh1VF271\\n4eDbp08NY9VclntR5OzcGI/9+2RF7ImgyXnWamvl6bI7tN8GyUKAHQxw3ih/SdqE\\nqiJbDG72+vpuRL5lKI3OhSNvETLwjt6UNL+oEcECgYAqWgZGabum6aWkQ2YZxvy6\\nmJ0zv/ESNNLAe1pS7n0q8gIw99qmJ7uV/9kRNKRnxRja0R32fEBdSaV5bF3FeA6C\\nqKjcHDU+/ipNxjL+3tmhPoOKtoMABrhN5i9TosN6LXdRDimJ5/DdfPX9pVSctMoc\\n2AQH2ifVNJl/RzBqS+4gVw==\\n-----END PRIVATE KEY-----\\n",
+                  "CHAT_WEBHOOK_SECRET": "c4b84f40b919088c893b6dff50f522c140312078525714a0ef8dee0d5189ce9c",
                   "NODE_OPTIONS": "--enable-source-maps"
                 }
               },
@@ -309,20 +442,21 @@
               "TpstreamsWebhookLogGroup"
             ]
           },
-          "ProcessVideoUploadLambdaFunction": {
+          "ChatMessageWebhookLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1782893693778-2026-07-01T08:14:53.778Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1783413664010-2026-07-07T08:41:04.010Z/background-service.zip"
               },
-              "Handler": "src/functions/video/processVideoUpload.handler",
+              "Handler": "src/functions/webhooks/chatMessageWebhook.handler",
               "Runtime": "nodejs20.x",
-              "FunctionName": "background-service-dev-processVideoUpload",
+              "FunctionName": "background-service-dev-chatMessageWebhook",
               "MemorySize": 1024,
-              "Timeout": 300,
+              "Timeout": 10,
               "Environment": {
                 "Variables": {
+                  "STAGE": "dev",
                   "VIDEO_UPLOAD_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"VIDEO_UPLOAD_QUEUE_URL\"]"
                   },
@@ -331,7 +465,55 @@
                   },
                   "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
                   "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCpsF2hz2Ou6NiS\\n4ukCoI0di3rVOG7VfMPh8y/a1kVxpCPts90z05zHj9YWyzpnT9Mehv65NjwF/KpA\\nHSnDFOk2rXVscvXXSMj/tBVHmL9JsYvke9eawPuqzZnvqrDswsACMkHaDCAoUan8\\nhsYGtb/YXTQLfEZjYnDBL0ECS6d0PxaQz0ovn/ucMWcfZjp/DCQQalHK9138cnbV\\nuP6FSM77XTinTbRCY6vah3SuSHUQmqoZaVITRG7kEyz6HOKbut4YrVnl3/Smmb3a\\nAH4VKGnGz2LTTLxumrX0sXiYaamdHpprXcRqxT/lRksrYrf3CIy6TmL+tkXYl+6j\\n8UuDxI4bAgMBAAECggEAGk4YXb6oHdPDyxV4+KrJ5XQbYRVj/R1fwlWwK/T+g+zl\\nkvJIjsG1sqwGDLeJgL17pWZY835IVMdD3zeGI1NJCexe4SZ7HNoQKq+Qgu5XbQWk\\ngZF/LWLQQLypqeEklzdji5Od6L7rd0SdnOOJrD2dlV1xdXxY7wwyHYiFQ+VVeqwS\\nXayCXVabyc53Yfbd1HWDAk0DpfV1mzFhzqi7wbO5vN60l+LJd47Bgv3SM84mC6ag\\nbqMBCPUY0idEJ7ipBEMzPJp7lbXp2CYi9FTLJmrhHTYY8xpVFjUoasJC7/kuMEAC\\nxvkNqrZ8Rh4p5s07SxsVU8chqoau+jRuJE0bxzGoiQKBgQDWyXksvNmb0dN7vQA5\\nev2VZXWhqLSu4PxqcNv3McRBXjGh07KeFQJ0hHo8DIBDPs8cm3rzwJq2SHCxUAnF\\nE/7ZyZ3wyO1PtWm3G770bEzQ6h+4nRKRPveGF2Dv2WxZUmrl4Wl+4jLMzMQbU4LA\\nG1xgxYCVqCIxqJ/tgSU+741K8wKBgQDKP6Kdjyx/tL2REEWHYF/CSnJQe4jb6xGI\\ngZNZ/X3wsMAodObcaiBxVf4sTpGuqyMNDPUEM/Fz/Lu8gw9hSjH7UWxcknjFuSj+\\nU+0pku9J45KR0985WK3RQqgkmlk4N376P/OgI5yxZTnHmYGZVODjRp+G9/NnNI6h\\nQFkeX7EqOQKBgErRgblYy4Cg1cdbrfFX62+YGSLH7rCgRK0bRTRVjKSsmCNj5+tz\\nLBjEcQPr4t4JygGQE4NHS11F3KOXWt/guDzLI45Vn3zNl9al/p2MADIh7AzWAjrA\\nMV7vU+AY38o5kG0lWSdOyh1XEtTmATzECyjWg5UeLVMZBySngP7sWU6LAoGAOOf+\\n0WZflu88B30UkyrCxuA7mfmoYHibzlTnKQLyVK7m4ntCGfKifkE76yuQQh1VF271\\n4eDbp08NY9VclntR5OzcGI/9+2RF7ImgyXnWamvl6bI7tN8GyUKAHQxw3ih/SdqE\\nqiJbDG72+vpuRL5lKI3OhSNvETLwjt6UNL+oEcECgYAqWgZGabum6aWkQ2YZxvy6\\nmJ0zv/ESNNLAe1pS7n0q8gIw99qmJ7uV/9kRNKRnxRja0R32fEBdSaV5bF3FeA6C\\nqKjcHDU+/ipNxjL+3tmhPoOKtoMABrhN5i9TosN6LXdRDimJ5/DdfPX9pVSctMoc\\n2AQH2ifVNJl/RzBqS+4gVw==\\n-----END PRIVATE KEY-----\\n",
+                  "CHAT_WEBHOOK_SECRET": "c4b84f40b919088c893b6dff50f522c140312078525714a0ef8dee0d5189ce9c",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "ChatMessageWebhookLogGroup"
+            ]
+          },
+          "ProcessVideoUploadLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1783413664010-2026-07-07T08:41:04.010Z/background-service.zip"
+              },
+              "Handler": "src/functions/video/processVideoUpload.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-processVideoUpload",
+              "MemorySize": 1024,
+              "Timeout": 300,
+              "Environment": {
+                "Variables": {
+                  "STAGE": "dev",
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"VIDEO_UPLOAD_QUEUE_URL\"]"
+                  },
+                  "CHAT_NOTIFICATION_QUEUE_URL": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"CHAT_NOTIFICATION_QUEUE_URL\"]"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCpsF2hz2Ou6NiS\\n4ukCoI0di3rVOG7VfMPh8y/a1kVxpCPts90z05zHj9YWyzpnT9Mehv65NjwF/KpA\\nHSnDFOk2rXVscvXXSMj/tBVHmL9JsYvke9eawPuqzZnvqrDswsACMkHaDCAoUan8\\nhsYGtb/YXTQLfEZjYnDBL0ECS6d0PxaQz0ovn/ucMWcfZjp/DCQQalHK9138cnbV\\nuP6FSM77XTinTbRCY6vah3SuSHUQmqoZaVITRG7kEyz6HOKbut4YrVnl3/Smmb3a\\nAH4VKGnGz2LTTLxumrX0sXiYaamdHpprXcRqxT/lRksrYrf3CIy6TmL+tkXYl+6j\\n8UuDxI4bAgMBAAECggEAGk4YXb6oHdPDyxV4+KrJ5XQbYRVj/R1fwlWwK/T+g+zl\\nkvJIjsG1sqwGDLeJgL17pWZY835IVMdD3zeGI1NJCexe4SZ7HNoQKq+Qgu5XbQWk\\ngZF/LWLQQLypqeEklzdji5Od6L7rd0SdnOOJrD2dlV1xdXxY7wwyHYiFQ+VVeqwS\\nXayCXVabyc53Yfbd1HWDAk0DpfV1mzFhzqi7wbO5vN60l+LJd47Bgv3SM84mC6ag\\nbqMBCPUY0idEJ7ipBEMzPJp7lbXp2CYi9FTLJmrhHTYY8xpVFjUoasJC7/kuMEAC\\nxvkNqrZ8Rh4p5s07SxsVU8chqoau+jRuJE0bxzGoiQKBgQDWyXksvNmb0dN7vQA5\\nev2VZXWhqLSu4PxqcNv3McRBXjGh07KeFQJ0hHo8DIBDPs8cm3rzwJq2SHCxUAnF\\nE/7ZyZ3wyO1PtWm3G770bEzQ6h+4nRKRPveGF2Dv2WxZUmrl4Wl+4jLMzMQbU4LA\\nG1xgxYCVqCIxqJ/tgSU+741K8wKBgQDKP6Kdjyx/tL2REEWHYF/CSnJQe4jb6xGI\\ngZNZ/X3wsMAodObcaiBxVf4sTpGuqyMNDPUEM/Fz/Lu8gw9hSjH7UWxcknjFuSj+\\nU+0pku9J45KR0985WK3RQqgkmlk4N376P/OgI5yxZTnHmYGZVODjRp+G9/NnNI6h\\nQFkeX7EqOQKBgErRgblYy4Cg1cdbrfFX62+YGSLH7rCgRK0bRTRVjKSsmCNj5+tz\\nLBjEcQPr4t4JygGQE4NHS11F3KOXWt/guDzLI45Vn3zNl9al/p2MADIh7AzWAjrA\\nMV7vU+AY38o5kG0lWSdOyh1XEtTmATzECyjWg5UeLVMZBySngP7sWU6LAoGAOOf+\\n0WZflu88B30UkyrCxuA7mfmoYHibzlTnKQLyVK7m4ntCGfKifkE76yuQQh1VF271\\n4eDbp08NY9VclntR5OzcGI/9+2RF7ImgyXnWamvl6bI7tN8GyUKAHQxw3ih/SdqE\\nqiJbDG72+vpuRL5lKI3OhSNvETLwjt6UNL+oEcECgYAqWgZGabum6aWkQ2YZxvy6\\nmJ0zv/ESNNLAe1pS7n0q8gIw99qmJ7uV/9kRNKRnxRja0R32fEBdSaV5bF3FeA6C\\nqKjcHDU+/ipNxjL+3tmhPoOKtoMABrhN5i9TosN6LXdRDimJ5/DdfPX9pVSctMoc\\n2AQH2ifVNJl/RzBqS+4gVw==\\n-----END PRIVATE KEY-----\\n",
+                  "CHAT_WEBHOOK_SECRET": "c4b84f40b919088c893b6dff50f522c140312078525714a0ef8dee0d5189ce9c",
                   "NODE_OPTIONS": "--enable-source-maps"
                 }
               },
@@ -351,7 +533,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1782893693778-2026-07-01T08:14:53.778Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1783413664010-2026-07-07T08:41:04.010Z/background-service.zip"
               },
               "Handler": "src/functions/chat/chat.notification.handler",
               "Runtime": "nodejs20.x",
@@ -360,6 +542,7 @@
               "Timeout": 60,
               "Environment": {
                 "Variables": {
+                  "STAGE": "dev",
                   "VIDEO_UPLOAD_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"VIDEO_UPLOAD_QUEUE_URL\"]"
                   },
@@ -368,7 +551,12 @@
                   },
                   "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
                   "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCpsF2hz2Ou6NiS\\n4ukCoI0di3rVOG7VfMPh8y/a1kVxpCPts90z05zHj9YWyzpnT9Mehv65NjwF/KpA\\nHSnDFOk2rXVscvXXSMj/tBVHmL9JsYvke9eawPuqzZnvqrDswsACMkHaDCAoUan8\\nhsYGtb/YXTQLfEZjYnDBL0ECS6d0PxaQz0ovn/ucMWcfZjp/DCQQalHK9138cnbV\\nuP6FSM77XTinTbRCY6vah3SuSHUQmqoZaVITRG7kEyz6HOKbut4YrVnl3/Smmb3a\\nAH4VKGnGz2LTTLxumrX0sXiYaamdHpprXcRqxT/lRksrYrf3CIy6TmL+tkXYl+6j\\n8UuDxI4bAgMBAAECggEAGk4YXb6oHdPDyxV4+KrJ5XQbYRVj/R1fwlWwK/T+g+zl\\nkvJIjsG1sqwGDLeJgL17pWZY835IVMdD3zeGI1NJCexe4SZ7HNoQKq+Qgu5XbQWk\\ngZF/LWLQQLypqeEklzdji5Od6L7rd0SdnOOJrD2dlV1xdXxY7wwyHYiFQ+VVeqwS\\nXayCXVabyc53Yfbd1HWDAk0DpfV1mzFhzqi7wbO5vN60l+LJd47Bgv3SM84mC6ag\\nbqMBCPUY0idEJ7ipBEMzPJp7lbXp2CYi9FTLJmrhHTYY8xpVFjUoasJC7/kuMEAC\\nxvkNqrZ8Rh4p5s07SxsVU8chqoau+jRuJE0bxzGoiQKBgQDWyXksvNmb0dN7vQA5\\nev2VZXWhqLSu4PxqcNv3McRBXjGh07KeFQJ0hHo8DIBDPs8cm3rzwJq2SHCxUAnF\\nE/7ZyZ3wyO1PtWm3G770bEzQ6h+4nRKRPveGF2Dv2WxZUmrl4Wl+4jLMzMQbU4LA\\nG1xgxYCVqCIxqJ/tgSU+741K8wKBgQDKP6Kdjyx/tL2REEWHYF/CSnJQe4jb6xGI\\ngZNZ/X3wsMAodObcaiBxVf4sTpGuqyMNDPUEM/Fz/Lu8gw9hSjH7UWxcknjFuSj+\\nU+0pku9J45KR0985WK3RQqgkmlk4N376P/OgI5yxZTnHmYGZVODjRp+G9/NnNI6h\\nQFkeX7EqOQKBgErRgblYy4Cg1cdbrfFX62+YGSLH7rCgRK0bRTRVjKSsmCNj5+tz\\nLBjEcQPr4t4JygGQE4NHS11F3KOXWt/guDzLI45Vn3zNl9al/p2MADIh7AzWAjrA\\nMV7vU+AY38o5kG0lWSdOyh1XEtTmATzECyjWg5UeLVMZBySngP7sWU6LAoGAOOf+\\n0WZflu88B30UkyrCxuA7mfmoYHibzlTnKQLyVK7m4ntCGfKifkE76yuQQh1VF271\\n4eDbp08NY9VclntR5OzcGI/9+2RF7ImgyXnWamvl6bI7tN8GyUKAHQxw3ih/SdqE\\nqiJbDG72+vpuRL5lKI3OhSNvETLwjt6UNL+oEcECgYAqWgZGabum6aWkQ2YZxvy6\\nmJ0zv/ESNNLAe1pS7n0q8gIw99qmJ7uV/9kRNKRnxRja0R32fEBdSaV5bF3FeA6C\\nqKjcHDU+/ipNxjL+3tmhPoOKtoMABrhN5i9TosN6LXdRDimJ5/DdfPX9pVSctMoc\\n2AQH2ifVNJl/RzBqS+4gVw==\\n-----END PRIVATE KEY-----\\n",
+                  "CHAT_WEBHOOK_SECRET": "c4b84f40b919088c893b6dff50f522c140312078525714a0ef8dee0d5189ce9c",
                   "NODE_OPTIONS": "--enable-source-maps"
                 }
               },
@@ -383,60 +571,93 @@
               "ChatNotificationWorkerLogGroup"
             ]
           },
-          "SaveBankDetailsLambdaVersionS4GyWJWbZlspNf3YKrUVUzo6PxAO864nEEqa06bsvU": {
+          "SaveBankDetailsLambdaVersionqwM8T22A295ihZaEMC6EOAyvmIXO7sWPw96siuUYSk": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "SaveBankDetailsLambdaFunction"
               },
-              "CodeSha256": "wtS8vSfoWDnLdI0k0USOs9uiJuco77AYT0YhijotVI0="
+              "CodeSha256": "jhQaSWjPhw3Pr//8IDNBFCW7Qbj8M9WxN8AZzPNbKgM="
             }
           },
-          "GetBankDetailsLambdaVersionvg3WwsmPr387jU6BS8YjmmOJbpmPm6Zd47Oqi8oE": {
+          "GetBankDetailsLambdaVersionltTqR9rvxvlMmlYv9uq0UexvYLD0t3Ebme372pd7gY": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetBankDetailsLambdaFunction"
               },
-              "CodeSha256": "wtS8vSfoWDnLdI0k0USOs9uiJuco77AYT0YhijotVI0="
+              "CodeSha256": "jhQaSWjPhw3Pr//8IDNBFCW7Qbj8M9WxN8AZzPNbKgM="
             }
           },
-          "TpstreamsWebhookLambdaVersion73N547n8y8ZVCz9gaaagQDQAD8LhZ3UgUvXgzMqRAY": {
+          "ExportCourseEnrollmentsLambdaVersion47tndB89mpvNKa11YlPEnt8O2Jkcz2UnV0nT5yljCXg": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ExportCourseEnrollmentsLambdaFunction"
+              },
+              "CodeSha256": "jhQaSWjPhw3Pr//8IDNBFCW7Qbj8M9WxN8AZzPNbKgM="
+            }
+          },
+          "ExportCourseEnrollmentsFacultyLambdaVersionVW9DGV1YxhL2drrgwTOu4jGGb132i2HszrKTWpxRU": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ExportCourseEnrollmentsFacultyLambdaFunction"
+              },
+              "CodeSha256": "jhQaSWjPhw3Pr//8IDNBFCW7Qbj8M9WxN8AZzPNbKgM="
+            }
+          },
+          "TpstreamsWebhookLambdaVersionX4QE42QLUlDFXXmzlMTxXizzyLzb8W75Z6QKdQnQ": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "TpstreamsWebhookLambdaFunction"
               },
-              "CodeSha256": "wtS8vSfoWDnLdI0k0USOs9uiJuco77AYT0YhijotVI0="
+              "CodeSha256": "jhQaSWjPhw3Pr//8IDNBFCW7Qbj8M9WxN8AZzPNbKgM="
             }
           },
-          "ProcessVideoUploadLambdaVersion8asnlqiaUvOXmnHV19vaO1VdDYx9g5ldpYa1QsLuqY": {
+          "ChatMessageWebhookLambdaVersionxtcFEMb1aX3Z7EiN59ySVUBpEN0fY9rmMNLVFYoPo": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ChatMessageWebhookLambdaFunction"
+              },
+              "CodeSha256": "jhQaSWjPhw3Pr//8IDNBFCW7Qbj8M9WxN8AZzPNbKgM="
+            }
+          },
+          "ProcessVideoUploadLambdaVersionpBKxDNF1hbeytqGglzvDH3SPZKxBr7u25J7QD3UfkY": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ProcessVideoUploadLambdaFunction"
               },
-              "CodeSha256": "wtS8vSfoWDnLdI0k0USOs9uiJuco77AYT0YhijotVI0="
+              "CodeSha256": "jhQaSWjPhw3Pr//8IDNBFCW7Qbj8M9WxN8AZzPNbKgM="
             }
           },
-          "ChatNotificationWorkerLambdaVersion3TuZfqYjsBDn5pF2CLFEZmHkTHAF6r8dlt76PewEYI": {
+          "ChatNotificationWorkerLambdaVersionuo5qG3TPDz0KHhEdaElZTCMOTso9S3gjbTKgZf8QkGw": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ChatNotificationWorkerLambdaFunction"
               },
-              "CodeSha256": "wtS8vSfoWDnLdI0k0USOs9uiJuco77AYT0YhijotVI0="
+              "CodeSha256": "jhQaSWjPhw3Pr//8IDNBFCW7Qbj8M9WxN8AZzPNbKgM="
             }
           },
           "ApiGatewayRestApi": {
             "Type": "AWS::ApiGateway::RestApi",
             "Properties": {
               "Name": "dev-background-service",
+              "BinaryMediaTypes": [
+                "*/*"
+              ],
               "EndpointConfiguration": {
                 "Types": [
                   "EDGE"
@@ -484,6 +705,117 @@
               }
             }
           },
+          "ApiGatewayResourceFacultyCourses": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFaculty"
+              },
+              "PathPart": "courses",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyCoursesCourseidVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyCourses"
+              },
+              "PathPart": "{courseId}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyCoursesCourseidVarEnrollments": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyCoursesCourseidVar"
+              },
+              "PathPart": "enrollments",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyCoursesCourseidVarEnrollmentsExport": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyCoursesCourseidVarEnrollments"
+              },
+              "PathPart": "export",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAdmin": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "admin",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAdminCourses": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceAdmin"
+              },
+              "PathPart": "courses",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAdminCoursesCourseidVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceAdminCourses"
+              },
+              "PathPart": "{courseId}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAdminCoursesCourseidVarEnrollments": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceAdminCoursesCourseidVar"
+              },
+              "PathPart": "enrollments",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAdminCoursesCourseidVarEnrollmentsExport": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceAdminCoursesCourseidVarEnrollments"
+              },
+              "PathPart": "export",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
           "ApiGatewayResourceWebhooks": {
             "Type": "AWS::ApiGateway::Resource",
             "Properties": {
@@ -506,6 +838,18 @@
                 "Ref": "ApiGatewayResourceWebhooks"
               },
               "PathPart": "tpstreams",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceWebhooksChatDashmessage": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceWebhooks"
+              },
+              "PathPart": "chat-message",
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
@@ -550,6 +894,96 @@
               },
               "ResourceId": {
                 "Ref": "ApiGatewayResourceFacultyBankDetails"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAdminCoursesCourseidVarEnrollmentsExport"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceFacultyCoursesCourseidVarEnrollmentsExport"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -648,6 +1082,98 @@
               "GetBankDetailsLambdaPermissionApiGateway"
             ]
           },
+          "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAdminCoursesCourseidVarEnrollmentsExport"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "ExportCourseEnrollmentsLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "ExportCourseEnrollmentsLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceFacultyCoursesCourseidVarEnrollmentsExport"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "ExportCourseEnrollmentsFacultyLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "ExportCourseEnrollmentsFacultyLambdaPermissionApiGateway"
+            ]
+          },
           "ApiGatewayMethodWebhooksTpstreamsPost": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
@@ -694,7 +1220,53 @@
               "TpstreamsWebhookLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1782893686779": {
+          "ApiGatewayMethodWebhooksChatDashmessagePost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceWebhooksChatDashmessage"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "ChatMessageWebhookLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "ChatMessageWebhookLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1783413650232": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -704,9 +1276,14 @@
             },
             "DependsOn": [
               "ApiGatewayMethodFacultyBankDetailsOptions",
+              "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportOptions",
+              "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportOptions",
               "ApiGatewayMethodFacultyBankDetailsPost",
               "ApiGatewayMethodFacultyBankDetailsGet",
-              "ApiGatewayMethodWebhooksTpstreamsPost"
+              "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportGet",
+              "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportGet",
+              "ApiGatewayMethodWebhooksTpstreamsPost",
+              "ApiGatewayMethodWebhooksChatDashmessagePost"
             ]
           },
           "SaveBankDetailsLambdaPermissionApiGateway": {
@@ -783,12 +1360,123 @@
               }
             }
           },
+          "ExportCourseEnrollmentsLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "ExportCourseEnrollmentsLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "ExportCourseEnrollmentsFacultyLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "ExportCourseEnrollmentsFacultyLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
           "TpstreamsWebhookLambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
             "Properties": {
               "FunctionName": {
                 "Fn::GetAtt": [
                   "TpstreamsWebhookLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "ChatMessageWebhookLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "ChatMessageWebhookLambdaFunction",
                   "Arn"
                 ]
               },
@@ -873,21 +1561,21 @@
           "VideoUploadDLQ": {
             "Type": "AWS::SQS::Queue",
             "Properties": {
-              "QueueName": "video-upload-dlq",
+              "QueueName": "video-upload-dlq-dev",
               "MessageRetentionPeriod": 1209600
             }
           },
           "ChatNotificationDLQ": {
             "Type": "AWS::SQS::Queue",
             "Properties": {
-              "QueueName": "chat-notification-dlq",
+              "QueueName": "chat-notification-dlq-dev",
               "MessageRetentionPeriod": 1209600
             }
           },
           "VideoUploadQueue": {
             "Type": "AWS::SQS::Queue",
             "Properties": {
-              "QueueName": "video-upload-queue",
+              "QueueName": "video-upload-queue-dev",
               "VisibilityTimeout": 300,
               "RedrivePolicy": {
                 "deadLetterTargetArn": {
@@ -903,7 +1591,7 @@
           "ChatNotificationQueue": {
             "Type": "AWS::SQS::Queue",
             "Properties": {
-              "QueueName": "chat-notification-queue",
+              "QueueName": "chat-notification-queue-dev",
               "VisibilityTimeout": 300,
               "RedrivePolicy": {
                 "deadLetterTargetArn": {
@@ -927,7 +1615,7 @@
           "SaveBankDetailsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "SaveBankDetailsLambdaVersionS4GyWJWbZlspNf3YKrUVUzo6PxAO864nEEqa06bsvU"
+              "Ref": "SaveBankDetailsLambdaVersionqwM8T22A295ihZaEMC6EOAyvmIXO7sWPw96siuUYSk"
             },
             "Export": {
               "Name": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
@@ -936,25 +1624,52 @@
           "GetBankDetailsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetBankDetailsLambdaVersionvg3WwsmPr387jU6BS8YjmmOJbpmPm6Zd47Oqi8oE"
+              "Ref": "GetBankDetailsLambdaVersionltTqR9rvxvlMmlYv9uq0UexvYLD0t3Ebme372pd7gY"
             },
             "Export": {
               "Name": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
             }
           },
+          "ExportCourseEnrollmentsLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ExportCourseEnrollmentsLambdaVersion47tndB89mpvNKa11YlPEnt8O2Jkcz2UnV0nT5yljCXg"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-ExportCourseEnrollmentsLambdaFunctionQualifiedArn"
+            }
+          },
+          "ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ExportCourseEnrollmentsFacultyLambdaVersionVW9DGV1YxhL2drrgwTOu4jGGb132i2HszrKTWpxRU"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn"
+            }
+          },
           "TpstreamsWebhookLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "TpstreamsWebhookLambdaVersion73N547n8y8ZVCz9gaaagQDQAD8LhZ3UgUvXgzMqRAY"
+              "Ref": "TpstreamsWebhookLambdaVersionX4QE42QLUlDFXXmzlMTxXizzyLzb8W75Z6QKdQnQ"
             },
             "Export": {
               "Name": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
             }
           },
+          "ChatMessageWebhookLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ChatMessageWebhookLambdaVersionxtcFEMb1aX3Z7EiN59ySVUBpEN0fY9rmMNLVFYoPo"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-ChatMessageWebhookLambdaFunctionQualifiedArn"
+            }
+          },
           "ProcessVideoUploadLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ProcessVideoUploadLambdaVersion8asnlqiaUvOXmnHV19vaO1VdDYx9g5ldpYa1QsLuqY"
+              "Ref": "ProcessVideoUploadLambdaVersionpBKxDNF1hbeytqGglzvDH3SPZKxBr7u25J7QD3UfkY"
             },
             "Export": {
               "Name": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
@@ -963,7 +1678,7 @@
           "ChatNotificationWorkerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ChatNotificationWorkerLambdaVersion3TuZfqYjsBDn5pF2CLFEZmHkTHAF6r8dlt76PewEYI"
+              "Ref": "ChatNotificationWorkerLambdaVersionuo5qG3TPDz0KHhEdaElZTCMOTso9S3gjbTKgZf8QkGw"
             },
             "Export": {
               "Name": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
@@ -1047,7 +1762,7 @@
         "timeout": 30,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "SaveBankDetailsLambdaVersionS4GyWJWbZlspNf3YKrUVUzo6PxAO864nEEqa06bsvU"
+        "versionLogicalId": "SaveBankDetailsLambdaVersionqwM8T22A295ihZaEMC6EOAyvmIXO7sWPw96siuUYSk"
       },
       "getBankDetails": {
         "handler": "src/functions/bank/getBankDetails.handler",
@@ -1086,7 +1801,85 @@
         "timeout": 30,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "GetBankDetailsLambdaVersionvg3WwsmPr387jU6BS8YjmmOJbpmPm6Zd47Oqi8oE"
+        "versionLogicalId": "GetBankDetailsLambdaVersionltTqR9rvxvlMmlYv9uq0UexvYLD0t3Ebme372pd7gY"
+      },
+      "exportCourseEnrollments": {
+        "handler": "src/functions/csvExpoter/admin/enrollmentExport.handler",
+        "events": [
+          {
+            "http": {
+              "path": "admin/courses/{courseId}/enrollments/export",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "background-service-dev-exportCourseEnrollments",
+        "environment": {
+          "NODE_OPTIONS": "--enable-source-maps"
+        },
+        "package": {},
+        "memory": 1024,
+        "timeout": 30,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "ExportCourseEnrollmentsLambdaVersion47tndB89mpvNKa11YlPEnt8O2Jkcz2UnV0nT5yljCXg"
+      },
+      "exportCourseEnrollmentsFaculty": {
+        "handler": "src/functions/csvExpoter/faculty/enrollmentExport.handler",
+        "events": [
+          {
+            "http": {
+              "path": "faculty/courses/{courseId}/enrollments/export",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "background-service-dev-exportCourseEnrollmentsFaculty",
+        "environment": {
+          "NODE_OPTIONS": "--enable-source-maps"
+        },
+        "package": {},
+        "memory": 1024,
+        "timeout": 30,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "ExportCourseEnrollmentsFacultyLambdaVersionVW9DGV1YxhL2drrgwTOu4jGGb132i2HszrKTWpxRU"
       },
       "tpstreamsWebhook": {
         "handler": "src/functions/webhooks/tpstreamsWebhook.handler",
@@ -1108,7 +1901,29 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "TpstreamsWebhookLambdaVersion73N547n8y8ZVCz9gaaagQDQAD8LhZ3UgUvXgzMqRAY"
+        "versionLogicalId": "TpstreamsWebhookLambdaVersionX4QE42QLUlDFXXmzlMTxXizzyLzb8W75Z6QKdQnQ"
+      },
+      "chatMessageWebhook": {
+        "handler": "src/functions/webhooks/chatMessageWebhook.handler",
+        "timeout": 10,
+        "events": [
+          {
+            "http": {
+              "path": "webhooks/chat-message",
+              "method": "post",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "background-service-dev-chatMessageWebhook",
+        "environment": {
+          "NODE_OPTIONS": "--enable-source-maps"
+        },
+        "package": {},
+        "memory": 1024,
+        "runtime": "nodejs20.x",
+        "vpc": {},
+        "versionLogicalId": "ChatMessageWebhookLambdaVersionxtcFEMb1aX3Z7EiN59ySVUBpEN0fY9rmMNLVFYoPo"
       },
       "processVideoUpload": {
         "handler": "src/functions/video/processVideoUpload.handler",
@@ -1132,7 +1947,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "ProcessVideoUploadLambdaVersion8asnlqiaUvOXmnHV19vaO1VdDYx9g5ldpYa1QsLuqY"
+        "versionLogicalId": "ProcessVideoUploadLambdaVersionpBKxDNF1hbeytqGglzvDH3SPZKxBr7u25J7QD3UfkY"
       },
       "chatNotificationWorker": {
         "handler": "src/functions/chat/chat.notification.handler",
@@ -1156,7 +1971,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "ChatNotificationWorkerLambdaVersion3TuZfqYjsBDn5pF2CLFEZmHkTHAF6r8dlt76PewEYI"
+        "versionLogicalId": "ChatNotificationWorkerLambdaVersionuo5qG3TPDz0KHhEdaElZTCMOTso9S3gjbTKgZf8QkGw"
       }
     },
     "resources": {
@@ -1164,21 +1979,21 @@
         "VideoUploadDLQ": {
           "Type": "AWS::SQS::Queue",
           "Properties": {
-            "QueueName": "video-upload-dlq",
+            "QueueName": "video-upload-dlq-dev",
             "MessageRetentionPeriod": 1209600
           }
         },
         "ChatNotificationDLQ": {
           "Type": "AWS::SQS::Queue",
           "Properties": {
-            "QueueName": "chat-notification-dlq",
+            "QueueName": "chat-notification-dlq-dev",
             "MessageRetentionPeriod": 1209600
           }
         },
         "VideoUploadQueue": {
           "Type": "AWS::SQS::Queue",
           "Properties": {
-            "QueueName": "video-upload-queue",
+            "QueueName": "video-upload-queue-dev",
             "VisibilityTimeout": 300,
             "RedrivePolicy": {
               "deadLetterTargetArn": {
@@ -1194,7 +2009,7 @@
         "ChatNotificationQueue": {
           "Type": "AWS::SQS::Queue",
           "Properties": {
-            "QueueName": "chat-notification-queue",
+            "QueueName": "chat-notification-queue-dev",
             "VisibilityTimeout": 300,
             "RedrivePolicy": {
               "deadLetterTargetArn": {
@@ -1235,7 +2050,7 @@
     "layers": {}
   },
   "package": {
-    "artifactDirectoryName": "serverless/background-service/dev/1782893693778-2026-07-01T08:14:53.778Z",
+    "artifactDirectoryName": "serverless/background-service/dev/1783413664010-2026-07-07T08:41:04.010Z",
     "artifact": "background-service.zip"
   }
 }

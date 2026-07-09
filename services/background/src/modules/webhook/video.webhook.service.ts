@@ -1,3 +1,4 @@
+import { parseJsonBody } from "../../../../../shared/utils/parseBody";
 import { videoWebhookRepository } from "./video.webhook.repository";
 
 export const videoWebhookService = {
@@ -6,7 +7,7 @@ export const videoWebhookService = {
 
         try {
 
-            const updatedMaterial = await videoWebhookRepository.handleVideoWebhook(JSON.parse(event.body));
+            const updatedMaterial = await videoWebhookRepository.handleVideoWebhook(parseJsonBody(event));
 
             return updatedMaterial;
 

@@ -99,16 +99,17 @@ const processRecord = async (record: any) => {
     //     )
     // );
 
-    // All FCM device tokens for the recipients.
+    // All active FCM device tokens for the recipients.
     const { data: devices, error: devErr } = await supabaseAdmin
-        .from("user_devices")
-        .select("fcm_token")
-        .in("user_id", recipientIds);
+        .from("notification_devices")
+        .select("token")
+        .in("user_id", recipientIds)
+        .eq("is_active", true);
 
     if (devErr) throw new Error(devErr.message);
 
     const tokens = (devices ?? [])
-        .map((d: any) => d.fcm_token)
+        .map((d: any) => d.token)
         .filter(Boolean);
 
     if (tokens.length === 0) return; // recipient has no registered device
@@ -123,12 +124,12 @@ const processRecord = async (record: any) => {
         },
     });
 
-    // Prune dead tokens so we stop trying them next time.
+    // Deactivate dead tokens so we stop trying them next time.
     if (invalidTokens.length) {
         await supabaseAdmin
-            .from("user_devices")
-            .delete()
-            .in("fcm_token", invalidTokens);
+            .from("notification_devices")
+            .update({ is_active: false })
+            .in("token", invalidTokens);
     }
 };
 

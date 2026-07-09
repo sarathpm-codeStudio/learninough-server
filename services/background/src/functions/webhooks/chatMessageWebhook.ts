@@ -1,3 +1,4 @@
+import { parseJsonBody } from "../../../../../shared/utils/parseBody";
 import { pushToQueue } from "../../../../../shared/utils/queue";
 import { supabaseAdmin } from "../../utils/supabaseAdmin";
 
@@ -22,8 +23,7 @@ export const handler = async (event: any) => {
             return { statusCode: 401, body: JSON.stringify({ error: "Unauthorized" }) };
         }
 
-        const payload =
-            typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+        const payload = parseJsonBody(event);
 
         // Supabase webhook shape: { type, table, schema, record, old_record }.
         const record = payload?.record ?? payload;

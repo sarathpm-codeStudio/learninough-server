@@ -1,6 +1,7 @@
 
 
 import { bankRepository } from "./bank.repository";
+import { parseJsonBody } from "../../../../../shared/utils/parseBody";
 import { validate } from "../../../../../shared/utils/validate";
 import { saveBankDetailsSchema } from "../../../../../shared/validators/bank.schema";
 
@@ -10,7 +11,7 @@ export const bankService = {
 
     saveBankDetails: async (event: any) => {
         try {
-            const validatedData = validate(saveBankDetailsSchema, JSON.parse(event.body));
+            const validatedData = validate(saveBankDetailsSchema, parseJsonBody(event));
             const bankDetails = await bankRepository.saveBankDetails(validatedData, event.user.id, event.supabase);
             return true;
         }

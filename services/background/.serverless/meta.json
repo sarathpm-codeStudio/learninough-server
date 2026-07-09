@@ -1,6 +1,6 @@
 {
   "/home/dev/Desktop/learninough-server/services/background/serverless.yml": {
-    "versionFramework": "4.38.1",
+    "versionFramework": "4.39.0",
     "servicePath": "/home/dev/Desktop/learninough-server/services/background/serverless.yml",
     "serviceConfigFileName": "serverless.yml",
     "service": {
@@ -9,6 +9,7 @@
         "name": "aws",
         "runtime": "nodejs20.x",
         "region": "ap-south-1",
+        "stage": "dev",
         "timeout": 30,
         "apiGateway": {
           "binaryMediaTypes": [
@@ -16,15 +17,24 @@
           ]
         },
         "environment": {
+          "STAGE": "dev",
           "VIDEO_UPLOAD_QUEUE_URL": {
             "Ref": "VideoUploadQueue"
           },
           "CHAT_NOTIFICATION_QUEUE_URL": {
             "Ref": "ChatNotificationQueue"
           },
+          "NOTIFICATION_QUEUE_URL": {
+            "Ref": "NotificationQueue"
+          },
           "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
           "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-          "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90"
+          "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+          "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+          "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+          "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+          "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+          "CHAT_WEBHOOK_SECRET": "<REDACTED>"
         },
         "iam": {
           "role": {
@@ -58,11 +68,25 @@
                     "Arn"
                   ]
                 }
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "sqs:SendMessage",
+                  "sqs:ReceiveMessage",
+                  "sqs:DeleteMessage",
+                  "sqs:GetQueueAttributes"
+                ],
+                "Resource": {
+                  "Fn::GetAtt": [
+                    "NotificationQueue",
+                    "Arn"
+                  ]
+                }
               }
             ]
           }
         },
-        "stage": "dev",
         "versionFunctions": true
       },
       "plugins": [
@@ -79,21 +103,28 @@
           "VideoUploadDLQ": {
             "Type": "AWS::SQS::Queue",
             "Properties": {
-              "QueueName": "video-upload-dlq",
+              "QueueName": "video-upload-dlq-dev",
               "MessageRetentionPeriod": 1209600
             }
           },
           "ChatNotificationDLQ": {
             "Type": "AWS::SQS::Queue",
             "Properties": {
-              "QueueName": "chat-notification-dlq",
+              "QueueName": "chat-notification-dlq-dev",
+              "MessageRetentionPeriod": 1209600
+            }
+          },
+          "NotificationDLQ": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "notification-dlq-dev",
               "MessageRetentionPeriod": 1209600
             }
           },
           "VideoUploadQueue": {
             "Type": "AWS::SQS::Queue",
             "Properties": {
-              "QueueName": "video-upload-queue",
+              "QueueName": "video-upload-queue-dev",
               "VisibilityTimeout": 300,
               "RedrivePolicy": {
                 "deadLetterTargetArn": {
@@ -109,12 +140,28 @@
           "ChatNotificationQueue": {
             "Type": "AWS::SQS::Queue",
             "Properties": {
-              "QueueName": "chat-notification-queue",
+              "QueueName": "chat-notification-queue-dev",
               "VisibilityTimeout": 300,
               "RedrivePolicy": {
                 "deadLetterTargetArn": {
                   "Fn::GetAtt": [
                     "ChatNotificationDLQ",
+                    "Arn"
+                  ]
+                },
+                "maxReceiveCount": 3
+              }
+            }
+          },
+          "NotificationQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "notification-queue-dev",
+              "VisibilityTimeout": 300,
+              "RedrivePolicy": {
+                "deadLetterTargetArn": {
+                  "Fn::GetAtt": [
+                    "NotificationDLQ",
                     "Arn"
                   ]
                 },
@@ -136,10 +183,7 @@
               }
             }
           ],
-          "name": "background-service-dev-saveBankDetails",
-          "environment": {
-            "NODE_OPTIONS": "--enable-source-maps"
-          }
+          "name": "background-service-dev-saveBankDetails"
         },
         "getBankDetails": {
           "handler": "src/functions/bank/getBankDetails.handler",
@@ -152,10 +196,7 @@
               }
             }
           ],
-          "name": "background-service-dev-getBankDetails",
-          "environment": {
-            "NODE_OPTIONS": "--enable-source-maps"
-          }
+          "name": "background-service-dev-getBankDetails"
         },
         "exportCourseEnrollments": {
           "handler": "src/functions/csvExpoter/admin/enrollmentExport.handler",
@@ -170,6 +211,19 @@
           ],
           "name": "background-service-dev-exportCourseEnrollments"
         },
+        "exportCourseEnrollmentsFaculty": {
+          "handler": "src/functions/csvExpoter/faculty/enrollmentExport.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/courses/{courseId}/enrollments/export",
+                "method": "get",
+                "cors": true
+              }
+            }
+          ],
+          "name": "background-service-dev-exportCourseEnrollmentsFaculty"
+        },
         "tpstreamsWebhook": {
           "handler": "src/functions/webhooks/tpstreamsWebhook.handler",
           "timeout": 10,
@@ -181,10 +235,20 @@
               }
             }
           ],
-          "name": "background-service-dev-tpstreamsWebhook",
-          "environment": {
-            "NODE_OPTIONS": "--enable-source-maps"
-          }
+          "name": "background-service-dev-tpstreamsWebhook"
+        },
+        "chatMessageWebhook": {
+          "handler": "src/functions/webhooks/chatMessageWebhook.handler",
+          "timeout": 10,
+          "events": [
+            {
+              "http": {
+                "path": "/webhooks/chat-message",
+                "method": "post"
+              }
+            }
+          ],
+          "name": "background-service-dev-chatMessageWebhook"
         },
         "processVideoUpload": {
           "handler": "src/functions/video/processVideoUpload.handler",
@@ -203,10 +267,7 @@
               }
             }
           ],
-          "name": "background-service-dev-processVideoUpload",
-          "environment": {
-            "NODE_OPTIONS": "--enable-source-maps"
-          }
+          "name": "background-service-dev-processVideoUpload"
         },
         "chatNotificationWorker": {
           "handler": "src/functions/chat/chat.notification.handler",
@@ -225,10 +286,56 @@
               }
             }
           ],
-          "name": "background-service-dev-chatNotificationWorker",
-          "environment": {
-            "NODE_OPTIONS": "--enable-source-maps"
-          }
+          "name": "background-service-dev-chatNotificationWorker"
+        },
+        "notificationWorker": {
+          "handler": "src/functions/notification/notificationWorker.handler",
+          "timeout": 60,
+          "events": [
+            {
+              "sqs": {
+                "arn": {
+                  "Fn::GetAtt": [
+                    "NotificationQueue",
+                    "Arn"
+                  ]
+                },
+                "batchSize": 1,
+                "functionResponseType": "ReportBatchItemFailures"
+              }
+            }
+          ],
+          "name": "background-service-dev-notificationWorker"
+        },
+        "studentStreakCron": {
+          "handler": "src/functions/streak/updateStreaks.handler",
+          "timeout": 300,
+          "events": [
+            {
+              "schedule": {
+                "rate": [
+                  "cron(30 18 * * ? *)"
+                ],
+                "enabled": true
+              }
+            }
+          ],
+          "name": "background-service-dev-studentStreakCron"
+        },
+        "notificationDispatchCron": {
+          "handler": "src/functions/notification/notificationDispatch.handler",
+          "timeout": 300,
+          "events": [
+            {
+              "schedule": {
+                "rate": [
+                  "cron(30 2 * * ? *)"
+                ],
+                "enabled": true
+              }
+            }
+          ],
+          "name": "background-service-dev-notificationDispatchCron"
         }
       }
     },
@@ -236,6 +343,7 @@
       "name": "aws",
       "runtime": "nodejs20.x",
       "region": "ap-south-1",
+      "stage": "dev",
       "timeout": 30,
       "apiGateway": {
         "binaryMediaTypes": [
@@ -243,15 +351,24 @@
         ]
       },
       "environment": {
+        "STAGE": "dev",
         "VIDEO_UPLOAD_QUEUE_URL": {
           "Ref": "VideoUploadQueue"
         },
         "CHAT_NOTIFICATION_QUEUE_URL": {
           "Ref": "ChatNotificationQueue"
         },
+        "NOTIFICATION_QUEUE_URL": {
+          "Ref": "NotificationQueue"
+        },
         "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
         "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-        "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90"
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+        "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+        "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+        "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+        "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+        "CHAT_WEBHOOK_SECRET": "<REDACTED>"
       },
       "iam": {
         "role": {
@@ -285,11 +402,25 @@
                   "Arn"
                 ]
               }
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Resource": {
+                "Fn::GetAtt": [
+                  "NotificationQueue",
+                  "Arn"
+                ]
+              }
             }
           ]
         }
       },
-      "stage": "dev",
       "versionFunctions": true
     },
     "dashboard": {
@@ -301,16 +432,13 @@
       "serviceProvider": null,
       "instanceParameters": null
     },
-    "error": {
-      "message": "Build failed with 1 error:\nsrc/functions/csvExpoter/admin/enrollmentExport.ts:5:29: ERROR: Could not resolve \"../../../../utils/xlsx\"",
-      "stack": "ServerlessError2: Build failed with 1 error:\nsrc/functions/csvExpoter/admin/enrollmentExport.ts:5:29: ERROR: Could not resolve \"../../../../utils/xlsx\"\n    at Esbuild._build (file:///home/dev/.serverless/releases/4.38.1/package/dist/sf-core.js:2202:10737)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async before:offline:start (file:///home/dev/.serverless/releases/4.38.1/package/dist/sf-core.js:2196:5054)\n    at async PluginManager.runHooks (file:///home/dev/.serverless/releases/4.38.1/package/dist/sf-core.js:2344:11241)\n    at async PluginManager.invoke (file:///home/dev/.serverless/releases/4.38.1/package/dist/sf-core.js:2344:11951)\n    at async PluginManager.run (file:///home/dev/.serverless/releases/4.38.1/package/dist/sf-core.js:2344:12707)\n    at async Serverless.run (file:///home/dev/.serverless/releases/4.38.1/package/dist/sf-core.js:2396:10552)\n    at async runFramework (file:///home/dev/.serverless/releases/4.38.1/package/dist/sf-core.js:2423:1781)\n    at async TraditionalRunner.run (file:///home/dev/.serverless/releases/4.38.1/package/dist/sf-core.js:2419:26785)\n    at async route (file:///home/dev/.serverless/releases/4.38.1/package/dist/sf-core.js:2590:2888)",
-      "code": "ESBULD_BUILD_ERROR"
-    },
-    "serviceRawFile": "\n\nservice: background-service\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n  region: ap-south-1\n  timeout: 30                          # default for HTTP endpoints\n  apiGateway:\n    binaryMediaTypes:                  # required so base64 xlsx bodies decode to real files\n      - '*/*'\n  environment:\n    VIDEO_UPLOAD_QUEUE_URL:        !Ref VideoUploadQueue\n    CHAT_NOTIFICATION_QUEUE_URL:   !Ref ChatNotificationQueue\n    SUPABASE_URL:                  ${ssm:/learning-app/SUPABASE_URL}\n    SUPABASE_ANON_KEY:             ${ssm:/learning-app/SUPABASE_ANON_KEY}\n    BANK_ENCRYPTION_KEY:           ${ssm:/learning-app/BANK_ENCRYPTION_KEY}\n\n  iam:\n    role:\n      statements:\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # ← ADDED (webhook needs to push)\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt VideoUploadQueue.Arn\n\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # ← ADDED\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt ChatNotificationQueue.Arn\n\nplugins:\n  - serverless-offline\n\ncustom:\n  serverless-offline:\n    httpPort: 3000\n    lambdaPort: 3003\n\nresources:\n  Resources:\n\n    # ── Dead Letter Queues ──────────────────────────────────────\n    VideoUploadDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-dlq\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    ChatNotificationDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-dlq\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    # ── Main Queues ─────────────────────────────────────────────\n    VideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-queue\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt VideoUploadDLQ.Arn\n          maxReceiveCount: 3             # retry 3 times then → DLQ\n\n    ChatNotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-queue\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt ChatNotificationDLQ.Arn\n          maxReceiveCount: 3\n\nfunctions:\n\n  # ── HTTP Endpoints ──────────────────────────────────────────\n\n  saveBankDetails:\n    handler: src/functions/bank/saveBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: post\n          cors:   true\n\n  getBankDetails:\n    handler: src/functions/bank/getBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: get\n          cors:   true\n\n  # ── CSV Exports ─────────────────────────────────────────────\n\n  exportCourseEnrollments:\n    handler: src/functions/csvExpoter/admin/enrollmentExport.handler\n    events:\n      - http:\n          path:   admin/courses/{courseId}/enrollments/export\n          method: get\n          cors:   true\n\n  # ── Webhooks ────────────────────────────────────────────────\n\n  tpstreamsWebhook:\n    handler: src/functions/webhooks/tpstreamsWebhook.handler\n    timeout: 10                          # short — just pushes to SQS\n    events:\n      - http:\n          path: /webhooks/tpstreams\n          method: post\n\n  # ── SQS Background Jobs ─────────────────────────────────────\n\n  processVideoUpload:\n    handler: src/functions/video/processVideoUpload.handler\n    timeout: 300                         # long — does heavy DB work\n    events:\n      - sqs:\n          arn: !GetAtt VideoUploadQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures\n\n  chatNotificationWorker:\n    handler: src/functions/chat/chat.notification.handler\n    timeout: 60                          # medium — notification work\n    events:\n      - sqs:\n          arn: !GetAtt ChatNotificationQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures   # ← ADDED",
+    "serviceRawFile": "\n\nservice: background-service\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n  region: ap-south-1\n  stage: ${opt:stage, 'dev'}           # deploy with --stage dev | --stage prod\n  timeout: 30                          # default for HTTP endpoints\n  apiGateway:\n    binaryMediaTypes:                  # required so base64 xlsx bodies decode to real files\n      - '*/*'\n  environment:\n    STAGE:                         ${sls:stage}\n    VIDEO_UPLOAD_QUEUE_URL:        !Ref VideoUploadQueue\n    CHAT_NOTIFICATION_QUEUE_URL:   !Ref ChatNotificationQueue\n    NOTIFICATION_QUEUE_URL:        !Ref NotificationQueue\n    SUPABASE_URL:                  ${ssm:/learning-app/${sls:stage}/SUPABASE_URL}\n    SUPABASE_ANON_KEY:             ${ssm:/learning-app/${sls:stage}/SUPABASE_ANON_KEY}\n    SUPABASE_SERVICE_ROLE_KEY:     ${ssm:/learning-app/${sls:stage}/SUPABASE_SERVICE_ROLE_KEY}\n    BANK_ENCRYPTION_KEY:           ${ssm:/learning-app/BANK_ENCRYPTION_KEY}\n    # FCM (Firebase Admin) credentials for chat push notifications.\n    FIREBASE_PROJECT_ID:           ${ssm:/learning-app/FIREBASE_PROJECT_ID}\n    FIREBASE_CLIENT_EMAIL:         ${ssm:/learning-app/FIREBASE_CLIENT_EMAIL}\n    FIREBASE_PRIVATE_KEY:          ${ssm:/learning-app/FIREBASE_PRIVATE_KEY}\n    # Shared secret the Supabase chat_messages webhook must present.\n    CHAT_WEBHOOK_SECRET:           ${ssm:/learning-app/CHAT_WEBHOOK_SECRET}\n\n  iam:\n    role:\n      statements:\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # ← ADDED (webhook needs to push)\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt VideoUploadQueue.Arn\n\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # ← ADDED\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt ChatNotificationQueue.Arn\n\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # streak cron pushes jobs\n            - sqs:ReceiveMessage       # notification worker consumes\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt NotificationQueue.Arn\n\nplugins:\n  - serverless-offline\n\ncustom:\n  serverless-offline:\n    httpPort: 3000\n    lambdaPort: 3003\n\nresources:\n  Resources:\n\n    # ── Dead Letter Queues ──────────────────────────────────────\n    VideoUploadDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-dlq-${sls:stage}\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    ChatNotificationDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-dlq-${sls:stage}\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    NotificationDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: notification-dlq-${sls:stage}\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    # ── Main Queues ─────────────────────────────────────────────\n    VideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-queue-${sls:stage}\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt VideoUploadDLQ.Arn\n          maxReceiveCount: 3             # retry 3 times then → DLQ\n\n    ChatNotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-queue-${sls:stage}\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt ChatNotificationDLQ.Arn\n          maxReceiveCount: 3\n\n    # Shared queue for ALL push scenarios (streak reward/broken, …). Producers\n    # enqueue { type, user_id, data }; notificationWorker switches on `type`.\n    NotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: notification-queue-${sls:stage}\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt NotificationDLQ.Arn\n          maxReceiveCount: 3\n\nfunctions:\n\n  # ── HTTP Endpoints ──────────────────────────────────────────\n\n  saveBankDetails:\n    handler: src/functions/bank/saveBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: post\n          cors:   true\n\n  getBankDetails:\n    handler: src/functions/bank/getBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: get\n          cors:   true\n\n  exportCourseEnrollments:\n    handler: src/functions/csvExpoter/admin/enrollmentExport.handler\n    events:\n      - http:\n          path:   admin/courses/{courseId}/enrollments/export\n          method: get\n          cors:   true\n\n  exportCourseEnrollmentsFaculty:\n    handler: src/functions/csvExpoter/faculty/enrollmentExport.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/enrollments/export\n          method: get\n          cors:   true\n\n  # ── Webhooks ────────────────────────────────────────────────\n\n  tpstreamsWebhook:\n    handler: src/functions/webhooks/tpstreamsWebhook.handler\n    timeout: 10                          # short — just pushes to SQS\n    events:\n      - http:\n          path: /webhooks/tpstreams\n          method: post\n\n  # Supabase database webhook: fires on every chat_messages INSERT and enqueues\n  # a chat push job. Authenticated via the x-webhook-secret header.\n  chatMessageWebhook:\n    handler: src/functions/webhooks/chatMessageWebhook.handler\n    timeout: 10                          # short — just pushes to SQS\n    events:\n      - http:\n          path: /webhooks/chat-message\n          method: post\n\n  # ── SQS Background Jobs ─────────────────────────────────────\n\n  processVideoUpload:\n    handler: src/functions/video/processVideoUpload.handler\n    timeout: 300                         # long — does heavy DB work\n    events:\n      - sqs:\n          arn: !GetAtt VideoUploadQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures\n\n  chatNotificationWorker:\n    handler: src/functions/chat/chat.notification.handler\n    timeout: 60                          # medium — notification work\n    events:\n      - sqs:\n          arn: !GetAtt ChatNotificationQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures   # ← ADDED\n\n  # Shared push worker — drains NotificationQueue and fans each job out to FCM\n  # + an in-app notifications row, based on the job's `type`.\n  notificationWorker:\n    handler: src/functions/notification/notificationWorker.handler\n    timeout: 60\n    events:\n      - sqs:\n          arn: !GetAtt NotificationQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures\n\n  # ── Scheduled Jobs ──────────────────────────────────────────\n\n  # Cron A — daily student-streak settlement. Runs at DAY-END (00:00 IST /\n  # 18:30 UTC) for the day that just ended: updates streak_days, awards coins on\n  # the goal, resets broken streaks, and STAGES reward/broken pushes into\n  # scheduled_notifications (scheduled_for = the coming 08:00 IST). No push yet.\n  studentStreakCron:\n    handler: src/functions/streak/updateStreaks.handler\n    timeout: 300\n    events:\n      - schedule:\n          rate: cron(30 18 * * ? *)      # 18:30 UTC = 00:00 IST (day end)\n          enabled: true\n\n  # Cron B — notification dispatch. Runs 08:00 IST (02:30 UTC): drains every\n  # due scheduled_notifications row onto NotificationQueue → notificationWorker\n  # → FCM. This is the \"scheduled delivery\" step for jobs staged at midnight.\n  notificationDispatchCron:\n    handler: src/functions/notification/notificationDispatch.handler\n    timeout: 300\n    events:\n      - schedule:\n          rate: cron(30 2 * * ? *)       # 02:30 UTC = 08:00 IST daily\n          enabled: true",
     "command": [
-      "offline"
+      "print"
     ],
-    "options": {},
+    "options": {
+      "stage": "dev"
+    },
     "orgId": "5acd3926-d700-405e-92da-dc1a13a30598",
     "orgName": "sarath1937",
     "userId": "n0TL8qG4d4qRbh4SlP",
@@ -319,32 +447,50 @@
     "serviceProviderAwsCfStackName": "background-service-dev",
     "serviceProviderAwsCfStackId": "arn:aws:cloudformation:ap-south-1:303192504126:stack/background-service-dev/49b7f6a0-6bbd-11f1-b381-0220d2af102b",
     "serviceProviderAwsCfStackCreated": "2026-06-19T09:00:16.213Z",
-    "serviceProviderAwsCfStackUpdated": "2026-07-01T08:14:58.718Z",
+    "serviceProviderAwsCfStackUpdated": "2026-07-07T08:41:11.872Z",
     "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
     "serviceProviderAwsCfStackOutputs": [
       {
         "OutputKey": "ProcessVideoUploadLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-processVideoUpload:6",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-processVideoUpload:10",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "GetBankDetailsLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-getBankDetails:6",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-getBankDetails:10",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "ChatNotificationWorkerLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-chatNotificationWorker:6",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-chatNotificationWorker:10",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
       },
       {
+        "OutputKey": "ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-exportCourseEnrollmentsFaculty:4",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn"
+      },
+      {
         "OutputKey": "TpstreamsWebhookLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-tpstreamsWebhook:6",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-tpstreamsWebhook:10",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ChatMessageWebhookLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-chatMessageWebhook:4",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-ChatMessageWebhookLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ExportCourseEnrollmentsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-exportCourseEnrollments:4",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-ExportCourseEnrollmentsLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "ServiceEndpoint",
@@ -359,7 +505,7 @@
       },
       {
         "OutputKey": "SaveBankDetailsLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-saveBankDetails:6",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-saveBankDetails:10",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
       }

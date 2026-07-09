@@ -25824,6 +25824,14 @@ var bankRepository = {
   }
 };
 
+// ../../shared/utils/parseBody.ts
+var parseJsonBody = (event) => {
+  if (event?.body == null) return null;
+  if (typeof event.body !== "string") return event.body;
+  const raw = event.isBase64Encoded ? Buffer.from(event.body, "base64").toString("utf8") : event.body;
+  return JSON.parse(raw);
+};
+
 // ../../shared/utils/validate.ts
 var validate = (schema, data) => {
   const result = schema.safeParse(data);
@@ -40372,7 +40380,7 @@ var saveBankDetailsSchema = external_exports.object({
 var bankService = {
   saveBankDetails: async (event) => {
     try {
-      const validatedData = validate(saveBankDetailsSchema, JSON.parse(event.body));
+      const validatedData = validate(saveBankDetailsSchema, parseJsonBody(event));
       const bankDetails = await bankRepository.saveBankDetails(validatedData, event.user.id, event.supabase);
       return true;
     } catch (error51) {

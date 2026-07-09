@@ -6,16 +6,19 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: ap-south-1
+  stage: ${opt:stage, 'dev'}           # deploy with --stage dev | --stage prod
   timeout: 30                          # default for HTTP endpoints
   apiGateway:
     binaryMediaTypes:                  # required so base64 xlsx bodies decode to real files
       - '*/*'
   environment:
+    STAGE:                         ${sls:stage}
     VIDEO_UPLOAD_QUEUE_URL:        !Ref VideoUploadQueue
     CHAT_NOTIFICATION_QUEUE_URL:   !Ref ChatNotificationQueue
-    SUPABASE_URL:                  ${ssm:/learning-app/SUPABASE_URL}
-    SUPABASE_ANON_KEY:             ${ssm:/learning-app/SUPABASE_ANON_KEY}
-    SUPABASE_SERVICE_ROLE_KEY:     ${ssm:/learning-app/SUPABASE_SERVICE_ROLE_KEY}
+    NOTIFICATION_QUEUE_URL:        !Ref NotificationQueue
+    SUPABASE_URL:                  ${ssm:/learning-app/${sls:stage}/SUPABASE_URL}
+    SUPABASE_ANON_KEY:             ${ssm:/learning-app/${sls:stage}/SUPABASE_ANON_KEY}
+    SUPABASE_SERVICE_ROLE_KEY:     ${ssm:/learning-app/${sls:stage}/SUPABASE_SERVICE_ROLE_KEY}
     BANK_ENCRYPTION_KEY:           ${ssm:/learning-app/BANK_ENCRYPTION_KEY}
     # FCM (Firebase Admin) credentials for chat push notifications.
     FIREBASE_PROJECT_ID:           ${ssm:/learning-app/FIREBASE_PROJECT_ID}
@@ -43,6 +46,14 @@ provider:
             - sqs:GetQueueAttributes
           Resource: !GetAtt ChatNotificationQueue.Arn
 
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage          # streak cron pushes jobs
+            - sqs:ReceiveMessage       # notification worker consumes
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource: !GetAtt NotificationQueue.Arn
+
 plugins:
   - serverless-offline
 
@@ -58,20 +69,26 @@ resources:
     VideoUploadDLQ:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: video-upload-dlq
+        QueueName: video-upload-dlq-${sls:stage}
         MessageRetentionPeriod: 1209600    # 14 days
 
     ChatNotificationDLQ:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: chat-notification-dlq
+        QueueName: chat-notification-dlq-${sls:stage}
+        MessageRetentionPeriod: 1209600    # 14 days
+
+    NotificationDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: notification-dlq-${sls:stage}
         MessageRetentionPeriod: 1209600    # 14 days
 
     # ── Main Queues ─────────────────────────────────────────────
     VideoUploadQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: video-upload-queue
+        QueueName: video-upload-queue-${sls:stage}
         VisibilityTimeout: 300
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt VideoUploadDLQ.Arn
@@ -80,10 +97,21 @@ resources:
     ChatNotificationQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: chat-notification-queue
+        QueueName: chat-notification-queue-${sls:stage}
         VisibilityTimeout: 300
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt ChatNotificationDLQ.Arn
+          maxReceiveCount: 3
+
+    # Shared queue for ALL push scenarios (streak reward/broken, …). Producers
+    # enqueue { type, user_id, data }; notificationWorker switches on `type`.
+    NotificationQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: notification-queue-${sls:stage}
+        VisibilityTimeout: 300
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt NotificationDLQ.Arn
           maxReceiveCount: 3
 
 functions:
@@ -161,3 +189,39 @@ functions:
           arn: !GetAtt ChatNotificationQueue.Arn
           batchSize: 1
           functionResponseType: ReportBatchItemFailures   # ← ADDED
+
+  # Shared push worker — drains NotificationQueue and fans each job out to FCM
+  # + an in-app notifications row, based on the job's `type`.
+  notificationWorker:
+    handler: src/functions/notification/notificationWorker.handler
+    timeout: 60
+    events:
+      - sqs:
+          arn: !GetAtt NotificationQueue.Arn
+          batchSize: 1
+          functionResponseType: ReportBatchItemFailures
+
+  # ── Scheduled Jobs ──────────────────────────────────────────
+
+  # Cron A — daily student-streak settlement. Runs at DAY-END (00:00 IST /
+  # 18:30 UTC) for the day that just ended: updates streak_days, awards coins on
+  # the goal, resets broken streaks, and STAGES reward/broken pushes into
+  # scheduled_notifications (scheduled_for = the coming 08:00 IST). No push yet.
+  studentStreakCron:
+    handler: src/functions/streak/updateStreaks.handler
+    timeout: 300
+    events:
+      - schedule:
+          rate: cron(30 18 * * ? *)      # 18:30 UTC = 00:00 IST (day end)
+          enabled: true
+
+  # Cron B — notification dispatch. Runs 08:00 IST (02:30 UTC): drains every
+  # due scheduled_notifications row onto NotificationQueue → notificationWorker
+  # → FCM. This is the "scheduled delivery" step for jobs staged at midnight.
+  notificationDispatchCron:
+    handler: src/functions/notification/notificationDispatch.handler
+    timeout: 300
+    events:
+      - schedule:
+          rate: cron(30 2 * * ? *)       # 02:30 UTC = 08:00 IST daily
+          enabled: true
