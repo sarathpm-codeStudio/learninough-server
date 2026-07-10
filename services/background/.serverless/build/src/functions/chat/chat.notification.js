@@ -186561,9 +186561,9 @@ var processRecord = async (record) => {
   const { data: sender } = await supabaseAdmin.from("profiles").select("first_name, last_name").eq("id", sender_id).maybeSingle();
   const senderName = [sender?.first_name, sender?.last_name].filter(Boolean).join(" ").trim() || "New message";
   const body = buildBody(senderName, message_type);
-  const { data: devices, error: devErr } = await supabaseAdmin.from("user_devices").select("fcm_token").in("user_id", recipientIds);
+  const { data: devices, error: devErr } = await supabaseAdmin.from("notification_devices").select("token").in("user_id", recipientIds).eq("is_active", true);
   if (devErr) throw new Error(devErr.message);
-  const tokens = (devices ?? []).map((d) => d.fcm_token).filter(Boolean);
+  const tokens = (devices ?? []).map((d) => d.token).filter(Boolean);
   if (tokens.length === 0) return;
   const { invalidTokens } = await sendPushToTokens(tokens, {
     title: senderName,
@@ -186575,7 +186575,7 @@ var processRecord = async (record) => {
     }
   });
   if (invalidTokens.length) {
-    await supabaseAdmin.from("user_devices").delete().in("fcm_token", invalidTokens);
+    await supabaseAdmin.from("notification_devices").update({ is_active: false }).in("token", invalidTokens);
   }
 };
 var chatRepository = {
