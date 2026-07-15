@@ -116,6 +116,18 @@
                 "LogGroupName": "/aws/lambda/background-service-dev-exportCourseEnrollmentsFaculty"
               }
             },
+            "DownloadQuestionImportTemplateLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-downloadQuestionImportTemplate"
+              }
+            },
+            "ImportTestQuestionsLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/background-service-dev-importTestQuestions"
+              }
+            },
             "TpstreamsWebhookLogGroup": {
               "Type": "AWS::Logs::LogGroup",
               "Properties": {
@@ -314,7 +326,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/bank/saveBankDetails.handler",
                 "Runtime": "nodejs20.x",
@@ -360,7 +372,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/bank/getBankDetails.handler",
                 "Runtime": "nodejs20.x",
@@ -406,7 +418,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/csvExpoter/admin/enrollmentExport.handler",
                 "Runtime": "nodejs20.x",
@@ -452,7 +464,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/csvExpoter/faculty/enrollmentExport.handler",
                 "Runtime": "nodejs20.x",
@@ -493,12 +505,104 @@
                 "ExportCourseEnrollmentsFacultyLogGroup"
               ]
             },
+            "DownloadQuestionImportTemplateLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                },
+                "Handler": "src/functions/csvExpoter/faculty/questionTemplate.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-downloadQuestionImportTemplate",
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment": {
+                  "Variables": {
+                    "STAGE": "dev",
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "CHAT_NOTIFICATION_QUEUE_URL": {
+                      "Ref": "ChatNotificationQueue"
+                    },
+                    "NOTIFICATION_QUEUE_URL": {
+                      "Ref": "NotificationQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                    "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                    "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+                    "CHAT_WEBHOOK_SECRET": "<REDACTED>",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "DownloadQuestionImportTemplateLogGroup"
+              ]
+            },
+            "ImportTestQuestionsLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                },
+                "Handler": "src/functions/csvExpoter/faculty/questionImport.handler",
+                "Runtime": "nodejs20.x",
+                "FunctionName": "background-service-dev-importTestQuestions",
+                "MemorySize": 1024,
+                "Timeout": 60,
+                "Environment": {
+                  "Variables": {
+                    "STAGE": "dev",
+                    "VIDEO_UPLOAD_QUEUE_URL": {
+                      "Ref": "VideoUploadQueue"
+                    },
+                    "CHAT_NOTIFICATION_QUEUE_URL": {
+                      "Ref": "ChatNotificationQueue"
+                    },
+                    "NOTIFICATION_QUEUE_URL": {
+                      "Ref": "NotificationQueue"
+                    },
+                    "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                    "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                    "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                    "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                    "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                    "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+                    "CHAT_WEBHOOK_SECRET": "<REDACTED>",
+                    "NODE_OPTIONS": "--enable-source-maps"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "ImportTestQuestionsLogGroup"
+              ]
+            },
             "TpstreamsWebhookLambdaFunction": {
               "Type": "AWS::Lambda::Function",
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/webhooks/tpstreamsWebhook.handler",
                 "Runtime": "nodejs20.x",
@@ -544,7 +648,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/webhooks/chatMessageWebhook.handler",
                 "Runtime": "nodejs20.x",
@@ -590,7 +694,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/video/processVideoUpload.handler",
                 "Runtime": "nodejs20.x",
@@ -636,7 +740,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/chat/chat.notification.handler",
                 "Runtime": "nodejs20.x",
@@ -682,7 +786,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/notification/notificationWorker.handler",
                 "Runtime": "nodejs20.x",
@@ -728,7 +832,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/streak/updateStreaks.handler",
                 "Runtime": "nodejs20.x",
@@ -774,7 +878,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                  "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                  "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
                 },
                 "Handler": "src/functions/notification/notificationDispatch.handler",
                 "Runtime": "nodejs20.x",
@@ -815,114 +919,134 @@
                 "NotificationDispatchCronLogGroup"
               ]
             },
-            "SaveBankDetailsLambdaVersionvOHFBCT7VaEnAXz7BmWFcfMbtqafgX7nCocGb2hFQg": {
+            "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "SaveBankDetailsLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "GetBankDetailsLambdaVersionlsTVjqftMcMInXfO11wXSFRuYB7ZGJXYxw2NZpmI": {
+            "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "GetBankDetailsLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "ExportCourseEnrollmentsLambdaVersionsyQOBNhxLHrPxxHK7vkXkkWdHkDZTwvXPpBi4JIQyo": {
+            "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "ExportCourseEnrollmentsLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "ExportCourseEnrollmentsFacultyLambdaVersion81z5l0Y9RnPqDqgJmty9lwDVm5WTrjA74gPjJh2fTDk": {
+            "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "ExportCourseEnrollmentsFacultyLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "TpstreamsWebhookLambdaVersionig3DeKCINKXJe2NKXLtZRDYxkDhrPtLVN5F4VVS2xs": {
+            "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "DownloadQuestionImportTemplateLambdaFunction"
+                },
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              }
+            },
+            "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "ImportTestQuestionsLambdaFunction"
+                },
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              }
+            },
+            "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "TpstreamsWebhookLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "ChatMessageWebhookLambdaVersionGKiL3JIcwxzW1ImPhCajhATPbn6kgWMk8aYO0CH3lGY": {
+            "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "ChatMessageWebhookLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "ProcessVideoUploadLambdaVersion5daniWtiukcxzTnipww8F3YOFtfBPjpx3lNyvW9bSw": {
+            "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "ProcessVideoUploadLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "ChatNotificationWorkerLambdaVersionKvkiCgcXyJQohNgrhZKMcbczBT1EJBWbe3g8aM4": {
+            "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "ChatNotificationWorkerLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "NotificationWorkerLambdaVersionXTHGDnoWk7IQCTltp69S5v3tUk3NTZW81M1x3x2DQ": {
+            "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "NotificationWorkerLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "StudentStreakCronLambdaVersionb6FGMRJ8pKvVfxqtqhHxDcXkvydykmN2avzJzTdEc": {
+            "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "StudentStreakCronLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
-            "NotificationDispatchCronLambdaVersionlp0JL86kdVaRx9r5esWmqDF8c2uNzpdN7HlIWT2JiYA": {
+            "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "NotificationDispatchCronLambdaFunction"
                 },
-                "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+                "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
               }
             },
             "StudentStreakCronEventsRuleSchedule1": {
@@ -1096,6 +1220,90 @@
                   "Ref": "ApiGatewayResourceFacultyCoursesCourseidVarEnrollments"
                 },
                 "PathPart": "export",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFacultyTests": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceFaculty"
+                },
+                "PathPart": "tests",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFacultyTestsQuestions": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceFacultyTests"
+                },
+                "PathPart": "questions",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFacultyTestsQuestionsImport": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceFacultyTestsQuestions"
+                },
+                "PathPart": "import",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFacultyTestsQuestionsImportTemplate": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceFacultyTestsQuestionsImport"
+                },
+                "PathPart": "template",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFacultyTestsTestidVar": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceFacultyTests"
+                },
+                "PathPart": "{testId}",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFacultyTestsTestidVarQuestions": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceFacultyTestsTestidVar"
+                },
+                "PathPart": "questions",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceFacultyTestsTestidVarQuestionsImport": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceFacultyTestsTestidVarQuestions"
+                },
+                "PathPart": "import",
                 "RestApiId": {
                   "Ref": "ApiGatewayRestApi"
                 }
@@ -1338,6 +1546,96 @@
                 }
               }
             },
+            "ApiGatewayMethodFacultyTestsQuestionsImportTemplateOptions": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "AuthorizationType": "NONE",
+                "HttpMethod": "OPTIONS",
+                "MethodResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": true,
+                      "method.response.header.Access-Control-Allow-Headers": true,
+                      "method.response.header.Access-Control-Allow-Methods": true
+                    },
+                    "ResponseModels": {}
+                  }
+                ],
+                "RequestParameters": {},
+                "Integration": {
+                  "Type": "MOCK",
+                  "RequestTemplates": {
+                    "application/json": "{statusCode:200}"
+                  },
+                  "ContentHandling": "CONVERT_TO_TEXT",
+                  "IntegrationResponses": [
+                    {
+                      "StatusCode": "200",
+                      "ResponseParameters": {
+                        "method.response.header.Access-Control-Allow-Origin": "'*'",
+                        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                      },
+                      "ResponseTemplates": {
+                        "application/json": ""
+                      }
+                    }
+                  ]
+                },
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceFacultyTestsQuestionsImportTemplate"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportOptions": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "AuthorizationType": "NONE",
+                "HttpMethod": "OPTIONS",
+                "MethodResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": true,
+                      "method.response.header.Access-Control-Allow-Headers": true,
+                      "method.response.header.Access-Control-Allow-Methods": true
+                    },
+                    "ResponseModels": {}
+                  }
+                ],
+                "RequestParameters": {},
+                "Integration": {
+                  "Type": "MOCK",
+                  "RequestTemplates": {
+                    "application/json": "{statusCode:200}"
+                  },
+                  "ContentHandling": "CONVERT_TO_TEXT",
+                  "IntegrationResponses": [
+                    {
+                      "StatusCode": "200",
+                      "ResponseParameters": {
+                        "method.response.header.Access-Control-Allow-Origin": "'*'",
+                        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                      },
+                      "ResponseTemplates": {
+                        "application/json": ""
+                      }
+                    }
+                  ]
+                },
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceFacultyTestsTestidVarQuestionsImport"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
             "ApiGatewayMethodFacultyBankDetailsPost": {
               "Type": "AWS::ApiGateway::Method",
               "Properties": {
@@ -1522,6 +1820,98 @@
                 "ExportCourseEnrollmentsFacultyLambdaPermissionApiGateway"
               ]
             },
+            "ApiGatewayMethodFacultyTestsQuestionsImportTemplateGet": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "GET",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceFacultyTestsQuestionsImportTemplate"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "DownloadQuestionImportTemplateLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "DownloadQuestionImportTemplateLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportPost": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "POST",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceFacultyTestsTestidVarQuestionsImport"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "ImportTestQuestionsLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "ImportTestQuestionsLambdaPermissionApiGateway"
+              ]
+            },
             "ApiGatewayMethodWebhooksTpstreamsPost": {
               "Type": "AWS::ApiGateway::Method",
               "Properties": {
@@ -1614,7 +2004,7 @@
                 "ChatMessageWebhookLambdaPermissionApiGateway"
               ]
             },
-            "ApiGatewayDeployment1783596957106": {
+            "ApiGatewayDeployment1784094162444": {
               "Type": "AWS::ApiGateway::Deployment",
               "Properties": {
                 "RestApiId": {
@@ -1626,10 +2016,14 @@
                 "ApiGatewayMethodFacultyBankDetailsOptions",
                 "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportOptions",
                 "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportOptions",
+                "ApiGatewayMethodFacultyTestsQuestionsImportTemplateOptions",
+                "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportOptions",
                 "ApiGatewayMethodFacultyBankDetailsPost",
                 "ApiGatewayMethodFacultyBankDetailsGet",
                 "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportGet",
                 "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportGet",
+                "ApiGatewayMethodFacultyTestsQuestionsImportTemplateGet",
+                "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportPost",
                 "ApiGatewayMethodWebhooksTpstreamsPost",
                 "ApiGatewayMethodWebhooksChatDashmessagePost"
               ]
@@ -1751,6 +2145,80 @@
                 "FunctionName": {
                   "Fn::GetAtt": [
                     "ExportCourseEnrollmentsFacultyLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "DownloadQuestionImportTemplateLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "DownloadQuestionImportTemplateLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "ImportTestQuestionsLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "ImportTestQuestionsLambdaFunction",
                     "Arn"
                   ]
                 },
@@ -2011,7 +2479,7 @@
             "SaveBankDetailsLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "SaveBankDetailsLambdaVersionvOHFBCT7VaEnAXz7BmWFcfMbtqafgX7nCocGb2hFQg"
+                "Ref": "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk"
               },
               "Export": {
                 "Name": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
@@ -2020,7 +2488,7 @@
             "GetBankDetailsLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "GetBankDetailsLambdaVersionlsTVjqftMcMInXfO11wXSFRuYB7ZGJXYxw2NZpmI"
+                "Ref": "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk"
               },
               "Export": {
                 "Name": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
@@ -2029,7 +2497,7 @@
             "ExportCourseEnrollmentsLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "ExportCourseEnrollmentsLambdaVersionsyQOBNhxLHrPxxHK7vkXkkWdHkDZTwvXPpBi4JIQyo"
+                "Ref": "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE"
               },
               "Export": {
                 "Name": "sls-background-service-dev-ExportCourseEnrollmentsLambdaFunctionQualifiedArn"
@@ -2038,16 +2506,34 @@
             "ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "ExportCourseEnrollmentsFacultyLambdaVersion81z5l0Y9RnPqDqgJmty9lwDVm5WTrjA74gPjJh2fTDk"
+                "Ref": "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI"
               },
               "Export": {
                 "Name": "sls-background-service-dev-ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn"
               }
             },
+            "DownloadQuestionImportTemplateLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-DownloadQuestionImportTemplateLambdaFunctionQualifiedArn"
+              }
+            },
+            "ImportTestQuestionsLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU"
+              },
+              "Export": {
+                "Name": "sls-background-service-dev-ImportTestQuestionsLambdaFunctionQualifiedArn"
+              }
+            },
             "TpstreamsWebhookLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "TpstreamsWebhookLambdaVersionig3DeKCINKXJe2NKXLtZRDYxkDhrPtLVN5F4VVS2xs"
+                "Ref": "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU"
               },
               "Export": {
                 "Name": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
@@ -2056,7 +2542,7 @@
             "ChatMessageWebhookLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "ChatMessageWebhookLambdaVersionGKiL3JIcwxzW1ImPhCajhATPbn6kgWMk8aYO0CH3lGY"
+                "Ref": "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0"
               },
               "Export": {
                 "Name": "sls-background-service-dev-ChatMessageWebhookLambdaFunctionQualifiedArn"
@@ -2065,7 +2551,7 @@
             "ProcessVideoUploadLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "ProcessVideoUploadLambdaVersion5daniWtiukcxzTnipww8F3YOFtfBPjpx3lNyvW9bSw"
+                "Ref": "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME"
               },
               "Export": {
                 "Name": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
@@ -2074,7 +2560,7 @@
             "ChatNotificationWorkerLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "ChatNotificationWorkerLambdaVersionKvkiCgcXyJQohNgrhZKMcbczBT1EJBWbe3g8aM4"
+                "Ref": "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw"
               },
               "Export": {
                 "Name": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
@@ -2083,7 +2569,7 @@
             "NotificationWorkerLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "NotificationWorkerLambdaVersionXTHGDnoWk7IQCTltp69S5v3tUk3NTZW81M1x3x2DQ"
+                "Ref": "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0"
               },
               "Export": {
                 "Name": "sls-background-service-dev-NotificationWorkerLambdaFunctionQualifiedArn"
@@ -2092,7 +2578,7 @@
             "StudentStreakCronLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "StudentStreakCronLambdaVersionb6FGMRJ8pKvVfxqtqhHxDcXkvydykmN2avzJzTdEc"
+                "Ref": "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70"
               },
               "Export": {
                 "Name": "sls-background-service-dev-StudentStreakCronLambdaFunctionQualifiedArn"
@@ -2101,7 +2587,7 @@
             "NotificationDispatchCronLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "NotificationDispatchCronLambdaVersionlp0JL86kdVaRx9r5esWmqDF8c2uNzpdN7HlIWT2JiYA"
+                "Ref": "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0"
               },
               "Export": {
                 "Name": "sls-background-service-dev-NotificationDispatchCronLambdaFunctionQualifiedArn"
@@ -2258,7 +2744,7 @@
           "timeout": 30,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "SaveBankDetailsLambdaVersionvOHFBCT7VaEnAXz7BmWFcfMbtqafgX7nCocGb2hFQg"
+          "versionLogicalId": "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk"
         },
         "getBankDetails": {
           "handler": "src/functions/bank/getBankDetails.handler",
@@ -2297,7 +2783,7 @@
           "timeout": 30,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "GetBankDetailsLambdaVersionlsTVjqftMcMInXfO11wXSFRuYB7ZGJXYxw2NZpmI"
+          "versionLogicalId": "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk"
         },
         "exportCourseEnrollments": {
           "handler": "src/functions/csvExpoter/admin/enrollmentExport.handler",
@@ -2336,7 +2822,7 @@
           "timeout": 30,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "ExportCourseEnrollmentsLambdaVersionsyQOBNhxLHrPxxHK7vkXkkWdHkDZTwvXPpBi4JIQyo"
+          "versionLogicalId": "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE"
         },
         "exportCourseEnrollmentsFaculty": {
           "handler": "src/functions/csvExpoter/faculty/enrollmentExport.handler",
@@ -2375,7 +2861,85 @@
           "timeout": 30,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "ExportCourseEnrollmentsFacultyLambdaVersion81z5l0Y9RnPqDqgJmty9lwDVm5WTrjA74gPjJh2fTDk"
+          "versionLogicalId": "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI"
+        },
+        "downloadQuestionImportTemplate": {
+          "handler": "src/functions/csvExpoter/faculty/questionTemplate.handler",
+          "events": [
+            {
+              "http": {
+                "path": "faculty/tests/questions/import/template",
+                "method": "get",
+                "cors": {
+                  "origin": "*",
+                  "methods": [
+                    "OPTIONS",
+                    "GET"
+                  ],
+                  "headers": [
+                    "Content-Type",
+                    "X-Amz-Date",
+                    "Authorization",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
+                    "X-Amz-User-Agent",
+                    "X-Amzn-Trace-Id"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                },
+                "integration": "AWS_PROXY"
+              }
+            }
+          ],
+          "name": "background-service-dev-downloadQuestionImportTemplate",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "timeout": 30,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso"
+        },
+        "importTestQuestions": {
+          "handler": "src/functions/csvExpoter/faculty/questionImport.handler",
+          "timeout": 60,
+          "events": [
+            {
+              "http": {
+                "path": "faculty/tests/{testId}/questions/import",
+                "method": "post",
+                "cors": {
+                  "origin": "*",
+                  "methods": [
+                    "OPTIONS",
+                    "POST"
+                  ],
+                  "headers": [
+                    "Content-Type",
+                    "X-Amz-Date",
+                    "Authorization",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
+                    "X-Amz-User-Agent",
+                    "X-Amzn-Trace-Id"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                },
+                "integration": "AWS_PROXY"
+              }
+            }
+          ],
+          "name": "background-service-dev-importTestQuestions",
+          "environment": {
+            "NODE_OPTIONS": "--enable-source-maps"
+          },
+          "package": {},
+          "memory": 1024,
+          "runtime": "nodejs20.x",
+          "vpc": {},
+          "versionLogicalId": "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU"
         },
         "tpstreamsWebhook": {
           "handler": "src/functions/webhooks/tpstreamsWebhook.handler",
@@ -2397,7 +2961,7 @@
           "memory": 1024,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "TpstreamsWebhookLambdaVersionig3DeKCINKXJe2NKXLtZRDYxkDhrPtLVN5F4VVS2xs"
+          "versionLogicalId": "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU"
         },
         "chatMessageWebhook": {
           "handler": "src/functions/webhooks/chatMessageWebhook.handler",
@@ -2419,7 +2983,7 @@
           "memory": 1024,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "ChatMessageWebhookLambdaVersionGKiL3JIcwxzW1ImPhCajhATPbn6kgWMk8aYO0CH3lGY"
+          "versionLogicalId": "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0"
         },
         "processVideoUpload": {
           "handler": "src/functions/video/processVideoUpload.handler",
@@ -2446,7 +3010,7 @@
           "memory": 1024,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "ProcessVideoUploadLambdaVersion5daniWtiukcxzTnipww8F3YOFtfBPjpx3lNyvW9bSw"
+          "versionLogicalId": "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME"
         },
         "chatNotificationWorker": {
           "handler": "src/functions/chat/chat.notification.handler",
@@ -2473,7 +3037,7 @@
           "memory": 1024,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "ChatNotificationWorkerLambdaVersionKvkiCgcXyJQohNgrhZKMcbczBT1EJBWbe3g8aM4"
+          "versionLogicalId": "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw"
         },
         "notificationWorker": {
           "handler": "src/functions/notification/notificationWorker.handler",
@@ -2500,7 +3064,7 @@
           "memory": 1024,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "NotificationWorkerLambdaVersionXTHGDnoWk7IQCTltp69S5v3tUk3NTZW81M1x3x2DQ"
+          "versionLogicalId": "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0"
         },
         "studentStreakCron": {
           "handler": "src/functions/streak/updateStreaks.handler",
@@ -2523,7 +3087,7 @@
           "memory": 1024,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "StudentStreakCronLambdaVersionb6FGMRJ8pKvVfxqtqhHxDcXkvydykmN2avzJzTdEc"
+          "versionLogicalId": "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70"
         },
         "notificationDispatchCron": {
           "handler": "src/functions/notification/notificationDispatch.handler",
@@ -2546,7 +3110,7 @@
           "memory": 1024,
           "runtime": "nodejs20.x",
           "vpc": {},
-          "versionLogicalId": "NotificationDispatchCronLambdaVersionlp0JL86kdVaRx9r5esWmqDF8c2uNzpdN7HlIWT2JiYA"
+          "versionLogicalId": "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0"
         }
       }
     },
@@ -2659,6 +3223,18 @@
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/background-service-dev-exportCourseEnrollmentsFaculty"
+            }
+          },
+          "DownloadQuestionImportTemplateLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-downloadQuestionImportTemplate"
+            }
+          },
+          "ImportTestQuestionsLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/background-service-dev-importTestQuestions"
             }
           },
           "TpstreamsWebhookLogGroup": {
@@ -2859,7 +3435,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/bank/saveBankDetails.handler",
               "Runtime": "nodejs20.x",
@@ -2905,7 +3481,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/bank/getBankDetails.handler",
               "Runtime": "nodejs20.x",
@@ -2951,7 +3527,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/csvExpoter/admin/enrollmentExport.handler",
               "Runtime": "nodejs20.x",
@@ -2997,7 +3573,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/csvExpoter/faculty/enrollmentExport.handler",
               "Runtime": "nodejs20.x",
@@ -3038,12 +3614,104 @@
               "ExportCourseEnrollmentsFacultyLogGroup"
             ]
           },
+          "DownloadQuestionImportTemplateLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+              },
+              "Handler": "src/functions/csvExpoter/faculty/questionTemplate.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-downloadQuestionImportTemplate",
+              "MemorySize": 1024,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "STAGE": "dev",
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "CHAT_NOTIFICATION_QUEUE_URL": {
+                    "Ref": "ChatNotificationQueue"
+                  },
+                  "NOTIFICATION_QUEUE_URL": {
+                    "Ref": "NotificationQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+                  "CHAT_WEBHOOK_SECRET": "<REDACTED>",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "DownloadQuestionImportTemplateLogGroup"
+            ]
+          },
+          "ImportTestQuestionsLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+              },
+              "Handler": "src/functions/csvExpoter/faculty/questionImport.handler",
+              "Runtime": "nodejs20.x",
+              "FunctionName": "background-service-dev-importTestQuestions",
+              "MemorySize": 1024,
+              "Timeout": 60,
+              "Environment": {
+                "Variables": {
+                  "STAGE": "dev",
+                  "VIDEO_UPLOAD_QUEUE_URL": {
+                    "Ref": "VideoUploadQueue"
+                  },
+                  "CHAT_NOTIFICATION_QUEUE_URL": {
+                    "Ref": "ChatNotificationQueue"
+                  },
+                  "NOTIFICATION_QUEUE_URL": {
+                    "Ref": "NotificationQueue"
+                  },
+                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                  "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                  "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                  "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+                  "CHAT_WEBHOOK_SECRET": "<REDACTED>",
+                  "NODE_OPTIONS": "--enable-source-maps"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "ImportTestQuestionsLogGroup"
+            ]
+          },
           "TpstreamsWebhookLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/webhooks/tpstreamsWebhook.handler",
               "Runtime": "nodejs20.x",
@@ -3089,7 +3757,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/webhooks/chatMessageWebhook.handler",
               "Runtime": "nodejs20.x",
@@ -3135,7 +3803,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/video/processVideoUpload.handler",
               "Runtime": "nodejs20.x",
@@ -3181,7 +3849,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/chat/chat.notification.handler",
               "Runtime": "nodejs20.x",
@@ -3227,7 +3895,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/notification/notificationWorker.handler",
               "Runtime": "nodejs20.x",
@@ -3273,7 +3941,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/streak/updateStreaks.handler",
               "Runtime": "nodejs20.x",
@@ -3319,7 +3987,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
               },
               "Handler": "src/functions/notification/notificationDispatch.handler",
               "Runtime": "nodejs20.x",
@@ -3360,114 +4028,134 @@
               "NotificationDispatchCronLogGroup"
             ]
           },
-          "SaveBankDetailsLambdaVersionvOHFBCT7VaEnAXz7BmWFcfMbtqafgX7nCocGb2hFQg": {
+          "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "SaveBankDetailsLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "GetBankDetailsLambdaVersionlsTVjqftMcMInXfO11wXSFRuYB7ZGJXYxw2NZpmI": {
+          "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetBankDetailsLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "ExportCourseEnrollmentsLambdaVersionsyQOBNhxLHrPxxHK7vkXkkWdHkDZTwvXPpBi4JIQyo": {
+          "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ExportCourseEnrollmentsLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "ExportCourseEnrollmentsFacultyLambdaVersion81z5l0Y9RnPqDqgJmty9lwDVm5WTrjA74gPjJh2fTDk": {
+          "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ExportCourseEnrollmentsFacultyLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "TpstreamsWebhookLambdaVersionig3DeKCINKXJe2NKXLtZRDYxkDhrPtLVN5F4VVS2xs": {
+          "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "DownloadQuestionImportTemplateLambdaFunction"
+              },
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+            }
+          },
+          "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ImportTestQuestionsLambdaFunction"
+              },
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+            }
+          },
+          "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "TpstreamsWebhookLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "ChatMessageWebhookLambdaVersionGKiL3JIcwxzW1ImPhCajhATPbn6kgWMk8aYO0CH3lGY": {
+          "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ChatMessageWebhookLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "ProcessVideoUploadLambdaVersion5daniWtiukcxzTnipww8F3YOFtfBPjpx3lNyvW9bSw": {
+          "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ProcessVideoUploadLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "ChatNotificationWorkerLambdaVersionKvkiCgcXyJQohNgrhZKMcbczBT1EJBWbe3g8aM4": {
+          "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ChatNotificationWorkerLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "NotificationWorkerLambdaVersionXTHGDnoWk7IQCTltp69S5v3tUk3NTZW81M1x3x2DQ": {
+          "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "NotificationWorkerLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "StudentStreakCronLambdaVersionb6FGMRJ8pKvVfxqtqhHxDcXkvydykmN2avzJzTdEc": {
+          "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "StudentStreakCronLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
-          "NotificationDispatchCronLambdaVersionlp0JL86kdVaRx9r5esWmqDF8c2uNzpdN7HlIWT2JiYA": {
+          "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "NotificationDispatchCronLambdaFunction"
               },
-              "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
             }
           },
           "StudentStreakCronEventsRuleSchedule1": {
@@ -3641,6 +4329,90 @@
                 "Ref": "ApiGatewayResourceFacultyCoursesCourseidVarEnrollments"
               },
               "PathPart": "export",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyTests": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFaculty"
+              },
+              "PathPart": "tests",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyTestsQuestions": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyTests"
+              },
+              "PathPart": "questions",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyTestsQuestionsImport": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyTestsQuestions"
+              },
+              "PathPart": "import",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyTestsQuestionsImportTemplate": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyTestsQuestionsImport"
+              },
+              "PathPart": "template",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyTestsTestidVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyTests"
+              },
+              "PathPart": "{testId}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyTestsTestidVarQuestions": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyTestsTestidVar"
+              },
+              "PathPart": "questions",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceFacultyTestsTestidVarQuestionsImport": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceFacultyTestsTestidVarQuestions"
+              },
+              "PathPart": "import",
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
@@ -3883,6 +4655,96 @@
               }
             }
           },
+          "ApiGatewayMethodFacultyTestsQuestionsImportTemplateOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceFacultyTestsQuestionsImportTemplate"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": ""
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceFacultyTestsTestidVarQuestionsImport"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
           "ApiGatewayMethodFacultyBankDetailsPost": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
@@ -4067,6 +4929,98 @@
               "ExportCourseEnrollmentsFacultyLambdaPermissionApiGateway"
             ]
           },
+          "ApiGatewayMethodFacultyTestsQuestionsImportTemplateGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceFacultyTestsQuestionsImportTemplate"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "DownloadQuestionImportTemplateLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "DownloadQuestionImportTemplateLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceFacultyTestsTestidVarQuestionsImport"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "ImportTestQuestionsLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "ImportTestQuestionsLambdaPermissionApiGateway"
+            ]
+          },
           "ApiGatewayMethodWebhooksTpstreamsPost": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
@@ -4159,7 +5113,7 @@
               "ChatMessageWebhookLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1783596957106": {
+          "ApiGatewayDeployment1784094162444": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -4171,10 +5125,14 @@
               "ApiGatewayMethodFacultyBankDetailsOptions",
               "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportOptions",
               "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportOptions",
+              "ApiGatewayMethodFacultyTestsQuestionsImportTemplateOptions",
+              "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportOptions",
               "ApiGatewayMethodFacultyBankDetailsPost",
               "ApiGatewayMethodFacultyBankDetailsGet",
               "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportGet",
               "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportGet",
+              "ApiGatewayMethodFacultyTestsQuestionsImportTemplateGet",
+              "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportPost",
               "ApiGatewayMethodWebhooksTpstreamsPost",
               "ApiGatewayMethodWebhooksChatDashmessagePost"
             ]
@@ -4296,6 +5254,80 @@
               "FunctionName": {
                 "Fn::GetAtt": [
                   "ExportCourseEnrollmentsFacultyLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "DownloadQuestionImportTemplateLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "DownloadQuestionImportTemplateLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "ImportTestQuestionsLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "ImportTestQuestionsLambdaFunction",
                   "Arn"
                 ]
               },
@@ -4556,7 +5588,7 @@
           "SaveBankDetailsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "SaveBankDetailsLambdaVersionvOHFBCT7VaEnAXz7BmWFcfMbtqafgX7nCocGb2hFQg"
+              "Ref": "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk"
             },
             "Export": {
               "Name": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
@@ -4565,7 +5597,7 @@
           "GetBankDetailsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetBankDetailsLambdaVersionlsTVjqftMcMInXfO11wXSFRuYB7ZGJXYxw2NZpmI"
+              "Ref": "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk"
             },
             "Export": {
               "Name": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
@@ -4574,7 +5606,7 @@
           "ExportCourseEnrollmentsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ExportCourseEnrollmentsLambdaVersionsyQOBNhxLHrPxxHK7vkXkkWdHkDZTwvXPpBi4JIQyo"
+              "Ref": "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE"
             },
             "Export": {
               "Name": "sls-background-service-dev-ExportCourseEnrollmentsLambdaFunctionQualifiedArn"
@@ -4583,16 +5615,34 @@
           "ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ExportCourseEnrollmentsFacultyLambdaVersion81z5l0Y9RnPqDqgJmty9lwDVm5WTrjA74gPjJh2fTDk"
+              "Ref": "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI"
             },
             "Export": {
               "Name": "sls-background-service-dev-ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn"
             }
           },
+          "DownloadQuestionImportTemplateLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-DownloadQuestionImportTemplateLambdaFunctionQualifiedArn"
+            }
+          },
+          "ImportTestQuestionsLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU"
+            },
+            "Export": {
+              "Name": "sls-background-service-dev-ImportTestQuestionsLambdaFunctionQualifiedArn"
+            }
+          },
           "TpstreamsWebhookLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "TpstreamsWebhookLambdaVersionig3DeKCINKXJe2NKXLtZRDYxkDhrPtLVN5F4VVS2xs"
+              "Ref": "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU"
             },
             "Export": {
               "Name": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
@@ -4601,7 +5651,7 @@
           "ChatMessageWebhookLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ChatMessageWebhookLambdaVersionGKiL3JIcwxzW1ImPhCajhATPbn6kgWMk8aYO0CH3lGY"
+              "Ref": "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0"
             },
             "Export": {
               "Name": "sls-background-service-dev-ChatMessageWebhookLambdaFunctionQualifiedArn"
@@ -4610,7 +5660,7 @@
           "ProcessVideoUploadLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ProcessVideoUploadLambdaVersion5daniWtiukcxzTnipww8F3YOFtfBPjpx3lNyvW9bSw"
+              "Ref": "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME"
             },
             "Export": {
               "Name": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
@@ -4619,7 +5669,7 @@
           "ChatNotificationWorkerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ChatNotificationWorkerLambdaVersionKvkiCgcXyJQohNgrhZKMcbczBT1EJBWbe3g8aM4"
+              "Ref": "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw"
             },
             "Export": {
               "Name": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
@@ -4628,7 +5678,7 @@
           "NotificationWorkerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "NotificationWorkerLambdaVersionXTHGDnoWk7IQCTltp69S5v3tUk3NTZW81M1x3x2DQ"
+              "Ref": "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0"
             },
             "Export": {
               "Name": "sls-background-service-dev-NotificationWorkerLambdaFunctionQualifiedArn"
@@ -4637,7 +5687,7 @@
           "StudentStreakCronLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "StudentStreakCronLambdaVersionb6FGMRJ8pKvVfxqtqhHxDcXkvydykmN2avzJzTdEc"
+              "Ref": "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70"
             },
             "Export": {
               "Name": "sls-background-service-dev-StudentStreakCronLambdaFunctionQualifiedArn"
@@ -4646,7 +5696,7 @@
           "NotificationDispatchCronLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "NotificationDispatchCronLambdaVersionlp0JL86kdVaRx9r5esWmqDF8c2uNzpdN7HlIWT2JiYA"
+              "Ref": "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0"
             },
             "Export": {
               "Name": "sls-background-service-dev-NotificationDispatchCronLambdaFunctionQualifiedArn"
@@ -4691,7 +5741,7 @@
       "serviceProvider": null,
       "instanceParameters": null
     },
-    "serviceRawFile": "\n\nservice: background-service\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n  region: ap-south-1\n  stage: ${opt:stage, 'dev'}           # deploy with --stage dev | --stage prod\n  timeout: 30                          # default for HTTP endpoints\n  apiGateway:\n    binaryMediaTypes:                  # required so base64 xlsx bodies decode to real files\n      - '*/*'\n  environment:\n    STAGE:                         ${sls:stage}\n    VIDEO_UPLOAD_QUEUE_URL:        !Ref VideoUploadQueue\n    CHAT_NOTIFICATION_QUEUE_URL:   !Ref ChatNotificationQueue\n    NOTIFICATION_QUEUE_URL:        !Ref NotificationQueue\n    SUPABASE_URL:                  ${ssm:/learning-app/${sls:stage}/SUPABASE_URL}\n    SUPABASE_ANON_KEY:             ${ssm:/learning-app/${sls:stage}/SUPABASE_ANON_KEY}\n    SUPABASE_SERVICE_ROLE_KEY:     ${ssm:/learning-app/${sls:stage}/SUPABASE_SERVICE_ROLE_KEY}\n    BANK_ENCRYPTION_KEY:           ${ssm:/learning-app/BANK_ENCRYPTION_KEY}\n    # FCM (Firebase Admin) credentials for chat push notifications.\n    FIREBASE_PROJECT_ID:           ${ssm:/learning-app/FIREBASE_PROJECT_ID}\n    FIREBASE_CLIENT_EMAIL:         ${ssm:/learning-app/FIREBASE_CLIENT_EMAIL}\n    FIREBASE_PRIVATE_KEY:          ${ssm:/learning-app/FIREBASE_PRIVATE_KEY}\n    # Shared secret the Supabase chat_messages webhook must present.\n    CHAT_WEBHOOK_SECRET:           ${ssm:/learning-app/CHAT_WEBHOOK_SECRET}\n\n  iam:\n    role:\n      statements:\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # ← ADDED (webhook needs to push)\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt VideoUploadQueue.Arn\n\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # ← ADDED\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt ChatNotificationQueue.Arn\n\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # streak cron pushes jobs\n            - sqs:ReceiveMessage       # notification worker consumes\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt NotificationQueue.Arn\n\nplugins:\n  - serverless-offline\n\ncustom:\n  serverless-offline:\n    httpPort: 3000\n    lambdaPort: 3003\n\nresources:\n  Resources:\n\n    # ── Dead Letter Queues ──────────────────────────────────────\n    VideoUploadDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-dlq-${sls:stage}\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    ChatNotificationDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-dlq-${sls:stage}\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    NotificationDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: notification-dlq-${sls:stage}\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    # ── Main Queues ─────────────────────────────────────────────\n    VideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-queue-${sls:stage}\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt VideoUploadDLQ.Arn\n          maxReceiveCount: 3             # retry 3 times then → DLQ\n\n    ChatNotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-queue-${sls:stage}\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt ChatNotificationDLQ.Arn\n          maxReceiveCount: 3\n\n    # Shared queue for ALL push scenarios (streak reward/broken, …). Producers\n    # enqueue { type, user_id, data }; notificationWorker switches on `type`.\n    NotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: notification-queue-${sls:stage}\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt NotificationDLQ.Arn\n          maxReceiveCount: 3\n\nfunctions:\n\n  # ── HTTP Endpoints ──────────────────────────────────────────\n\n  saveBankDetails:\n    handler: src/functions/bank/saveBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: post\n          cors:   true\n\n  getBankDetails:\n    handler: src/functions/bank/getBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: get\n          cors:   true\n\n  exportCourseEnrollments:\n    handler: src/functions/csvExpoter/admin/enrollmentExport.handler\n    events:\n      - http:\n          path:   admin/courses/{courseId}/enrollments/export\n          method: get\n          cors:   true\n\n  exportCourseEnrollmentsFaculty:\n    handler: src/functions/csvExpoter/faculty/enrollmentExport.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/enrollments/export\n          method: get\n          cors:   true\n\n  # ── Webhooks ────────────────────────────────────────────────\n\n  tpstreamsWebhook:\n    handler: src/functions/webhooks/tpstreamsWebhook.handler\n    timeout: 10                          # short — just pushes to SQS\n    events:\n      - http:\n          path: /webhooks/tpstreams\n          method: post\n\n  # Supabase database webhook: fires on every chat_messages INSERT and enqueues\n  # a chat push job. Authenticated via the x-webhook-secret header.\n  chatMessageWebhook:\n    handler: src/functions/webhooks/chatMessageWebhook.handler\n    timeout: 10                          # short — just pushes to SQS\n    events:\n      - http:\n          path: /webhooks/chat-message\n          method: post\n\n  # ── SQS Background Jobs ─────────────────────────────────────\n\n  processVideoUpload:\n    handler: src/functions/video/processVideoUpload.handler\n    timeout: 300                         # long — does heavy DB work\n    events:\n      - sqs:\n          arn: !GetAtt VideoUploadQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures\n\n  chatNotificationWorker:\n    handler: src/functions/chat/chat.notification.handler\n    timeout: 60                          # medium — notification work\n    events:\n      - sqs:\n          arn: !GetAtt ChatNotificationQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures   # ← ADDED\n\n  # Shared push worker — drains NotificationQueue and fans each job out to FCM\n  # + an in-app notifications row, based on the job's `type`.\n  notificationWorker:\n    handler: src/functions/notification/notificationWorker.handler\n    timeout: 60\n    events:\n      - sqs:\n          arn: !GetAtt NotificationQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures\n\n  # ── Scheduled Jobs ──────────────────────────────────────────\n\n  # Cron A — daily student-streak settlement. Runs at DAY-END (00:00 IST /\n  # 18:30 UTC) for the day that just ended: updates streak_days, awards coins on\n  # the goal, resets broken streaks, and STAGES reward/broken pushes into\n  # scheduled_notifications (scheduled_for = the coming 08:00 IST). No push yet.\n  studentStreakCron:\n    handler: src/functions/streak/updateStreaks.handler\n    timeout: 300\n    events:\n      - schedule:\n          rate: cron(30 18 * * ? *)      # 18:30 UTC = 00:00 IST (day end)\n          enabled: true\n\n  # Cron B — notification dispatch. Runs 08:00 IST (02:30 UTC): drains every\n  # due scheduled_notifications row onto NotificationQueue → notificationWorker\n  # → FCM. This is the \"scheduled delivery\" step for jobs staged at midnight.\n  notificationDispatchCron:\n    handler: src/functions/notification/notificationDispatch.handler\n    timeout: 300\n    events:\n      - schedule:\n          rate: cron(30 2 * * ? *)       # 02:30 UTC = 08:00 IST daily\n          enabled: true",
+    "serviceRawFile": "\n\nservice: background-service\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n  region: ap-south-1\n  stage: ${opt:stage, 'dev'}           # deploy with --stage dev | --stage prod\n  timeout: 30                          # default for HTTP endpoints\n  apiGateway:\n    binaryMediaTypes:                  # required so base64 xlsx bodies decode to real files\n      - '*/*'\n  environment:\n    STAGE:                         ${sls:stage}\n    VIDEO_UPLOAD_QUEUE_URL:        !Ref VideoUploadQueue\n    CHAT_NOTIFICATION_QUEUE_URL:   !Ref ChatNotificationQueue\n    NOTIFICATION_QUEUE_URL:        !Ref NotificationQueue\n    SUPABASE_URL:                  ${ssm:/learning-app/${sls:stage}/SUPABASE_URL}\n    SUPABASE_ANON_KEY:             ${ssm:/learning-app/${sls:stage}/SUPABASE_ANON_KEY}\n    SUPABASE_SERVICE_ROLE_KEY:     ${ssm:/learning-app/${sls:stage}/SUPABASE_SERVICE_ROLE_KEY}\n    BANK_ENCRYPTION_KEY:           ${ssm:/learning-app/BANK_ENCRYPTION_KEY}\n    # FCM (Firebase Admin) credentials for chat push notifications.\n    FIREBASE_PROJECT_ID:           ${ssm:/learning-app/FIREBASE_PROJECT_ID}\n    FIREBASE_CLIENT_EMAIL:         ${ssm:/learning-app/FIREBASE_CLIENT_EMAIL}\n    FIREBASE_PRIVATE_KEY:          ${ssm:/learning-app/FIREBASE_PRIVATE_KEY}\n    # Shared secret the Supabase chat_messages webhook must present.\n    CHAT_WEBHOOK_SECRET:           ${ssm:/learning-app/CHAT_WEBHOOK_SECRET}\n\n  iam:\n    role:\n      statements:\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # ← ADDED (webhook needs to push)\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt VideoUploadQueue.Arn\n\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # ← ADDED\n            - sqs:ReceiveMessage\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt ChatNotificationQueue.Arn\n\n        - Effect: Allow\n          Action:\n            - sqs:SendMessage          # streak cron pushes jobs\n            - sqs:ReceiveMessage       # notification worker consumes\n            - sqs:DeleteMessage\n            - sqs:GetQueueAttributes\n          Resource: !GetAtt NotificationQueue.Arn\n\nplugins:\n  - serverless-offline\n\ncustom:\n  serverless-offline:\n    httpPort: 3000\n    lambdaPort: 3003\n\nresources:\n  Resources:\n\n    # ── Dead Letter Queues ──────────────────────────────────────\n    VideoUploadDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-dlq-${sls:stage}\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    ChatNotificationDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-dlq-${sls:stage}\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    NotificationDLQ:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: notification-dlq-${sls:stage}\n        MessageRetentionPeriod: 1209600    # 14 days\n\n    # ── Main Queues ─────────────────────────────────────────────\n    VideoUploadQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: video-upload-queue-${sls:stage}\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt VideoUploadDLQ.Arn\n          maxReceiveCount: 3             # retry 3 times then → DLQ\n\n    ChatNotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: chat-notification-queue-${sls:stage}\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt ChatNotificationDLQ.Arn\n          maxReceiveCount: 3\n\n    # Shared queue for ALL push scenarios (streak reward/broken, …). Producers\n    # enqueue { type, user_id, data }; notificationWorker switches on `type`.\n    NotificationQueue:\n      Type: AWS::SQS::Queue\n      Properties:\n        QueueName: notification-queue-${sls:stage}\n        VisibilityTimeout: 300\n        RedrivePolicy:\n          deadLetterTargetArn: !GetAtt NotificationDLQ.Arn\n          maxReceiveCount: 3\n\nfunctions:\n\n  # ── HTTP Endpoints ──────────────────────────────────────────\n\n  saveBankDetails:\n    handler: src/functions/bank/saveBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: post\n          cors:   true\n\n  getBankDetails:\n    handler: src/functions/bank/getBankDetails.handler\n    events:\n      - http:\n          path:   faculty/bank/details\n          method: get\n          cors:   true\n\n  exportCourseEnrollments:\n    handler: src/functions/csvExpoter/admin/enrollmentExport.handler\n    events:\n      - http:\n          path:   admin/courses/{courseId}/enrollments/export\n          method: get\n          cors:   true\n\n  exportCourseEnrollmentsFaculty:\n    handler: src/functions/csvExpoter/faculty/enrollmentExport.handler\n    events:\n      - http:\n          path:   faculty/courses/{courseId}/enrollments/export\n          method: get\n          cors:   true\n\n  # ── Question Import (xlsx) ──────────────────────────────────\n\n  # Sample .xlsx faculty fill in before importing questions.\n  downloadQuestionImportTemplate:\n    handler: src/functions/csvExpoter/faculty/questionTemplate.handler\n    events:\n      - http:\n          path:   faculty/tests/questions/import/template\n          method: get\n          cors:   true\n\n  # Body is the raw .xlsx (base64, via binaryMediaTypes); module/material ride\n  # along as query params since the body is taken by the file.\n  importTestQuestions:\n    handler: src/functions/csvExpoter/faculty/questionImport.handler\n    timeout: 60                          # parse + batched inserts for up to 200 rows\n    events:\n      - http:\n          path:   faculty/tests/{testId}/questions/import\n          method: post\n          cors:   true\n\n  # ── Webhooks ────────────────────────────────────────────────\n\n  tpstreamsWebhook:\n    handler: src/functions/webhooks/tpstreamsWebhook.handler\n    timeout: 10                          # short — just pushes to SQS\n    events:\n      - http:\n          path: /webhooks/tpstreams\n          method: post\n\n  # Supabase database webhook: fires on every chat_messages INSERT and enqueues\n  # a chat push job. Authenticated via the x-webhook-secret header.\n  chatMessageWebhook:\n    handler: src/functions/webhooks/chatMessageWebhook.handler\n    timeout: 10                          # short — just pushes to SQS\n    events:\n      - http:\n          path: /webhooks/chat-message\n          method: post\n\n  # ── SQS Background Jobs ─────────────────────────────────────\n\n  processVideoUpload:\n    handler: src/functions/video/processVideoUpload.handler\n    timeout: 300                         # long — does heavy DB work\n    events:\n      - sqs:\n          arn: !GetAtt VideoUploadQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures\n\n  chatNotificationWorker:\n    handler: src/functions/chat/chat.notification.handler\n    timeout: 60                          # medium — notification work\n    events:\n      - sqs:\n          arn: !GetAtt ChatNotificationQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures   # ← ADDED\n\n  # Shared push worker — drains NotificationQueue and fans each job out to FCM\n  # + an in-app notifications row, based on the job's `type`.\n  notificationWorker:\n    handler: src/functions/notification/notificationWorker.handler\n    timeout: 60\n    events:\n      - sqs:\n          arn: !GetAtt NotificationQueue.Arn\n          batchSize: 1\n          functionResponseType: ReportBatchItemFailures\n\n  # ── Scheduled Jobs ──────────────────────────────────────────\n\n  # Cron A — daily student-streak settlement. Runs at DAY-END (00:00 IST /\n  # 18:30 UTC) for the day that just ended: updates streak_days, awards coins on\n  # the goal, resets broken streaks, and STAGES reward/broken pushes into\n  # scheduled_notifications (scheduled_for = the coming 08:00 IST). No push yet.\n  studentStreakCron:\n    handler: src/functions/streak/updateStreaks.handler\n    timeout: 300\n    events:\n      - schedule:\n          rate: cron(30 18 * * ? *)      # 18:30 UTC = 00:00 IST (day end)\n          enabled: true\n\n  # Cron B — notification dispatch. Runs 08:00 IST (02:30 UTC): drains every\n  # due scheduled_notifications row onto NotificationQueue → notificationWorker\n  # → FCM. This is the \"scheduled delivery\" step for jobs staged at midnight.\n  notificationDispatchCron:\n    handler: src/functions/notification/notificationDispatch.handler\n    timeout: 300\n    events:\n      - schedule:\n          rate: cron(30 2 * * ? *)       # 02:30 UTC = 08:00 IST daily\n          enabled: true",
     "command": [
       "deploy"
     ],
@@ -4706,50 +5756,79 @@
     "serviceProviderAwsCfStackName": "background-service-dev",
     "serviceProviderAwsCfStackId": "arn:aws:cloudformation:ap-south-1:303192504126:stack/background-service-dev/49b7f6a0-6bbd-11f1-b381-0220d2af102b",
     "serviceProviderAwsCfStackCreated": "2026-06-19T09:00:16.213Z",
-    "serviceProviderAwsCfStackUpdated": "2026-07-07T08:41:11.872Z",
+    "serviceProviderAwsCfStackUpdated": "2026-07-13T09:23:17.041Z",
     "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
     "serviceProviderAwsCfStackOutputs": [
       {
-        "OutputKey": "ProcessVideoUploadLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-processVideoUpload:10",
+        "OutputKey": "NotificationWorkerLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-notificationWorker:2",
         "Description": "Current Lambda function version",
-        "ExportName": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
+        "ExportName": "sls-background-service-dev-NotificationWorkerLambdaFunctionQualifiedArn"
       },
       {
-        "OutputKey": "GetBankDetailsLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-getBankDetails:10",
+        "OutputKey": "ImportTestQuestionsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-importTestQuestions:1",
         "Description": "Current Lambda function version",
-        "ExportName": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
-      },
-      {
-        "OutputKey": "ChatNotificationWorkerLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-chatNotificationWorker:10",
-        "Description": "Current Lambda function version",
-        "ExportName": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
-      },
-      {
-        "OutputKey": "ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-exportCourseEnrollmentsFaculty:4",
-        "Description": "Current Lambda function version",
-        "ExportName": "sls-background-service-dev-ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn"
-      },
-      {
-        "OutputKey": "TpstreamsWebhookLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-tpstreamsWebhook:10",
-        "Description": "Current Lambda function version",
-        "ExportName": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
+        "ExportName": "sls-background-service-dev-ImportTestQuestionsLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "ChatMessageWebhookLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-chatMessageWebhook:4",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-chatMessageWebhook:6",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-ChatMessageWebhookLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "ExportCourseEnrollmentsLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-exportCourseEnrollments:4",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-exportCourseEnrollments:6",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-ExportCourseEnrollmentsLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ServerlessDeploymentBucketName",
+        "OutputValue": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+        "ExportName": "sls-background-service-dev-ServerlessDeploymentBucketName"
+      },
+      {
+        "OutputKey": "StudentStreakCronLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-studentStreakCron:2",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-StudentStreakCronLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ProcessVideoUploadLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-processVideoUpload:12",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetBankDetailsLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-getBankDetails:12",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ChatNotificationWorkerLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-chatNotificationWorker:12",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-exportCourseEnrollmentsFaculty:6",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "TpstreamsWebhookLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-tpstreamsWebhook:12",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "DownloadQuestionImportTemplateLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-downloadQuestionImportTemplate:1",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-DownloadQuestionImportTemplateLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "ServiceEndpoint",
@@ -4758,15 +5837,16 @@
         "ExportName": "sls-background-service-dev-ServiceEndpoint"
       },
       {
-        "OutputKey": "ServerlessDeploymentBucketName",
-        "OutputValue": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-        "ExportName": "sls-background-service-dev-ServerlessDeploymentBucketName"
-      },
-      {
         "OutputKey": "SaveBankDetailsLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-saveBankDetails:10",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-saveBankDetails:12",
         "Description": "Current Lambda function version",
         "ExportName": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "NotificationDispatchCronLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:ap-south-1:303192504126:function:background-service-dev-notificationDispatchCron:2",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-background-service-dev-NotificationDispatchCronLambdaFunctionQualifiedArn"
       }
     ],
     "compiledCloudFormationTemplate": {
@@ -4795,6 +5875,18 @@
           "Type": "AWS::Logs::LogGroup",
           "Properties": {
             "LogGroupName": "/aws/lambda/background-service-dev-exportCourseEnrollmentsFaculty"
+          }
+        },
+        "DownloadQuestionImportTemplateLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-downloadQuestionImportTemplate"
+          }
+        },
+        "ImportTestQuestionsLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/background-service-dev-importTestQuestions"
           }
         },
         "TpstreamsWebhookLogGroup": {
@@ -4995,7 +6087,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/bank/saveBankDetails.handler",
             "Runtime": "nodejs20.x",
@@ -5041,7 +6133,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/bank/getBankDetails.handler",
             "Runtime": "nodejs20.x",
@@ -5087,7 +6179,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/csvExpoter/admin/enrollmentExport.handler",
             "Runtime": "nodejs20.x",
@@ -5133,7 +6225,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/csvExpoter/faculty/enrollmentExport.handler",
             "Runtime": "nodejs20.x",
@@ -5174,12 +6266,104 @@
             "ExportCourseEnrollmentsFacultyLogGroup"
           ]
         },
+        "DownloadQuestionImportTemplateLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+            },
+            "Handler": "src/functions/csvExpoter/faculty/questionTemplate.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-downloadQuestionImportTemplate",
+            "MemorySize": 1024,
+            "Timeout": 30,
+            "Environment": {
+              "Variables": {
+                "STAGE": "dev",
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "CHAT_NOTIFICATION_QUEUE_URL": {
+                  "Ref": "ChatNotificationQueue"
+                },
+                "NOTIFICATION_QUEUE_URL": {
+                  "Ref": "NotificationQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+                "CHAT_WEBHOOK_SECRET": "<REDACTED>",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "DownloadQuestionImportTemplateLogGroup"
+          ]
+        },
+        "ImportTestQuestionsLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+            },
+            "Handler": "src/functions/csvExpoter/faculty/questionImport.handler",
+            "Runtime": "nodejs20.x",
+            "FunctionName": "background-service-dev-importTestQuestions",
+            "MemorySize": 1024,
+            "Timeout": 60,
+            "Environment": {
+              "Variables": {
+                "STAGE": "dev",
+                "VIDEO_UPLOAD_QUEUE_URL": {
+                  "Ref": "VideoUploadQueue"
+                },
+                "CHAT_NOTIFICATION_QUEUE_URL": {
+                  "Ref": "ChatNotificationQueue"
+                },
+                "NOTIFICATION_QUEUE_URL": {
+                  "Ref": "NotificationQueue"
+                },
+                "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
+                "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
+                "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
+                "FIREBASE_PROJECT_ID": "learninough-b2e2f",
+                "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
+                "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+                "CHAT_WEBHOOK_SECRET": "<REDACTED>",
+                "NODE_OPTIONS": "--enable-source-maps"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "ImportTestQuestionsLogGroup"
+          ]
+        },
         "TpstreamsWebhookLambdaFunction": {
           "Type": "AWS::Lambda::Function",
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/webhooks/tpstreamsWebhook.handler",
             "Runtime": "nodejs20.x",
@@ -5225,7 +6409,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/webhooks/chatMessageWebhook.handler",
             "Runtime": "nodejs20.x",
@@ -5271,7 +6455,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/video/processVideoUpload.handler",
             "Runtime": "nodejs20.x",
@@ -5317,7 +6501,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/chat/chat.notification.handler",
             "Runtime": "nodejs20.x",
@@ -5363,7 +6547,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/notification/notificationWorker.handler",
             "Runtime": "nodejs20.x",
@@ -5409,7 +6593,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/streak/updateStreaks.handler",
             "Runtime": "nodejs20.x",
@@ -5455,7 +6639,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-              "S3Key": "serverless/background-service/dev/1783596976816-2026-07-09T11:36:16.816Z/background-service.zip"
+              "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
             },
             "Handler": "src/functions/notification/notificationDispatch.handler",
             "Runtime": "nodejs20.x",
@@ -5496,114 +6680,134 @@
             "NotificationDispatchCronLogGroup"
           ]
         },
-        "SaveBankDetailsLambdaVersionvOHFBCT7VaEnAXz7BmWFcfMbtqafgX7nCocGb2hFQg": {
+        "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "SaveBankDetailsLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "GetBankDetailsLambdaVersionlsTVjqftMcMInXfO11wXSFRuYB7ZGJXYxw2NZpmI": {
+        "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "GetBankDetailsLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "ExportCourseEnrollmentsLambdaVersionsyQOBNhxLHrPxxHK7vkXkkWdHkDZTwvXPpBi4JIQyo": {
+        "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "ExportCourseEnrollmentsLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "ExportCourseEnrollmentsFacultyLambdaVersion81z5l0Y9RnPqDqgJmty9lwDVm5WTrjA74gPjJh2fTDk": {
+        "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "ExportCourseEnrollmentsFacultyLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "TpstreamsWebhookLambdaVersionig3DeKCINKXJe2NKXLtZRDYxkDhrPtLVN5F4VVS2xs": {
+        "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "DownloadQuestionImportTemplateLambdaFunction"
+            },
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+          }
+        },
+        "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "ImportTestQuestionsLambdaFunction"
+            },
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+          }
+        },
+        "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "TpstreamsWebhookLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "ChatMessageWebhookLambdaVersionGKiL3JIcwxzW1ImPhCajhATPbn6kgWMk8aYO0CH3lGY": {
+        "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "ChatMessageWebhookLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "ProcessVideoUploadLambdaVersion5daniWtiukcxzTnipww8F3YOFtfBPjpx3lNyvW9bSw": {
+        "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "ProcessVideoUploadLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "ChatNotificationWorkerLambdaVersionKvkiCgcXyJQohNgrhZKMcbczBT1EJBWbe3g8aM4": {
+        "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "ChatNotificationWorkerLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "NotificationWorkerLambdaVersionXTHGDnoWk7IQCTltp69S5v3tUk3NTZW81M1x3x2DQ": {
+        "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "NotificationWorkerLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "StudentStreakCronLambdaVersionb6FGMRJ8pKvVfxqtqhHxDcXkvydykmN2avzJzTdEc": {
+        "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "StudentStreakCronLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
-        "NotificationDispatchCronLambdaVersionlp0JL86kdVaRx9r5esWmqDF8c2uNzpdN7HlIWT2JiYA": {
+        "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "NotificationDispatchCronLambdaFunction"
             },
-            "CodeSha256": "3V1v/GscqjoZBxE8krKC1wuD4pkQj9pFEGHEqsZwUaw="
+            "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
           }
         },
         "StudentStreakCronEventsRuleSchedule1": {
@@ -5777,6 +6981,90 @@
               "Ref": "ApiGatewayResourceFacultyCoursesCourseidVarEnrollments"
             },
             "PathPart": "export",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFacultyTests": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceFaculty"
+            },
+            "PathPart": "tests",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFacultyTestsQuestions": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceFacultyTests"
+            },
+            "PathPart": "questions",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFacultyTestsQuestionsImport": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceFacultyTestsQuestions"
+            },
+            "PathPart": "import",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFacultyTestsQuestionsImportTemplate": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceFacultyTestsQuestionsImport"
+            },
+            "PathPart": "template",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFacultyTestsTestidVar": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceFacultyTests"
+            },
+            "PathPart": "{testId}",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFacultyTestsTestidVarQuestions": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceFacultyTestsTestidVar"
+            },
+            "PathPart": "questions",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceFacultyTestsTestidVarQuestionsImport": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceFacultyTestsTestidVarQuestions"
+            },
+            "PathPart": "import",
             "RestApiId": {
               "Ref": "ApiGatewayRestApi"
             }
@@ -6019,6 +7307,96 @@
             }
           }
         },
+        "ApiGatewayMethodFacultyTestsQuestionsImportTemplateOptions": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "AuthorizationType": "NONE",
+            "HttpMethod": "OPTIONS",
+            "MethodResponses": [
+              {
+                "StatusCode": "200",
+                "ResponseParameters": {
+                  "method.response.header.Access-Control-Allow-Origin": true,
+                  "method.response.header.Access-Control-Allow-Headers": true,
+                  "method.response.header.Access-Control-Allow-Methods": true
+                },
+                "ResponseModels": {}
+              }
+            ],
+            "RequestParameters": {},
+            "Integration": {
+              "Type": "MOCK",
+              "RequestTemplates": {
+                "application/json": "{statusCode:200}"
+              },
+              "ContentHandling": "CONVERT_TO_TEXT",
+              "IntegrationResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": "'*'",
+                    "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                    "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
+                  },
+                  "ResponseTemplates": {
+                    "application/json": ""
+                  }
+                }
+              ]
+            },
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceFacultyTestsQuestionsImportTemplate"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportOptions": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "AuthorizationType": "NONE",
+            "HttpMethod": "OPTIONS",
+            "MethodResponses": [
+              {
+                "StatusCode": "200",
+                "ResponseParameters": {
+                  "method.response.header.Access-Control-Allow-Origin": true,
+                  "method.response.header.Access-Control-Allow-Headers": true,
+                  "method.response.header.Access-Control-Allow-Methods": true
+                },
+                "ResponseModels": {}
+              }
+            ],
+            "RequestParameters": {},
+            "Integration": {
+              "Type": "MOCK",
+              "RequestTemplates": {
+                "application/json": "{statusCode:200}"
+              },
+              "ContentHandling": "CONVERT_TO_TEXT",
+              "IntegrationResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": "'*'",
+                    "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                    "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                  },
+                  "ResponseTemplates": {
+                    "application/json": ""
+                  }
+                }
+              ]
+            },
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceFacultyTestsTestidVarQuestionsImport"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
         "ApiGatewayMethodFacultyBankDetailsPost": {
           "Type": "AWS::ApiGateway::Method",
           "Properties": {
@@ -6203,6 +7581,98 @@
             "ExportCourseEnrollmentsFacultyLambdaPermissionApiGateway"
           ]
         },
+        "ApiGatewayMethodFacultyTestsQuestionsImportTemplateGet": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "GET",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceFacultyTestsQuestionsImportTemplate"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "DownloadQuestionImportTemplateLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "DownloadQuestionImportTemplateLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportPost": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "POST",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceFacultyTestsTestidVarQuestionsImport"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "ImportTestQuestionsLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "ImportTestQuestionsLambdaPermissionApiGateway"
+          ]
+        },
         "ApiGatewayMethodWebhooksTpstreamsPost": {
           "Type": "AWS::ApiGateway::Method",
           "Properties": {
@@ -6295,7 +7765,7 @@
             "ChatMessageWebhookLambdaPermissionApiGateway"
           ]
         },
-        "ApiGatewayDeployment1783596957106": {
+        "ApiGatewayDeployment1784094162444": {
           "Type": "AWS::ApiGateway::Deployment",
           "Properties": {
             "RestApiId": {
@@ -6307,10 +7777,14 @@
             "ApiGatewayMethodFacultyBankDetailsOptions",
             "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportOptions",
             "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportOptions",
+            "ApiGatewayMethodFacultyTestsQuestionsImportTemplateOptions",
+            "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportOptions",
             "ApiGatewayMethodFacultyBankDetailsPost",
             "ApiGatewayMethodFacultyBankDetailsGet",
             "ApiGatewayMethodAdminCoursesCourseidVarEnrollmentsExportGet",
             "ApiGatewayMethodFacultyCoursesCourseidVarEnrollmentsExportGet",
+            "ApiGatewayMethodFacultyTestsQuestionsImportTemplateGet",
+            "ApiGatewayMethodFacultyTestsTestidVarQuestionsImportPost",
             "ApiGatewayMethodWebhooksTpstreamsPost",
             "ApiGatewayMethodWebhooksChatDashmessagePost"
           ]
@@ -6432,6 +7906,80 @@
             "FunctionName": {
               "Fn::GetAtt": [
                 "ExportCourseEnrollmentsFacultyLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "DownloadQuestionImportTemplateLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "DownloadQuestionImportTemplateLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "ImportTestQuestionsLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "ImportTestQuestionsLambdaFunction",
                 "Arn"
               ]
             },
@@ -6692,7 +8240,7 @@
         "SaveBankDetailsLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "SaveBankDetailsLambdaVersionvOHFBCT7VaEnAXz7BmWFcfMbtqafgX7nCocGb2hFQg"
+            "Ref": "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk"
           },
           "Export": {
             "Name": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
@@ -6701,7 +8249,7 @@
         "GetBankDetailsLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "GetBankDetailsLambdaVersionlsTVjqftMcMInXfO11wXSFRuYB7ZGJXYxw2NZpmI"
+            "Ref": "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk"
           },
           "Export": {
             "Name": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
@@ -6710,7 +8258,7 @@
         "ExportCourseEnrollmentsLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "ExportCourseEnrollmentsLambdaVersionsyQOBNhxLHrPxxHK7vkXkkWdHkDZTwvXPpBi4JIQyo"
+            "Ref": "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE"
           },
           "Export": {
             "Name": "sls-background-service-dev-ExportCourseEnrollmentsLambdaFunctionQualifiedArn"
@@ -6719,16 +8267,34 @@
         "ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "ExportCourseEnrollmentsFacultyLambdaVersion81z5l0Y9RnPqDqgJmty9lwDVm5WTrjA74gPjJh2fTDk"
+            "Ref": "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI"
           },
           "Export": {
             "Name": "sls-background-service-dev-ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn"
           }
         },
+        "DownloadQuestionImportTemplateLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-DownloadQuestionImportTemplateLambdaFunctionQualifiedArn"
+          }
+        },
+        "ImportTestQuestionsLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU"
+          },
+          "Export": {
+            "Name": "sls-background-service-dev-ImportTestQuestionsLambdaFunctionQualifiedArn"
+          }
+        },
         "TpstreamsWebhookLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "TpstreamsWebhookLambdaVersionig3DeKCINKXJe2NKXLtZRDYxkDhrPtLVN5F4VVS2xs"
+            "Ref": "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU"
           },
           "Export": {
             "Name": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
@@ -6737,7 +8303,7 @@
         "ChatMessageWebhookLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "ChatMessageWebhookLambdaVersionGKiL3JIcwxzW1ImPhCajhATPbn6kgWMk8aYO0CH3lGY"
+            "Ref": "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0"
           },
           "Export": {
             "Name": "sls-background-service-dev-ChatMessageWebhookLambdaFunctionQualifiedArn"
@@ -6746,7 +8312,7 @@
         "ProcessVideoUploadLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "ProcessVideoUploadLambdaVersion5daniWtiukcxzTnipww8F3YOFtfBPjpx3lNyvW9bSw"
+            "Ref": "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME"
           },
           "Export": {
             "Name": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
@@ -6755,7 +8321,7 @@
         "ChatNotificationWorkerLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "ChatNotificationWorkerLambdaVersionKvkiCgcXyJQohNgrhZKMcbczBT1EJBWbe3g8aM4"
+            "Ref": "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw"
           },
           "Export": {
             "Name": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
@@ -6764,7 +8330,7 @@
         "NotificationWorkerLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "NotificationWorkerLambdaVersionXTHGDnoWk7IQCTltp69S5v3tUk3NTZW81M1x3x2DQ"
+            "Ref": "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0"
           },
           "Export": {
             "Name": "sls-background-service-dev-NotificationWorkerLambdaFunctionQualifiedArn"
@@ -6773,7 +8339,7 @@
         "StudentStreakCronLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "StudentStreakCronLambdaVersionb6FGMRJ8pKvVfxqtqhHxDcXkvydykmN2avzJzTdEc"
+            "Ref": "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70"
           },
           "Export": {
             "Name": "sls-background-service-dev-StudentStreakCronLambdaFunctionQualifiedArn"
@@ -6782,7 +8348,7 @@
         "NotificationDispatchCronLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "NotificationDispatchCronLambdaVersionlp0JL86kdVaRx9r5esWmqDF8c2uNzpdN7HlIWT2JiYA"
+            "Ref": "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0"
           },
           "Export": {
             "Name": "sls-background-service-dev-NotificationDispatchCronLambdaFunctionQualifiedArn"

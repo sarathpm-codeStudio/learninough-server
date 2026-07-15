@@ -110,6 +110,7 @@ async function processRecord(record: any) {
                     video_uploading_status: videoStatus,
                     video_upload_progress: data?.video?.progress,
                     duration_sec: data?.video?.duration,
+                    file_size: data?.bytes,
                 })
                 .eq("video_asset_id", updatedUploadProgress?.asset_id)
                 .select()
