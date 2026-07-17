@@ -26,9 +26,9 @@
         "NOTIFICATION_QUEUE_URL": {
           "Ref": "NotificationQueue"
         },
-        "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+        "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
         "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
         "FIREBASE_PROJECT_ID": "learninough-b2e2f",
         "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -289,7 +289,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/bank/saveBankDetails.handler",
               "Runtime": "nodejs20.x",
@@ -308,9 +308,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -335,7 +335,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/bank/getBankDetails.handler",
               "Runtime": "nodejs20.x",
@@ -354,9 +354,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -381,7 +381,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/csvExpoter/admin/enrollmentExport.handler",
               "Runtime": "nodejs20.x",
@@ -400,9 +400,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -427,7 +427,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/csvExpoter/faculty/enrollmentExport.handler",
               "Runtime": "nodejs20.x",
@@ -446,9 +446,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -473,7 +473,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/csvExpoter/faculty/questionTemplate.handler",
               "Runtime": "nodejs20.x",
@@ -492,9 +492,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -519,7 +519,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/csvExpoter/faculty/questionImport.handler",
               "Runtime": "nodejs20.x",
@@ -538,9 +538,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -565,7 +565,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/webhooks/tpstreamsWebhook.handler",
               "Runtime": "nodejs20.x",
@@ -584,9 +584,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -611,7 +611,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/webhooks/chatMessageWebhook.handler",
               "Runtime": "nodejs20.x",
@@ -630,9 +630,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -657,7 +657,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/video/processVideoUpload.handler",
               "Runtime": "nodejs20.x",
@@ -676,9 +676,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -703,7 +703,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/chat/chat.notification.handler",
               "Runtime": "nodejs20.x",
@@ -722,9 +722,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -749,7 +749,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/notification/notificationWorker.handler",
               "Runtime": "nodejs20.x",
@@ -768,9 +768,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -795,7 +795,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/streak/updateStreaks.handler",
               "Runtime": "nodejs20.x",
@@ -814,9 +814,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -841,7 +841,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-ap-south-1-34eddb8e-84ec",
-                "S3Key": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z/background-service.zip"
+                "S3Key": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z/background-service.zip"
               },
               "Handler": "src/functions/notification/notificationDispatch.handler",
               "Runtime": "nodejs20.x",
@@ -860,9 +860,9 @@
                   "NOTIFICATION_QUEUE_URL": {
                     "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"NOTIFICATION_QUEUE_URL\"]"
                   },
-                  "SUPABASE_URL": "https://wxhucjxavifzogfejkng.supabase.co",
-                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzcyOTcsImV4cCI6MjA4OTQ1MzI5N30.N0Uyqrde2tx0gpXgw0Drqb2a3DxSzb-ql-um6OQjDnA",
-                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4aHVjanhhdmlmem9nZmVqa25nIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg3NzI5NywiZXhwIjoyMDg5NDUzMjk3fQ.85lbT2hakbMwGb9XpVgKHKvEYWBVTKx1Lt-pVO0K6fg",
+                  "SUPABASE_URL": "https://jhyvykegnqqbyllgtgvr.supabase.co",
+                  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNzk0NjksImV4cCI6MjA5OTc1NTQ2OX0.cCRiZivaQgyob-LKpCjmUQaC6yxCqivGXvh6OC-H14c",
+                  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeXZ5a2VnbnFxYnlsbGd0Z3ZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDE3OTQ2OSwiZXhwIjoyMDk5NzU1NDY5fQ.Hp6-nJEsNkhs7SNUY0w4Bm0NTAQ4M9d_rirNQQl5Jlc",
                   "BANK_ENCRYPTION_KEY": "454a7b75cc14cd14ff6bdc38310cba90",
                   "FIREBASE_PROJECT_ID": "learninough-b2e2f",
                   "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@learninough-b2e2f.iam.gserviceaccount.com",
@@ -882,134 +882,134 @@
               "NotificationDispatchCronLogGroup"
             ]
           },
-          "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk": {
+          "SaveBankDetailsLambdaVersionTImFF6p7fPQ4vo27eisAt4nyM6w4sLqbaUq5JAYa1SU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "SaveBankDetailsLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk": {
+          "GetBankDetailsLambdaVersionuakwrqw4JbeDyX5dVbfEvUlpubF3EpWyx9jSYScsogc": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetBankDetailsLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE": {
+          "ExportCourseEnrollmentsLambdaVersionlRzq7f5fD6p5ilbBIvfCIx2XPY4iA23hTD5fMQ108C4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ExportCourseEnrollmentsLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI": {
+          "ExportCourseEnrollmentsFacultyLambdaVersionuKcTUGz9aZHMyiwL37Sml7dZp56MACwSs2BH1Xus24": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ExportCourseEnrollmentsFacultyLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso": {
+          "DownloadQuestionImportTemplateLambdaVersionmBGohviobCHcs3XoS8d6nSnmYgBTTr4oYkUH3YrfzM": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "DownloadQuestionImportTemplateLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU": {
+          "ImportTestQuestionsLambdaVersionUH9bjhIKPQm88U46zzr0fh8woo87sEqWnXNzCCOpeI": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ImportTestQuestionsLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU": {
+          "TpstreamsWebhookLambdaVersionjDqs4VLtrUksPAekAkmPRhxGMVRSVjC5fmgyPRQ3b4g": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "TpstreamsWebhookLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0": {
+          "ChatMessageWebhookLambdaVersionlLNko3GpBNUCMOQFJWhyFuShUThL5rRqjmi21a38Q": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ChatMessageWebhookLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME": {
+          "ProcessVideoUploadLambdaVersionWBZWEL6CW0Av4G6RRjdvAlO3CJK66GvQa7p3FroUTE": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ProcessVideoUploadLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw": {
+          "ChatNotificationWorkerLambdaVersionKau3NvmBQ7kq5pUPoi3KQRydf1JWJBnXbUhj6Rwaww": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ChatNotificationWorkerLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0": {
+          "NotificationWorkerLambdaVersionmunnbFY6kgJqITGhWyvyk5kpLwcRb1NTzu7rnOOVSk": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "NotificationWorkerLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70": {
+          "StudentStreakCronLambdaVersionZtlifWdVnz5lHcEeMr9F6CThtK2jBFTdEEyYVvD4Q": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "StudentStreakCronLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
-          "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0": {
+          "NotificationDispatchCronLambdaVersionYQp5C0CWc0hnzWQUpyuawplAzqonliKd2lYUW3XJ4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "NotificationDispatchCronLambdaFunction"
               },
-              "CodeSha256": "P0S7hL4qdb8pfKAx3DB5F1Kw1ek/xBFMLHQtnWEQz7I="
+              "CodeSha256": "MJE74C8Hq5sKpzv88CoRx9G8vmb4+wWs5nGOW1SiIys="
             }
           },
           "StudentStreakCronEventsRuleSchedule1": {
@@ -1967,7 +1967,7 @@
               "ChatMessageWebhookLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1784094162444": {
+          "ApiGatewayDeployment1784191545790": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -2442,7 +2442,7 @@
           "SaveBankDetailsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk"
+              "Ref": "SaveBankDetailsLambdaVersionTImFF6p7fPQ4vo27eisAt4nyM6w4sLqbaUq5JAYa1SU"
             },
             "Export": {
               "Name": "sls-background-service-dev-SaveBankDetailsLambdaFunctionQualifiedArn"
@@ -2451,7 +2451,7 @@
           "GetBankDetailsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk"
+              "Ref": "GetBankDetailsLambdaVersionuakwrqw4JbeDyX5dVbfEvUlpubF3EpWyx9jSYScsogc"
             },
             "Export": {
               "Name": "sls-background-service-dev-GetBankDetailsLambdaFunctionQualifiedArn"
@@ -2460,7 +2460,7 @@
           "ExportCourseEnrollmentsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE"
+              "Ref": "ExportCourseEnrollmentsLambdaVersionlRzq7f5fD6p5ilbBIvfCIx2XPY4iA23hTD5fMQ108C4"
             },
             "Export": {
               "Name": "sls-background-service-dev-ExportCourseEnrollmentsLambdaFunctionQualifiedArn"
@@ -2469,7 +2469,7 @@
           "ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI"
+              "Ref": "ExportCourseEnrollmentsFacultyLambdaVersionuKcTUGz9aZHMyiwL37Sml7dZp56MACwSs2BH1Xus24"
             },
             "Export": {
               "Name": "sls-background-service-dev-ExportCourseEnrollmentsFacultyLambdaFunctionQualifiedArn"
@@ -2478,7 +2478,7 @@
           "DownloadQuestionImportTemplateLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso"
+              "Ref": "DownloadQuestionImportTemplateLambdaVersionmBGohviobCHcs3XoS8d6nSnmYgBTTr4oYkUH3YrfzM"
             },
             "Export": {
               "Name": "sls-background-service-dev-DownloadQuestionImportTemplateLambdaFunctionQualifiedArn"
@@ -2487,7 +2487,7 @@
           "ImportTestQuestionsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU"
+              "Ref": "ImportTestQuestionsLambdaVersionUH9bjhIKPQm88U46zzr0fh8woo87sEqWnXNzCCOpeI"
             },
             "Export": {
               "Name": "sls-background-service-dev-ImportTestQuestionsLambdaFunctionQualifiedArn"
@@ -2496,7 +2496,7 @@
           "TpstreamsWebhookLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU"
+              "Ref": "TpstreamsWebhookLambdaVersionjDqs4VLtrUksPAekAkmPRhxGMVRSVjC5fmgyPRQ3b4g"
             },
             "Export": {
               "Name": "sls-background-service-dev-TpstreamsWebhookLambdaFunctionQualifiedArn"
@@ -2505,7 +2505,7 @@
           "ChatMessageWebhookLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0"
+              "Ref": "ChatMessageWebhookLambdaVersionlLNko3GpBNUCMOQFJWhyFuShUThL5rRqjmi21a38Q"
             },
             "Export": {
               "Name": "sls-background-service-dev-ChatMessageWebhookLambdaFunctionQualifiedArn"
@@ -2514,7 +2514,7 @@
           "ProcessVideoUploadLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME"
+              "Ref": "ProcessVideoUploadLambdaVersionWBZWEL6CW0Av4G6RRjdvAlO3CJK66GvQa7p3FroUTE"
             },
             "Export": {
               "Name": "sls-background-service-dev-ProcessVideoUploadLambdaFunctionQualifiedArn"
@@ -2523,7 +2523,7 @@
           "ChatNotificationWorkerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw"
+              "Ref": "ChatNotificationWorkerLambdaVersionKau3NvmBQ7kq5pUPoi3KQRydf1JWJBnXbUhj6Rwaww"
             },
             "Export": {
               "Name": "sls-background-service-dev-ChatNotificationWorkerLambdaFunctionQualifiedArn"
@@ -2532,7 +2532,7 @@
           "NotificationWorkerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0"
+              "Ref": "NotificationWorkerLambdaVersionmunnbFY6kgJqITGhWyvyk5kpLwcRb1NTzu7rnOOVSk"
             },
             "Export": {
               "Name": "sls-background-service-dev-NotificationWorkerLambdaFunctionQualifiedArn"
@@ -2541,7 +2541,7 @@
           "StudentStreakCronLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70"
+              "Ref": "StudentStreakCronLambdaVersionZtlifWdVnz5lHcEeMr9F6CThtK2jBFTdEEyYVvD4Q"
             },
             "Export": {
               "Name": "sls-background-service-dev-StudentStreakCronLambdaFunctionQualifiedArn"
@@ -2550,7 +2550,7 @@
           "NotificationDispatchCronLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0"
+              "Ref": "NotificationDispatchCronLambdaVersionYQp5C0CWc0hnzWQUpyuawplAzqonliKd2lYUW3XJ4"
             },
             "Export": {
               "Name": "sls-background-service-dev-NotificationDispatchCronLambdaFunctionQualifiedArn"
@@ -2634,7 +2634,7 @@
         "timeout": 30,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "SaveBankDetailsLambdaVersionWh3Xh8UJJ0LMFIHoHfvWKXP3vIO6DovCag0FNkRk"
+        "versionLogicalId": "SaveBankDetailsLambdaVersionTImFF6p7fPQ4vo27eisAt4nyM6w4sLqbaUq5JAYa1SU"
       },
       "getBankDetails": {
         "handler": "src/functions/bank/getBankDetails.handler",
@@ -2673,7 +2673,7 @@
         "timeout": 30,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "GetBankDetailsLambdaVersionqyZGf8X37FhBOaVcx2ejltJ6yghajkPhUz63xVeBfk"
+        "versionLogicalId": "GetBankDetailsLambdaVersionuakwrqw4JbeDyX5dVbfEvUlpubF3EpWyx9jSYScsogc"
       },
       "exportCourseEnrollments": {
         "handler": "src/functions/csvExpoter/admin/enrollmentExport.handler",
@@ -2712,7 +2712,7 @@
         "timeout": 30,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "ExportCourseEnrollmentsLambdaVersionNrlJNEr5l28UTd9YRDZd7EQr6yeWnkliQYT3kxaE"
+        "versionLogicalId": "ExportCourseEnrollmentsLambdaVersionlRzq7f5fD6p5ilbBIvfCIx2XPY4iA23hTD5fMQ108C4"
       },
       "exportCourseEnrollmentsFaculty": {
         "handler": "src/functions/csvExpoter/faculty/enrollmentExport.handler",
@@ -2751,7 +2751,7 @@
         "timeout": 30,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "ExportCourseEnrollmentsFacultyLambdaVersionsa2mJz0q6a5nMDzkIcdpFZ20xkgJZGjChi4RNDViwI"
+        "versionLogicalId": "ExportCourseEnrollmentsFacultyLambdaVersionuKcTUGz9aZHMyiwL37Sml7dZp56MACwSs2BH1Xus24"
       },
       "downloadQuestionImportTemplate": {
         "handler": "src/functions/csvExpoter/faculty/questionTemplate.handler",
@@ -2790,7 +2790,7 @@
         "timeout": 30,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "DownloadQuestionImportTemplateLambdaVersionIkYNmZkDYRCEdGafVMDAcje1ILalSDRMLlVg7C3rrso"
+        "versionLogicalId": "DownloadQuestionImportTemplateLambdaVersionmBGohviobCHcs3XoS8d6nSnmYgBTTr4oYkUH3YrfzM"
       },
       "importTestQuestions": {
         "handler": "src/functions/csvExpoter/faculty/questionImport.handler",
@@ -2829,7 +2829,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "ImportTestQuestionsLambdaVersionWOrm0JBJm4rZcEHpMM53wR3b6WN8uojZZc8CsjRQVU"
+        "versionLogicalId": "ImportTestQuestionsLambdaVersionUH9bjhIKPQm88U46zzr0fh8woo87sEqWnXNzCCOpeI"
       },
       "tpstreamsWebhook": {
         "handler": "src/functions/webhooks/tpstreamsWebhook.handler",
@@ -2851,7 +2851,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "TpstreamsWebhookLambdaVersion9moQb6Boo1WsgCJqqoalIWDjx4Z97gyHfA0xzPxQNVU"
+        "versionLogicalId": "TpstreamsWebhookLambdaVersionjDqs4VLtrUksPAekAkmPRhxGMVRSVjC5fmgyPRQ3b4g"
       },
       "chatMessageWebhook": {
         "handler": "src/functions/webhooks/chatMessageWebhook.handler",
@@ -2873,7 +2873,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "ChatMessageWebhookLambdaVersion0ECN4cUuKW5P9bHisvfUgaKy5x2ybwklRmZf5oSMt0"
+        "versionLogicalId": "ChatMessageWebhookLambdaVersionlLNko3GpBNUCMOQFJWhyFuShUThL5rRqjmi21a38Q"
       },
       "processVideoUpload": {
         "handler": "src/functions/video/processVideoUpload.handler",
@@ -2897,7 +2897,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "ProcessVideoUploadLambdaVersionGsqxSzp5O20SUSwwD5bcgMdbI5mU1oBPy9uHBOgvME"
+        "versionLogicalId": "ProcessVideoUploadLambdaVersionWBZWEL6CW0Av4G6RRjdvAlO3CJK66GvQa7p3FroUTE"
       },
       "chatNotificationWorker": {
         "handler": "src/functions/chat/chat.notification.handler",
@@ -2921,7 +2921,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "ChatNotificationWorkerLambdaVersionSH1GalTtQF6rfTWtXHRJSmgO81hxZBVfMY0pcxyxmw"
+        "versionLogicalId": "ChatNotificationWorkerLambdaVersionKau3NvmBQ7kq5pUPoi3KQRydf1JWJBnXbUhj6Rwaww"
       },
       "notificationWorker": {
         "handler": "src/functions/notification/notificationWorker.handler",
@@ -2945,7 +2945,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "NotificationWorkerLambdaVersionFybwuhhQhbLS3he7OruBo0RgQ8pSNvreUgXKUPwpD0"
+        "versionLogicalId": "NotificationWorkerLambdaVersionmunnbFY6kgJqITGhWyvyk5kpLwcRb1NTzu7rnOOVSk"
       },
       "studentStreakCron": {
         "handler": "src/functions/streak/updateStreaks.handler",
@@ -2968,7 +2968,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "StudentStreakCronLambdaVersionItbYnPeQRBA3RJjTa1OhXIggHRFNXk2wARWZW8vp70"
+        "versionLogicalId": "StudentStreakCronLambdaVersionZtlifWdVnz5lHcEeMr9F6CThtK2jBFTdEEyYVvD4Q"
       },
       "notificationDispatchCron": {
         "handler": "src/functions/notification/notificationDispatch.handler",
@@ -2991,7 +2991,7 @@
         "memory": 1024,
         "runtime": "nodejs20.x",
         "vpc": {},
-        "versionLogicalId": "NotificationDispatchCronLambdaVersionWKtIZy5ZZg8pzV9uzyWeUx5AjZ6iVo3WqyhZXIb0"
+        "versionLogicalId": "NotificationDispatchCronLambdaVersionYQp5C0CWc0hnzWQUpyuawplAzqonliKd2lYUW3XJ4"
       }
     },
     "resources": {
@@ -3093,7 +3093,7 @@
     "layers": {}
   },
   "package": {
-    "artifactDirectoryName": "serverless/background-service/dev/1784094192499-2026-07-15T05:43:12.499Z",
+    "artifactDirectoryName": "serverless/background-service/dev/1784191561277-2026-07-16T08:46:01.277Z",
     "artifact": "background-service.zip"
   }
 }
