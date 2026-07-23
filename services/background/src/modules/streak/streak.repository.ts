@@ -43,7 +43,7 @@ export const streakRepository = {
         const Dm1 = istDate(new Date(now.getTime() - 48 * 60 * 60 * 1000));
 
         // Admin-tunable goal + reward, read live from platform_settings.
-        const goal = await getSettingInt("default_streak_days", 7);
+        const goal = await getSettingInt("streak_days", 7);
         const reward = await getSettingInt("default_streak_coin_count", 5);
 
         // 1. Qualifying activity rows for D and D-1 in one query.
