@@ -150,6 +150,28 @@ functions:
           method: get
           cors:   true
 
+  # ── Question Import (xlsx) ──────────────────────────────────
+
+  # Sample .xlsx faculty fill in before importing questions.
+  downloadQuestionImportTemplate:
+    handler: src/functions/csvExpoter/faculty/questionTemplate.handler
+    events:
+      - http:
+          path:   faculty/tests/questions/import/template
+          method: get
+          cors:   true
+
+  # Body is the raw .xlsx (base64, via binaryMediaTypes); module/material ride
+  # along as query params since the body is taken by the file.
+  importTestQuestions:
+    handler: src/functions/csvExpoter/faculty/questionImport.handler
+    timeout: 60                          # parse + batched inserts for up to 200 rows
+    events:
+      - http:
+          path:   faculty/tests/{testId}/questions/import
+          method: post
+          cors:   true
+
   # ── Webhooks ────────────────────────────────────────────────
 
   tpstreamsWebhook:
