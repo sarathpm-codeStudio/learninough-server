@@ -10,14 +10,17 @@ import { scenarios } from "../../utils/notificationScenarios";
 export const notificationTriggerRepository = {
     dispatch: async (body: any, caller: any, db: SupabaseClient) => {
         const { key, ...payload } = body ?? {};
+        console.log(`🔔[NOTIF-TRIGGER] API called key=${key ?? "(none)"} caller=${caller?.id ?? caller?.sub ?? "?"} payload=${JSON.stringify(payload)}`);
 
         const scenario = key ? scenarios[key] : undefined;
         if (!scenario) throw new Error(`Unknown notification key: ${key ?? "(none)"}`);
 
         // Scenario decides WHO to notify and the shared template data.
         const { userIds, data } = await scenario.resolve({ payload, db, caller });
+        console.log(`🔔[NOTIF-TRIGGER] scenario=${key} resolved recipients=${userIds.length} type=${scenario.templateType} isPush=${scenario.isPush}`);
 
         if (!userIds.length) {
+            console.log(`🔔[NOTIF-TRIGGER] no recipients — nothing queued (key=${key})`);
             return { queued: false, recipients: 0 };
         }
 
@@ -30,6 +33,7 @@ export const notificationTriggerRepository = {
             data,
             isPush: scenario.isPush,
         });
+        console.log(`🔔[NOTIF-TRIGGER] queued OK key=${key} recipients=${userIds.length}`);
 
         return { queued: true, recipients: userIds.length };
     },

@@ -186531,7 +186531,7 @@ var sendPushToTokens = async (tokens, payload) => {
   return { successCount: response.successCount, invalidTokens };
 };
 
-// src/modules/notification/notificationWorker.repository.ts
+// src/utils/notificationTemplates.ts
 var templates = {
   // Student completed the streak goal and earned coins.
   STREAK_REWARD: (d) => ({
@@ -186562,8 +186562,60 @@ var templates = {
       type: "COURSE_UPDATE",
       ...d?.courseId ? { courseId: String(d.courseId) } : {}
     }
+  }),
+  // Faculty added a new video to an ALREADY published course — notify every
+  // enrolled student. Enqueue with `user_ids` (all enrolled students) + shared
+  // data { courseName, courseId, videoTitle? } and `isPush: false` (in-app only).
+  COURSE_NEW_VIDEO: (d) => ({
+    notifType: "COURSE_UPDATE",
+    title: "New video added \u{1F4F9}",
+    body: `A new video${d?.videoTitle ? ` "${d.videoTitle}"` : ""} was added to "${d?.courseName ?? "your course"}".`,
+    pushData: {
+      type: "COURSE_NEW_VIDEO",
+      ...d?.courseId ? { courseId: String(d.courseId) } : {}
+    }
+  }),
+  // Faculty published a BRAND-NEW course — notify students who already purchased
+  // any of this faculty's OTHER courses, so they know their faculty has a new
+  // course out. In-app only (no push). Shared data { facultyName, courseName,
+  // courseId }.
+  FACULTY_NEW_COURSE: (d) => ({
+    notifType: "COURSE_UPDATE",
+    title: "New course from your faculty \u{1F393}",
+    body: `${d?.facultyName ?? "A faculty you follow"} just published a new course "${d?.courseName ?? "a course"}".`,
+    pushData: {
+      type: "FACULTY_NEW_COURSE",
+      ...d?.courseId ? { courseId: String(d.courseId) } : {}
+    }
+  }),
+  // Faculty posted a note / announcement on a published course — notify enrolled
+  // students. Triggered from the frontend via the notification-trigger API.
+  // Shared data { courseName, courseId, note? }; typically enqueued with isPush:false.
+  COURSE_NOTE: (d) => ({
+    notifType: "COURSE_UPDATE",
+    title: `\u{1F4DD} Note added in "${d?.courseName ?? "your course"}"`,
+    body: d?.note ? String(d.note) : `${d?.courseName ?? "Your course"} has a new note from the faculty.`,
+    pushData: {
+      type: "COURSE_NOTE",
+      ...d?.courseId ? { courseId: String(d.courseId) } : {}
+    }
+  }),
+  // Faculty added a new test to a course — notify enrolled students. Triggered
+  // from the frontend via the notification-trigger API.
+  // Shared data { courseName, courseId, testId, testTitle }.
+  TEST_ADDED: (d) => ({
+    notifType: "EXAM_REMINDER",
+    title: "\u{1F4DD} New test added",
+    body: `${d?.testTitle ? `"${d.testTitle}"` : "A new test"} was added to "${d?.courseName ?? "your course"}".`,
+    pushData: {
+      type: "TEST_ADDED",
+      ...d?.courseId ? { courseId: String(d.courseId) } : {},
+      ...d?.testId ? { testId: String(d.testId) } : {}
+    }
   })
 };
+
+// src/modules/notification/notificationWorker.repository.ts
 var normalizeRecipients = (job) => {
   const shared = job?.data ?? {};
   const out = [];
@@ -186612,6 +186664,7 @@ var processRecord = async (record) => {
     data: r2.data
   }));
   await createNotifications(built);
+  if (job?.isPush === false) return;
   const userIds = built.map((b) => b.userId);
   const { data: devices, error: devErr } = await supabaseAdmin.from("notification_devices").select("user_id, token").in("user_id", userIds).eq("is_active", true);
   if (devErr) throw new Error(devErr.message);
@@ -186672,7 +186725,7 @@ var DISPATCH_LIMIT = 1e3;
 var notificationSchedulerRepository = {
   dispatchDue: async () => {
     const nowIso = (/* @__PURE__ */ new Date()).toISOString();
-    const { data: due, error } = await supabaseAdmin.from("scheduled_notifications").select("id, type, user_id, data").eq("status", "pending").lte("scheduled_for", nowIso).order("scheduled_for", { ascending: true }).limit(DISPATCH_LIMIT);
+    const { data: due, error } = await supabaseAdmin.from("scheduled_notifications").select("id, type, user_id, data, is_push").eq("status", "pending").lte("scheduled_for", nowIso).order("scheduled_for", { ascending: true }).limit(DISPATCH_LIMIT);
     if (error) throw new Error(error.message);
     if (!due || due.length === 0) {
       console.log("dispatchDue: nothing due");
@@ -186685,7 +186738,10 @@ var notificationSchedulerRepository = {
         (row) => pushToQueue(queueUrl, {
           type: row.type,
           user_id: row.user_id,
-          data: row.data
+          data: row.data,
+          // false → worker creates the in-app row only, no FCM push.
+          // null/undefined (column absent) → defaults to a normal push.
+          isPush: row.is_push ?? true
         }).then(() => row.id)
       )
     );

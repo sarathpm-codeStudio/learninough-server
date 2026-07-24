@@ -25722,6 +25722,16 @@ var supabase = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
+// ../../shared/utils/queue.ts
+var import_client_sqs = require("@aws-sdk/client-sqs");
+var sqs = new import_client_sqs.SQSClient({ region: process.env.AWS_REGION || "" });
+var pushToQueue = async (queueUrl, payload) => {
+  await sqs.send(new import_client_sqs.SendMessageCommand({
+    QueueUrl: queueUrl,
+    MessageBody: JSON.stringify(payload)
+  }));
+};
+
 // src/modules/video/video.repository.ts
 var createNotification = async (notification) => {
   const { error } = await supabase.from("notifications").insert({
@@ -25750,6 +25760,8 @@ async function processRecord(record) {
   try {
     console.log("Processing video webhook:", data);
     let courseId = "";
+    let materialTitle = "";
+    let isMaterialVideo = false;
     const videoStatus = data?.video?.status === "Completed" ? "COMPLETED" /* COMPLETED */ : data?.video?.status === "Error" ? "FAILED" /* FAILED */ : "TRANSCODING" /* TRANSCODING */;
     const materialStatus = videoStatus === "COMPLETED" /* COMPLETED */ ? "READY" /* READY */ : videoStatus === "TRANSCODING" /* TRANSCODING */ ? "PROCESSING" /* PROCESSING */ : videoStatus === "FAILED" /* FAILED */ ? "FAILED" /* FAILED */ : "PENDING" /* PENDING */;
     const { data: updatedUploadProgress, error: uploadProgressError } = await supabase.from("video_upload_progress").update({
@@ -25774,12 +25786,14 @@ async function processRecord(record) {
       }).eq("video_asset_id", updatedUploadProgress?.asset_id).select().single();
       if (materialError) throw materialError;
       courseId = updatedMaterial?.course_id;
+      materialTitle = updatedMaterial?.title ?? "";
+      isMaterialVideo = true;
     }
     if (videoStatus === "TRANSCODING" /* TRANSCODING */) {
       console.log("Still transcoding, waiting...");
       return true;
     }
-    const { data: course } = await supabase.from("courses").select("id, title, faculty_id, pending_publish, is_draft, video_uploading_status").eq("id", courseId).single();
+    const { data: course } = await supabase.from("courses").select("id, title, faculty_id, pending_publish, is_draft, unpublished, video_uploading_status").eq("id", courseId).single();
     if (videoStatus === "FAILED" /* FAILED */) {
       await createNotification({
         user_id: course?.faculty_id,
@@ -25788,6 +25802,56 @@ async function processRecord(record) {
         body: `A video in "${course?.title}" failed to process.`,
         data: { course_id: courseId }
       });
+    }
+    if (isMaterialVideo && videoStatus === "COMPLETED" /* COMPLETED */ && !course?.is_draft && !course?.pending_publish) {
+      console.log(`\u{1F514}[NOTIF] new-video-on-published branch ENTER courseId=${courseId} isDraft=${course?.is_draft} pendingPublish=${course?.pending_publish}`);
+      const { data: enrollments } = await supabase.from("enrollments").select("student_id").eq("course_id", courseId);
+      const studentIds = [
+        ...new Set(
+          (enrollments ?? []).map((e) => e.student_id).filter(Boolean)
+        )
+      ];
+      console.log(`\u{1F514}[NOTIF] enrolled students to notify = ${studentIds.length}`);
+      if (studentIds.length) {
+        const now = (/* @__PURE__ */ new Date()).toISOString();
+        const { error: notifyError } = await supabase.from("notifications").insert(
+          studentIds.map((studentId) => ({
+            user_id: studentId,
+            type: "COURSE_UPDATE",
+            title: "New video added \u{1F4F9}",
+            body: `A new video${materialTitle ? ` "${materialTitle}"` : ""} was added to "${course?.title}".`,
+            data: {
+              course_id: courseId,
+              ...materialTitle ? { material_title: materialTitle } : {}
+            },
+            is_admin: false,
+            sent_at: now
+          }))
+        );
+        if (notifyError) console.log("new video notify error", notifyError);
+      }
+    }
+    if (isMaterialVideo && videoStatus === "COMPLETED" /* COMPLETED */ && course?.is_draft === false && course?.unpublished === false && !course?.pending_publish) {
+      const { data: enrollments } = await supabase.from("enrollments").select("student_id").eq("course_id", courseId);
+      const studentIds = [
+        ...new Set(
+          (enrollments ?? []).map((e) => e.student_id).filter(Boolean)
+        )
+      ];
+      const queueUrl = process.env.NOTIFICATION_QUEUE_URL;
+      if (studentIds.length && queueUrl) {
+        await pushToQueue(queueUrl, {
+          type: "COURSE_NEW_VIDEO",
+          user_ids: studentIds,
+          data: {
+            courseId,
+            courseName: course?.title,
+            ...materialTitle ? { videoTitle: materialTitle } : {}
+          },
+          isPush: false
+          // in-app only, no push
+        });
+      }
     }
     if (!course?.pending_publish) return true;
     const { data: allVideos } = await supabase.from("course_materials").select("id, title, video_uploading_status").eq("course_id", courseId).eq("is_deleted", false).eq("type", "VIDEO");
@@ -25842,6 +25906,35 @@ async function processRecord(record) {
       data: { course_id: courseId, faculty_id: course?.faculty_id },
       is_admin: true
     });
+    if (course?.faculty_id) {
+      const { data: facultyCourses } = await supabase.from("courses").select("id").eq("faculty_id", course.faculty_id).eq("is_deleted", false).neq("id", courseId);
+      const otherCourseIds = (facultyCourses ?? []).map((c) => c.id).filter(Boolean);
+      if (otherCourseIds.length) {
+        const { data: otherEnrollments } = await supabase.from("enrollments").select("student_id").in("course_id", otherCourseIds);
+        const studentIds = [
+          ...new Set(
+            (otherEnrollments ?? []).map((e) => e.student_id).filter(Boolean)
+          )
+          // Never notify the faculty about their own new course.
+        ].filter((id) => id !== course.faculty_id);
+        const { data: faculty } = await supabase.from("profiles").select("first_name, last_name").eq("id", course.faculty_id).maybeSingle();
+        const facultyName = [faculty?.first_name, faculty?.last_name].filter(Boolean).join(" ").trim();
+        const queueUrl = process.env.NOTIFICATION_QUEUE_URL;
+        if (studentIds.length && queueUrl) {
+          await pushToQueue(queueUrl, {
+            type: "FACULTY_NEW_COURSE",
+            user_ids: studentIds,
+            data: {
+              courseId,
+              courseName: course?.title,
+              ...facultyName ? { facultyName } : {}
+            },
+            isPush: false
+            // in-app only, no push
+          });
+        }
+      }
+    }
     console.log(`Course ${courseId} auto published! \u2705`);
     return true;
   } catch (error) {

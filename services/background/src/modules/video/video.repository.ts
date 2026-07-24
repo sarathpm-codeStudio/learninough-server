@@ -134,7 +134,7 @@ async function processRecord(record: any) {
         // ── 4. Get course details ─────────────────────────────────
         const { data: course } = await supabase
             .from("courses")
-            .select("id, title, faculty_id, pending_publish, is_draft, video_uploading_status")
+            .select("id, title, faculty_id, pending_publish, is_draft, unpublished, video_uploading_status")
             .eq("id", courseId)
             .single();
 
@@ -159,6 +159,7 @@ async function processRecord(record: any) {
             !course?.is_draft &&
             !course?.pending_publish
         ) {
+            console.log(`🔔[NOTIF] new-video-on-published branch ENTER courseId=${courseId} isDraft=${course?.is_draft} pendingPublish=${course?.pending_publish}`);
             const { data: enrollments } = await supabase
                 .from("enrollments")
                 .select("student_id")
@@ -172,6 +173,7 @@ async function processRecord(record: any) {
                 ),
             ];
 
+            console.log(`🔔[NOTIF] enrolled students to notify = ${studentIds.length}`);
             if (studentIds.length) {
                 const now = new Date().toISOString();
                 const { error: notifyError } = await supabase
@@ -203,7 +205,8 @@ async function processRecord(record: any) {
         if (
             isMaterialVideo &&
             videoStatus === MaterialStatus.COMPLETED &&
-            !course?.is_draft &&
+            course?.is_draft === false &&
+            course?.unpublished === false &&
             !course?.pending_publish
         ) {
             const { data: enrollments } = await supabase

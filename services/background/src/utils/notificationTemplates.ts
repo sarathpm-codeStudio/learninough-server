@@ -9,11 +9,11 @@
 export interface NotificationTemplate {
     // notifications.type is the `notification_type` enum — must be a valid label.
     notifType:
-        | "COINS_EARNED"
-        | "STREAK_REMINDER"
-        | "BADGE_UNLOCKED"
-        | "COURSE_UPDATE"
-        | "EXAM_REMINDER";
+    | "COINS_EARNED"
+    | "STREAK_REMINDER"
+    | "BADGE_UNLOCKED"
+    | "COURSE_UPDATE"
+    | "EXAM_REMINDER";
     title: string;
     body: string;
     // Extra string map delivered to the app for deep-linking.
@@ -86,7 +86,7 @@ export const templates: Record<string, (data: any) => NotificationTemplate> = {
     // Shared data { courseName, courseId, note? }; typically enqueued with isPush:false.
     COURSE_NOTE: (d) => ({
         notifType: "COURSE_UPDATE",
-        title: `📝 Update in "${d?.courseName ?? "your course"}"`,
+        title: `📝 Note added in "${d?.courseName ?? "your course"}"`,
         body: d?.note ? String(d.note) : `${d?.courseName ?? "Your course"} has a new note from the faculty.`,
         pushData: {
             type: "COURSE_NOTE",
