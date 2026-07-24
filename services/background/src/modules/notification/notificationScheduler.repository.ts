@@ -18,7 +18,7 @@ export const notificationSchedulerRepository = {
 
         const { data: due, error } = await supabaseAdmin
             .from("scheduled_notifications")
-            .select("id, type, user_id, data")
+            .select("id, type, user_id, data, is_push")
             .eq("status", "pending")
             .lte("scheduled_for", nowIso)
             .order("scheduled_for", { ascending: true })
@@ -40,6 +40,9 @@ export const notificationSchedulerRepository = {
                     type: row.type,
                     user_id: row.user_id,
                     data: row.data,
+                    // false → worker creates the in-app row only, no FCM push.
+                    // null/undefined (column absent) → defaults to a normal push.
+                    isPush: row.is_push ?? true,
                 }).then(() => row.id)
             )
         );
