@@ -186550,39 +186550,97 @@ var templates = {
     title: "\u{1F494} You lost your streak",
     body: "Start a new one today!",
     pushData: { type: "STREAK_BROKEN" }
+  }),
+  // Faculty uploaded / updated a course — fan out to enrolled students.
+  // Enqueue with `user_ids` (all students) + shared data { courseName, facultyName,
+  // courseId }. Add a per-recipient { name } if you want to greet each student.
+  COURSE_UPDATE: (d) => ({
+    notifType: "COURSE_UPDATE",
+    title: d?.name ? `Hi ${d.name}! New course material \u{1F4DA}` : "New course material \u{1F4DA}",
+    body: `${d?.facultyName ?? "Your faculty"} added "${d?.courseName ?? "a course"}".`,
+    pushData: {
+      type: "COURSE_UPDATE",
+      ...d?.courseId ? { courseId: String(d.courseId) } : {}
+    }
   })
 };
-var createNotification = async (userId, tpl, data) => {
-  const { error } = await supabaseAdmin.from("notifications").insert({
-    user_id: userId,
-    type: tpl.notifType,
-    title: tpl.title,
-    body: tpl.body,
-    data: data ?? null,
-    is_admin: false,
-    sent_at: (/* @__PURE__ */ new Date()).toISOString()
-  });
-  if (error) console.log("createNotification error", error);
+var normalizeRecipients = (job) => {
+  const shared = job?.data ?? {};
+  const out = [];
+  if (Array.isArray(job?.recipients)) {
+    for (const r2 of job.recipients) {
+      if (r2?.user_id) out.push({ userId: r2.user_id, data: { ...shared, ...r2.data ?? {} } });
+    }
+  }
+  if (Array.isArray(job?.user_ids)) {
+    for (const id of job.user_ids) {
+      if (id) out.push({ userId: id, data: shared });
+    }
+  }
+  if (job?.user_id) out.push({ userId: job.user_id, data: shared });
+  const seen = /* @__PURE__ */ new Set();
+  return out.filter((r2) => seen.has(r2.userId) ? false : seen.add(r2.userId));
+};
+var createNotifications = async (built) => {
+  if (built.length === 0) return;
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  const { error } = await supabaseAdmin.from("notifications").insert(
+    built.map((b) => ({
+      user_id: b.userId,
+      type: b.tpl.notifType,
+      title: b.tpl.title,
+      body: b.tpl.body,
+      data: b.data ?? null,
+      is_admin: false,
+      sent_at: now
+    }))
+  );
+  if (error) console.log("createNotifications error", error);
 };
 var processRecord = async (record) => {
   const job = JSON.parse(record.body);
-  const { type, user_id, data } = job ?? {};
+  const { type } = job ?? {};
   const build = type ? templates[type] : void 0;
-  if (!build || !user_id) {
+  const recipients = normalizeRecipients(job);
+  if (!build || recipients.length === 0) {
     console.log("notificationWorker: skipping unactionable job", job);
     return;
   }
-  const tpl = build(data);
-  await createNotification(user_id, tpl, data ?? null);
-  const { data: devices, error: devErr } = await supabaseAdmin.from("notification_devices").select("token").eq("user_id", user_id).eq("is_active", true);
+  const built = recipients.map((r2) => ({
+    userId: r2.userId,
+    tpl: build(r2.data),
+    data: r2.data
+  }));
+  await createNotifications(built);
+  const userIds = built.map((b) => b.userId);
+  const { data: devices, error: devErr } = await supabaseAdmin.from("notification_devices").select("user_id, token").in("user_id", userIds).eq("is_active", true);
   if (devErr) throw new Error(devErr.message);
-  const tokens = (devices ?? []).map((d) => d.token).filter(Boolean);
-  if (tokens.length === 0) return;
-  const { invalidTokens } = await sendPushToTokens(tokens, {
-    title: tpl.title,
-    body: tpl.body,
-    data: tpl.pushData ?? {}
-  });
+  const tokensByUser = /* @__PURE__ */ new Map();
+  for (const d of devices ?? []) {
+    if (!d?.token) continue;
+    const list = tokensByUser.get(d.user_id) ?? [];
+    list.push(d.token);
+    tokensByUser.set(d.user_id, list);
+  }
+  const groups = /* @__PURE__ */ new Map();
+  for (const b of built) {
+    const tokens = tokensByUser.get(b.userId);
+    if (!tokens || tokens.length === 0) continue;
+    const payload = {
+      title: b.tpl.title,
+      body: b.tpl.body,
+      data: b.tpl.pushData ?? {}
+    };
+    const key = `${payload.title}\0${payload.body}\0${JSON.stringify(payload.data)}`;
+    const g = groups.get(key) ?? { payload, tokens: [] };
+    g.tokens.push(...tokens);
+    groups.set(key, g);
+  }
+  if (groups.size === 0) return;
+  const results = await Promise.all(
+    [...groups.values()].map((g) => sendPushToTokens(g.tokens, g.payload))
+  );
+  const invalidTokens = results.flatMap((r2) => r2.invalidTokens);
   if (invalidTokens.length) {
     await supabaseAdmin.from("notification_devices").update({ is_active: false }).in("token", invalidTokens);
   }

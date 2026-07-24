@@ -21070,7 +21070,7 @@ var streakRepository = {
     const now = /* @__PURE__ */ new Date();
     const D = istDate(new Date(now.getTime() - 24 * 60 * 60 * 1e3));
     const Dm1 = istDate(new Date(now.getTime() - 48 * 60 * 60 * 1e3));
-    const goal = await getSettingInt("default_streak_days", 7);
+    const goal = await getSettingInt("streak_days", 7);
     const reward = await getSettingInt("default_streak_coin_count", 5);
     const { data: rows, error } = await supabaseAdmin.from("daily_analytics").select("user_id, date, active_seconds, streak_day").in("date", [D, Dm1]).gte("active_seconds", ACTIVE_SECONDS_THRESHOLD);
     if (error) throw new Error(error.message);
